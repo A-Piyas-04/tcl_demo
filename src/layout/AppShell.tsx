@@ -18,6 +18,7 @@ import {
   Gauge,
   GitBranch,
   LogOut,
+  Menu as MenuIcon,
   type LucideIcon,
   Network,
   PanelsTopLeft,
@@ -31,7 +32,9 @@ import {
   Timer,
   Users,
   Wallet,
+  X,
 } from 'lucide-react'
+import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { cn, fmtAgo } from '@/lib/utils'
 import {
   useCanWrite,
@@ -227,7 +230,7 @@ export function AppShell() {
       </motion.aside>
 
       {/* workspace */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
         <TopBar onOpenPalette={() => setPaletteOpen(true)} />
         <main className="min-w-0 flex-1">
           <div className="mx-auto w-full max-w-[94rem] px-4 py-5 sm:px-6">
@@ -310,11 +313,19 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const mine = db.notifications.filter((n) => n.userId === user?.id).slice(0, 8)
 
   return (
-    <header className="sticky top-0 z-20 border-b border-paper-300 bg-paper-50/95 backdrop-blur-[3px]">
+    <header className="sticky top-0 z-20 border-b border-paper-300 bg-paper-50/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-[3px] md:pt-0">
       <div className="mx-auto flex h-[3.25rem] w-full max-w-[94rem] items-center gap-3 px-4 sm:px-6">
         <div className="min-w-0 flex-1">
           <Breadcrumbs />
         </div>
+
+        <button
+          onClick={onOpenPalette}
+          aria-label="Search"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-500 active:bg-paper-200 sm:hidden"
+        >
+          <Search className="h-5 w-5" />
+        </button>
 
         <button
           onClick={onOpenPalette}
@@ -449,40 +460,119 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   )
 }
 
-/** Bottom bar on phones: the five sections that matter on a small screen. */
+/** Frequent destinations stay in the bottom bar; every section is in More. */
 function MobileNav() {
+  const [open, setOpen] = React.useState(false)
+  const location = useLocation()
   const items = [
     { to: '/', label: 'Home', icon: Gauge, end: true },
     { to: '/products', label: 'Products', icon: Pill },
     { to: '/clients', label: 'Clients', icon: Users },
     { to: '/engagements', label: 'Pipeline', icon: GitBranch },
-    { to: '/indents', label: 'Indents', icon: Rocket },
   ]
+  const moreActive = NAV.some((group) => group.items.some((item) =>
+    !items.some((quick) => quick.to === item.to) &&
+    (location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)),
+  ))
+
+  React.useEffect(() => {
+    setOpen(false)
+  }, [location.pathname])
+
+  React.useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 768px)')
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false) }
+    desktop.addEventListener('change', closeOnDesktop)
+    return () => desktop.removeEventListener('change', closeOnDesktop)
+  }, [])
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-800 bg-ink-900 pb-[env(safe-area-inset-bottom)] md:hidden">
-      <ul className="flex">
-        {items.map((item) => {
-          const Icon = item.icon
-          return (
-            <li key={item.to} className="flex-1">
-              <NavLink
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    'flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors',
-                    isActive ? 'text-accent-300' : 'text-ink-500',
-                  )
-                }
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </NavLink>
-            </li>
-          )
-        })}
-      </ul>
-    </nav>
+    <>
+      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-800 bg-ink-900 pb-[env(safe-area-inset-bottom,0px)] md:hidden">
+        <ul className="flex min-h-14">
+          {items.map((item) => {
+            const Icon = item.icon
+            return (
+              <li key={item.to} className="min-w-0 flex-1">
+                <NavLink
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
+                      isActive ? 'text-accent-300' : 'text-ink-400',
+                    )
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="truncate">{item.label}</span>
+                </NavLink>
+              </li>
+            )
+          })}
+          <li className="min-w-0 flex-1">
+            <button
+              type="button"
+              aria-label="More navigation"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
+              className={cn(
+                'flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
+                moreActive || open ? 'text-accent-300' : 'text-ink-400',
+              )}
+            >
+              <MenuIcon className="h-5 w-5" />
+              <span>More</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-ink-950/50 md:hidden" />
+          <DialogPrimitive.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-xl bg-ink-900 text-paper-100 shadow-pop md:hidden">
+            <div className="flex shrink-0 items-center justify-between border-b border-ink-800 px-5 py-3">
+              <DialogPrimitive.Title className="text-base font-semibold">Navigation</DialogPrimitive.Title>
+              <DialogPrimitive.Close asChild>
+                <button type="button" aria-label="Close navigation" className="grid h-11 w-11 place-items-center rounded-md text-ink-400 active:bg-ink-800">
+                  <X className="h-5 w-5" />
+                </button>
+              </DialogPrimitive.Close>
+            </div>
+            <nav aria-label="All sections" className="scroll-slim min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
+              {NAV.map((group) => (
+                <div key={group.title} className="mb-4">
+                  <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-400">{group.title}</p>
+                  <ul className="grid grid-cols-2 gap-1">
+                    {group.items.map((item) => {
+                      const Icon = item.icon
+                      return (
+                        <li key={item.to}>
+                          <NavLink
+                            to={item.to}
+                            end={item.end}
+                            onClick={() => setOpen(false)}
+                            className={({ isActive }) => cn(
+                              'flex min-h-12 items-center gap-2 rounded-md px-3 text-sm active:bg-ink-700',
+                              isActive ? 'bg-ink-800 font-medium text-accent-300' : 'text-paper-200',
+                            )}
+                          >
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span className="min-w-0 truncate">{item.label}</span>
+                          </NavLink>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </nav>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
+    </>
   )
 }
 
