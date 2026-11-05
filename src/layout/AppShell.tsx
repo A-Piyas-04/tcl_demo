@@ -532,7 +532,7 @@ function MobileNav() {
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-ink-950/50 md:hidden" />
-          <DialogPrimitive.Content className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-xl bg-ink-900 text-paper-100 shadow-pop md:hidden">
+          <DialogPrimitive.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-xl bg-ink-900 text-paper-100 shadow-pop md:hidden">
             <div className="flex shrink-0 items-center justify-between border-b border-ink-800 px-5 py-3">
               <DialogPrimitive.Title className="text-base font-semibold">Navigation</DialogPrimitive.Title>
               <DialogPrimitive.Close asChild>
