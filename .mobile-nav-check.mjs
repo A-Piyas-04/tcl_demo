@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'
 
-const browser = await chromium.launch({ headless: true })
+const browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
 try {
   await page.goto('http://127.0.0.1:5175/')
