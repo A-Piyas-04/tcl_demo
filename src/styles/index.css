@@ -1,0 +1,114 @@
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --rail-w: 15rem;
+    --rail-w-collapsed: 3.75rem;
+    --topbar-h: 3.25rem;
+  }
+
+  * {
+    @apply border-paper-300;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper-100 text-ink-900 font-sans text-base antialiased;
+    font-feature-settings: 'cv05' 1, 'ss01' 1;
+  }
+
+  /* Numbers and identifiers line up in tables. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    @apply bg-accent-200 text-accent-900;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-500/70 ring-offset-1 ring-offset-paper-100;
+  }
+
+  /* Slim, unobtrusive scrollbars inside panels. */
+  .scroll-slim {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.paper.400') transparent;
+  }
+  .scroll-slim::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  .scroll-slim::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-paper-400/80;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scroll-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* A panel is the base surface: solid, hairline border, small radius.
+     Deliberately never a full-width banner — panels are placed in grids. */
+  .panel {
+    @apply rounded-lg border border-paper-300 bg-white shadow-tile;
+  }
+
+  .panel-head {
+    @apply flex items-center justify-between gap-3 border-b border-paper-200 px-4 py-2.5;
+  }
+
+  .hairline {
+    @apply border-paper-200;
+  }
+
+  /* Data grid cells */
+  .cell {
+    @apply px-3 py-2 align-middle;
+  }
+
+  .th {
+    @apply cell text-2xs font-semibold uppercase tracking-wider text-ink-500 select-none;
+  }
+
+  /* Skeleton shimmer block */
+  .sk {
+    @apply relative overflow-hidden rounded bg-paper-200/90;
+  }
+  .sk::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full animate-shimmer;
+    background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.65), transparent);
+  }
+
+  /* Dotted grid used behind canvases and empty states */
+  .dotgrid {
+    background-image: radial-gradient(circle at 1px 1px, theme('colors.paper.400') 1px, transparent 0);
+    background-size: 18px 18px;
+  }
+}
+
+/* Honour the viewer's motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
