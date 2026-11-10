@@ -39,11 +39,12 @@ import {
   AnimatedNumber,
   Badge,
   EmptyState,
+  HelpTip,
   KpiTile,
   MiniBars,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   SegmentedControl,
   SkeletonTiles,
   StageBadge,
@@ -209,8 +210,10 @@ function AttentionPanel({ groups, mineOnly }: { groups: AttentionGroup[]; mineOn
                       <div className="flex items-start gap-2">
                         <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', TONE_DOT[g.tone])} />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-ink-900">{g.title}</p>
-                          <p className="text-xs text-ink-500">{g.why}</p>
+                          <p className="flex items-start gap-1 text-sm font-medium text-ink-900">
+                            {g.title}
+                            <HelpTip>{g.why}</HelpTip>
+                          </p>
                           <ul className="mt-1.5 space-y-0.5">
                             {g.items.slice(0, 3).map((item) => (
                               <li key={item.id}>
@@ -391,7 +394,6 @@ function DemoStories() {
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-ink-900">{s.title}</span>
                 <span className="block truncate text-xs text-ink-500">{s.subtitle}</span>
-                <span className="mt-1 block text-2xs leading-relaxed text-ink-500">{s.point}</span>
               </span>
               {s.stage ? <StageBadge stage={s.stage} size="sm" /> : <Badge tone="info">Requirement</Badge>}
             </Link>

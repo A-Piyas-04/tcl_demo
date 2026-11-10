@@ -21,9 +21,10 @@ import {
   EmptyState,
   Field,
   FieldGrid,
+  NoteTip,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   SkeletonTable,
   Tooltip,
 } from '@/components/ui'
@@ -175,9 +176,9 @@ export function BatchDetail() {
             </Field>
             <Field label="First recorded">{fmtDate(batch.createdAt)}</Field>
           </FieldGrid>
-          <p className="mt-3 text-xs leading-relaxed text-ink-500">
+          <NoteTip className="mt-3" label="Batch numbering">
             The same batch number from a different manufacturer is a different batch and is kept separately.
-          </p>
+          </NoteTip>
         </div>
       </Panel>
 

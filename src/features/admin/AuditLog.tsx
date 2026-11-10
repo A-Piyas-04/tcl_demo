@@ -25,9 +25,10 @@ import {
   Field,
   FieldGrid,
   LinkButton,
+  NoteTip,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   SearchInput,
   Select,
   Tab,
@@ -454,34 +455,32 @@ export function AuditLog() {
           <PanelHeader title="Why there are two logs" icon={<History className="h-4 w-4" />} />
           <div className="space-y-3 p-3.5">
             <FieldGrid cols={2}>
-              <Field label="Data changes">Every insert, update and delete on a business record, field by field</Field>
-              <Field label="Security and access">
+              <Field label="Data changes" wrap>Every insert, update and delete on a business record, field by field</Field>
+              <Field label="Security and access" wrap>
                 Sign-ins, failed sign-ins, refused requests, role changes, exports and cross-client views
               </Field>
               <Field label="Data changes kept for">Ten years</Field>
               <Field label="Security kept for">One year</Field>
             </FieldGrid>
-            <p className="text-xs leading-relaxed text-ink-500">
+            <NoteTip label="What a read records">
               A read changes nothing, so it writes no data-change entry. The two reads that still have to be
               accountable, the cross-client view and every export, are written to the security log instead, with the
-              filters used and the number of rows. Exporting either log is itself an export, so it appears in the
-              security log a moment later.
-            </p>
+              filters used and the number of rows.
+            </NoteTip>
           </div>
         </Panel>
 
         <Panel>
           <PanelHeader title="Nobody can edit this" icon={<ShieldAlert className="h-4 w-4" />} />
-          <div className="space-y-3 p-3.5 text-xs leading-relaxed text-ink-600">
-            <p>
+          <div className="flex flex-wrap gap-1.5 p-3.5">
+            <NoteTip label="No edit or delete">
               There is no edit or delete action on either log, for Full Access as much as for View Only. An entry can be
               read, filtered and exported, and that is all the application offers.
-            </p>
-            <p>
-              Both roles can open this page, which is deliberate: cross-client visibility is open across the business
-              and is managed by this trail rather than by permissions, so the trail has to be as visible as the data it
-              covers.
-            </p>
+            </NoteTip>
+            <NoteTip label="Open to both roles">
+              Cross-client visibility is open across the business and is managed by this trail rather than by
+              permissions, so the trail has to be as visible as the data it covers.
+            </NoteTip>
           </div>
         </Panel>
       </div>

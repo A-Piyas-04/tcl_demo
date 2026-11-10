@@ -17,9 +17,10 @@ import {
   ConfirmDialog,
   Field,
   FieldGrid,
+  NoteTip,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   SegmentedControl,
   WriteButton,
 } from '@/components/ui'
@@ -135,10 +136,10 @@ export function SystemHealth() {
                 { value: 'slow', label: 'Slow' },
               ]}
             />
-            <p className="text-xs leading-relaxed text-ink-500">
+            <NoteTip label="What each setting does">
               Realistic waits between roughly 0.3 and 0.6 seconds, slow between 0.9 and 1.6, and off returns at once.
               It affects only the pause before an answer, never what the answer is.
-            </p>
+            </NoteTip>
           </div>
         </Panel>
       </div>

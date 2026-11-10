@@ -639,10 +639,9 @@ export function ClientOrderForm() {
         description="The indents on each manufacturer can be raised now, or later from the order."
       >
         <div className="space-y-3">
-          <p className="text-sm leading-relaxed text-ink-700">
-            Raising the indents groups these lines by manufacturer and proposes one indent per manufacturer, each
-            naming {client?.displayName ?? 'this client'}. You enter the price agreed between the client and that
-            manufacturer on each line.
+          <p className="text-sm text-ink-700">
+            This groups the lines by manufacturer and proposes one indent each, naming{' '}
+            {client?.displayName ?? 'this client'}. You enter the agreed price per line.
           </p>
           <div className="flex items-center justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => leave(false)}>

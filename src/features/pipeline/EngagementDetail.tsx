@@ -35,6 +35,7 @@ import {
   Field,
   FieldGrid,
   FilingDot,
+  HelpTip,
   InlineWarning,
   LinkButton,
   Menu,
@@ -43,9 +44,9 @@ import {
   MenuLabel,
   MenuSeparator,
   MenuTrigger,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   PortfolioBadge,
   StageBadge,
   StageRail,
@@ -200,8 +201,8 @@ export function EngagementDetail() {
                   ))
                 )}
                 <MenuSeparator />
-                <p className="max-w-[15rem] px-2 py-1 text-2xs leading-relaxed text-ink-400">
-                  Offers and samples move the stage when they are recorded, on the Offers &amp; samples tab.
+                <p className="max-w-[15rem] px-2 py-1 text-2xs text-ink-400">
+                  Offers and samples move the stage when recorded.
                 </p>
               </MenuContent>
             </Menu>
@@ -305,9 +306,9 @@ export function EngagementDetail() {
                   <Field label="Country">{client ? countryName(client.countryCode) : '—'}</Field>
                 </FieldGrid>
                 {approval.siblingApproved > 0 ? (
-                  <p className="text-xs leading-relaxed text-ink-500">
-                    This client also has {pluralise(approval.siblingApproved, 'other approved source')} for{' '}
-                    {product?.genericName ?? 'this molecule'}. Dual sourcing is normal and regulator-encouraged.
+                  <p className="flex items-center gap-1 text-xs text-ink-500">
+                    {pluralise(approval.siblingApproved, 'other approved source')} for this molecule
+                    <HelpTip>Dual sourcing is normal and regulator-encouraged.</HelpTip>
                   </p>
                 ) : null}
                 <LinkButton to={`/engagements/${id}/peers`} variant="ghost" size="sm">

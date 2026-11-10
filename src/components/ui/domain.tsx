@@ -24,7 +24,7 @@ import type {
   ManufacturerStatus,
   StageHistoryEntry,
 } from '@/data/types'
-import { Badge } from './primitives'
+import { Badge, HelpTip, splitBlurb } from './primitives'
 import { Tooltip } from './overlays'
 
 // ------------------------------------------------------------ stage chip
@@ -320,6 +320,7 @@ export function KpiTile({
     ok: 'bg-ok-50/70 border-ok-200',
     ink: 'bg-ink-900 border-ink-800 text-paper-100',
   }
+  const { caption: hintCaption, tip: hintTip } = splitBlurb(hint)
   const valueTone: Record<string, string> = {
     default: 'text-ink-900',
     accent: 'text-accent-800',
@@ -346,11 +347,12 @@ export function KpiTile({
       <div className="flex items-start justify-between gap-2">
         <p
           className={cn(
-            'text-2xs font-semibold uppercase tracking-wider',
+            'inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider',
             tone === 'ink' ? 'text-paper-300' : 'text-ink-500',
           )}
         >
           {label}
+          <HelpTip className={tone === 'ink' ? 'text-paper-400' : undefined}>{hintTip}</HelpTip>
         </p>
         {icon ? (
           <span className={cn('shrink-0', tone === 'ink' ? 'text-accent-300' : 'text-ink-300')}>{icon}</span>
@@ -368,14 +370,14 @@ export function KpiTile({
 
       {children}
 
-      {hint || footer ? (
+      {hintCaption || footer ? (
         <div
           className={cn(
             'text-xs leading-relaxed',
             tone === 'ink' ? 'text-paper-300' : 'text-ink-500',
           )}
         >
-          {hint}
+          {hintCaption}
           {footer}
         </div>
       ) : null}

@@ -47,6 +47,7 @@ import {
   InlineError,
   InlineWarning,
   Input,
+  NoteTip,
   NumberInput,
   Panel,
   PanelHeader,
@@ -206,10 +207,10 @@ export function SamplePanel({
                 Reject the engagement
               </Button>
             </div>
-            <p className="text-2xs leading-relaxed text-ink-500">
+            <NoteTip label="Another round vs. on hold">
               Another round takes the engagement from Under evaluation back to Sample requested. On hold is a different
               thing: it pauses the whole engagement and is not how a second round is raised.
-            </p>
+            </NoteTip>
           </div>
         </WriteOnly>
       ) : null}

@@ -9,7 +9,7 @@
  */
 
 import * as React from 'react'
-import { Info } from 'lucide-react'
+import { NoteTip } from '@/components/ui'
 import { READ_ONLY_PERMISSIONS, WRITE_PERMISSIONS, type Permission } from '@/data/reference'
 
 /**
@@ -24,15 +24,7 @@ export function PrototypeNote({
   title: string
   children: React.ReactNode
 }) {
-  return (
-    <div className="flex max-w-3xl items-start gap-2.5 rounded-md border border-paper-300 bg-paper-50 p-3">
-      <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" />
-      <div className="min-w-0 space-y-1">
-        <p className="text-xs font-semibold text-ink-800">{title}</p>
-        <p className="text-xs leading-relaxed text-ink-500">{children}</p>
-      </div>
-    </div>
-  )
+  return <NoteTip label={title}>{children}</NoteTip>
 }
 
 // ------------------------------------------------------- permission grouping

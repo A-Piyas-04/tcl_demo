@@ -9,10 +9,79 @@
 
 import * as React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 import { motion } from 'framer-motion'
-import { Loader2 } from 'lucide-react'
+import { Info, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCanWrite } from '@/data/store'
+
+// ------------------------------------------------------------------ hover help
+
+const TIP_CLASS =
+  'z-50 max-w-xs rounded border border-ink-800 bg-ink-900 px-2 py-1 text-xs leading-relaxed text-paper-100 shadow-pop data-[state=delayed-open]:animate-fade-up'
+
+/**
+ * An explanation the screen does not have to say out loud. Hover or focus the
+ * mark and the sentence appears; the layout stays quiet until then.
+ */
+export function HelpTip({
+  children,
+  side = 'top',
+  className,
+}: {
+  children?: React.ReactNode
+  side?: 'top' | 'right' | 'bottom' | 'left'
+  className?: string
+}) {
+  if (!children) return null
+  return (
+    <TooltipPrimitive.Root>
+      <TooltipPrimitive.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Explain this"
+          onClick={(e) => e.preventDefault()}
+          className={cn(
+            'inline-grid h-4 w-4 shrink-0 translate-y-px place-items-center rounded-full text-ink-300',
+            'transition-colors hover:text-ink-600 focus-visible:text-ink-600',
+            className,
+          )}
+        >
+          <Info className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Portal>
+        <TooltipPrimitive.Content side={side} sideOffset={6} className={TIP_CLASS}>
+          {children}
+          <TooltipPrimitive.Arrow className="fill-ink-900" />
+        </TooltipPrimitive.Content>
+      </TooltipPrimitive.Portal>
+    </TooltipPrimitive.Root>
+  )
+}
+
+/**
+ * The single rule that keeps the screens quiet: a short caption is data worth
+ * reading in place, a sentence is an explanation and belongs on hover. Applied
+ * by every heading, tile and empty state, so no page has to decide for itself.
+ */
+const CAPTION_MAX = 34
+
+export function splitBlurb(node: React.ReactNode): {
+  caption: React.ReactNode | null
+  tip: React.ReactNode | null
+} {
+  if (node === null || node === undefined || node === false || node === '') {
+    return { caption: null, tip: null }
+  }
+  if (typeof node === 'string') {
+    const text = node.trim()
+    if (!text) return { caption: null, tip: null }
+    const isSentence = text.length > CAPTION_MAX || /[.!?](\s|$)/.test(text)
+    return isSentence ? { caption: null, tip: text } : { caption: text, tip: null }
+  }
+  return { caption: node, tip: null }
+}
 
 // ------------------------------------------------------------------ panel
 
@@ -36,13 +105,17 @@ export function PanelHeader({
   icon?: React.ReactNode
   className?: string
 }) {
+  const { caption, tip } = splitBlurb(subtitle)
   return (
     <div className={cn('panel-head', className)}>
       <div className="flex min-w-0 items-center gap-2.5">
         {icon ? <span className="shrink-0 text-ink-500">{icon}</span> : null}
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold text-ink-900">{title}</h2>
-          {subtitle ? <p className="truncate text-xs text-ink-500">{subtitle}</p> : null}
+          <div className="flex min-w-0 items-center gap-1">
+            <h2 className="truncate text-sm font-semibold text-ink-900">{title}</h2>
+            <HelpTip>{tip}</HelpTip>
+          </div>
+          {caption ? <p className="truncate text-xs text-ink-500">{caption}</p> : null}
         </div>
       </div>
       {actions ? <div className="flex shrink-0 items-center gap-1.5">{actions}</div> : null}
@@ -243,6 +316,7 @@ export function EmptyState({
   secondary?: React.ReactNode
   compact?: boolean
 }) {
+  const { caption, tip } = splitBlurb(description)
   return (
     <div
       className={cn(
@@ -256,8 +330,11 @@ export function EmptyState({
         </div>
       ) : null}
       <div className="max-w-sm space-y-1">
-        <p className="text-sm font-semibold text-ink-800">{title}</p>
-        {description ? <p className="text-xs leading-relaxed text-ink-500">{description}</p> : null}
+        <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-800">
+          {title}
+          <HelpTip>{tip}</HelpTip>
+        </p>
+        {caption ? <p className="text-xs leading-relaxed text-ink-500">{caption}</p> : null}
       </div>
       {action || secondary ? (
         <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
@@ -339,17 +416,26 @@ export function Field({
   label,
   children,
   mono,
+  wrap,
   className,
 }: {
   label: React.ReactNode
   children: React.ReactNode
   mono?: boolean
+  /** Let a sentence-length value wrap instead of truncating. */
+  wrap?: boolean
   className?: string
 }) {
   return (
     <div className={cn('min-w-0', className)}>
       <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">{label}</dt>
-      <dd className={cn('mt-0.5 truncate text-sm text-ink-800', mono && 'font-mono tabular text-[0.8rem]')}>
+      <dd
+        className={cn(
+          'mt-0.5 text-ink-800',
+          wrap ? 'text-xs leading-snug text-ink-700' : 'truncate text-sm',
+          mono && 'font-mono tabular text-[0.8rem]',
+        )}
+      >
         {children}
       </dd>
     </div>
@@ -373,11 +459,70 @@ export function FieldGrid({ children, cols = 3 }: { children: React.ReactNode; c
 
 /** A short explanation of a rule the prototype enforces, shown in demo mode. */
 export function RuleHint({ children }: { children: React.ReactNode }) {
+  if (!children) return null
   return (
-    <p className="flex items-start gap-1.5 rounded border border-accent-200 bg-accent-50/70 px-2 py-1.5 text-2xs leading-relaxed text-accent-900">
-      <span className="mt-[1px] font-semibold">Rule</span>
-      <span className="text-accent-800">{children}</span>
-    </p>
+    <TooltipPrimitive.Root>
+      <TooltipPrimitive.Trigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.preventDefault()}
+          className="inline-flex w-fit items-center gap-1 rounded border border-accent-200 bg-accent-50/70 px-1.5 py-0.5 text-2xs font-medium text-accent-800 transition-colors hover:bg-accent-100"
+        >
+          <Info className="h-3 w-3" aria-hidden />
+          Rule
+        </button>
+      </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Portal>
+        <TooltipPrimitive.Content side="top" sideOffset={6} className={TIP_CLASS}>
+          {children}
+          <TooltipPrimitive.Arrow className="fill-ink-900" />
+        </TooltipPrimitive.Content>
+      </TooltipPrimitive.Portal>
+    </TooltipPrimitive.Root>
+  )
+}
+
+/**
+ * A labelled note collapsed to one chip. The sentence is on hover, so a screen
+ * can carry the caveat without spending four lines of prose on it.
+ */
+export function NoteTip({
+  label = 'About this',
+  children,
+  tone = 'neutral',
+  className,
+}: {
+  label?: string
+  children: React.ReactNode
+  tone?: 'neutral' | 'accent'
+  className?: string
+}) {
+  if (!children) return null
+  return (
+    <TooltipPrimitive.Root>
+      <TooltipPrimitive.Trigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.preventDefault()}
+          className={cn(
+            'inline-flex w-fit items-center gap-1 rounded border px-1.5 py-0.5 text-2xs font-medium transition-colors',
+            tone === 'accent'
+              ? 'border-accent-200 bg-accent-50/70 text-accent-800 hover:bg-accent-100'
+              : 'border-paper-300 bg-paper-50 text-ink-500 hover:bg-paper-200 hover:text-ink-700',
+            className,
+          )}
+        >
+          <Info className="h-3 w-3" aria-hidden />
+          {label}
+        </button>
+      </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Portal>
+        <TooltipPrimitive.Content side="top" sideOffset={6} className={TIP_CLASS}>
+          {children}
+          <TooltipPrimitive.Arrow className="fill-ink-900" />
+        </TooltipPrimitive.Content>
+      </TooltipPrimitive.Portal>
+    </TooltipPrimitive.Root>
   )
 }
 
@@ -412,12 +557,16 @@ export function PageHeading({
   actions?: React.ReactNode
   meta?: React.ReactNode
 }) {
+  const { caption, tip } = splitBlurb(subtitle)
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink-900">{title}</h1>
-        {subtitle ? <p className="mt-0.5 max-w-2xl text-sm text-ink-500">{subtitle}</p> : null}
-        {meta ? <div className="mt-2 flex flex-wrap items-center gap-2">{meta}</div> : null}
+        <div className="flex min-w-0 items-center gap-1.5">
+          <h1 className="min-w-0 text-xl font-semibold tracking-tight text-ink-900">{title}</h1>
+          <HelpTip side="bottom">{tip}</HelpTip>
+        </div>
+        {caption ? <p className="mt-0.5 text-sm text-ink-500">{caption}</p> : null}
+        {meta ? <div className="mt-1.5 flex flex-wrap items-center gap-2">{meta}</div> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>

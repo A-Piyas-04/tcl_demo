@@ -14,7 +14,7 @@
 
 import * as React from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Building2, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, Building2, Users } from 'lucide-react'
 import { useDb } from '@/data/store'
 import { engagementRows, type EngagementRow } from '@/data/selectors'
 import { loadCrossClient } from '@/data/api'
@@ -28,9 +28,10 @@ import {
   EmptyState,
   LinkButton,
   NameCell,
+  NoteTip,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   SegmentedControl,
   SkeletonTable,
   StageBadge,
@@ -147,6 +148,10 @@ export function PeersView() {
           <>
             <Badge tone="accent">{pluralise(clientCount, 'other client')}</Badge>
             <Badge tone="neutral">{pluralise(sourceCount, 'source')}</Badge>
+            <NoteTip label="This view is recorded">
+              Each visit is written to the security log with the user, the molecule and the time, because the clients
+              listed here compete with one another. Both Full Access and View Only sessions may open it.
+            </NoteTip>
             <Link to={`/products/${product.id}`} className="text-xs text-accent-700 underline">
               Open the molecule
             </Link>
@@ -164,32 +169,6 @@ export function PeersView() {
           </Button>
         }
       />
-
-      <div className="grid gap-3 lg:grid-cols-3">
-        <Panel className="p-3.5 lg:col-span-2">
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-700">
-            <ShieldCheck className="h-3.5 w-3.5 text-ink-400" />
-            This view is recorded
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-ink-600">
-            Both Full Access and View Only sessions may open this screen. Each visit is written to the security log
-            with the user, the molecule and the time, because the clients listed here compete with one another. The
-            record exists so the company can see who looked, and it stays inside TCL.
-          </p>
-        </Panel>
-        <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Starting point</p>
-          <Link
-            to={`/clients/${fromClient.id}`}
-            className="mt-1 block truncate text-sm font-semibold text-ink-900 hover:text-accent-700"
-          >
-            {fromClient.displayName}
-          </Link>
-          <p className="mt-0.5 text-xs text-ink-500">
-            {product.genericName} · {engagement.stage === 'COMMERCIAL' ? 'in commercial supply' : 'in the pipeline'}
-          </p>
-        </Panel>
-      </div>
 
       <Panel>
         <PanelHeader

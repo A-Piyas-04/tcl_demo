@@ -16,9 +16,10 @@ import {
   Badge,
   Button,
   EmptyState,
+  HelpTip,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   SearchInput,
 } from '@/components/ui'
 import { MODULE_ORDER, permissionAction, permissionRows, PrototypeNote } from './shared'
@@ -63,36 +64,36 @@ export function RoleAdmin() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Full Access</p>
+          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+            Full Access
+            <HelpTip>Every permission code. Held by {pluralise(counts.fullAccess, 'active user')}.</HelpTip>
+          </p>
           <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-accent-800">
             {READ_ONLY_PERMISSIONS.length + WRITE_PERMISSIONS.length}
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-ink-500">
-            Every permission code. Held by {pluralise(counts.fullAccess, 'active user')}.
-          </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">View Only</p>
+          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+            View Only
+            <HelpTip>The read and export codes, and nothing else. Held by {pluralise(counts.viewer, 'active user')}.</HelpTip>
+          </p>
           <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-ink-900">
             {READ_ONLY_PERMISSIONS.length}
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-ink-500">
-            The read and export codes, and nothing else. Held by {pluralise(counts.viewer, 'active user')}.
-          </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Modules covered</p>
+          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+            Modules covered
+            <HelpTip>The module is read from the code prefix, so a new permission groups itself.</HelpTip>
+          </p>
           <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-ink-900">{MODULE_ORDER.length}</p>
-          <p className="mt-2 text-xs leading-relaxed text-ink-500">
-            The module is read from the code prefix, so a new permission groups itself.
-          </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Editable here</p>
-          <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-ink-900">0</p>
-          <p className="mt-2 text-xs leading-relaxed text-ink-500">
-            Read-only in v1. Both roles can read this page.
+          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+            Editable here
+            <HelpTip>Read-only in v1. Both roles can read this page.</HelpTip>
           </p>
+          <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-ink-900">0</p>
         </Panel>
       </div>
 

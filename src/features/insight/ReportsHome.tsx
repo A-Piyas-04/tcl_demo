@@ -125,9 +125,8 @@ export function ReportsHome() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
           <Panel key={card.to} className="flex flex-col">
-            <PanelHeader title={card.title} icon={card.icon} />
+            <PanelHeader title={card.title} subtitle={card.question} icon={card.icon} />
             <div className="flex flex-1 flex-col justify-between gap-3 p-4">
-              <p className="text-xs leading-relaxed text-ink-600">{card.question}</p>
               <div>
                 {loading ? (
                   <Skeleton className="h-7 w-24" />

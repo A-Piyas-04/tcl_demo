@@ -95,7 +95,6 @@ export function RelationshipsHome() {
           <Panel key={card.to} className="flex flex-col">
             <PanelHeader title={card.title} subtitle={card.question} icon={card.icon} />
             <div className="flex flex-1 flex-col justify-between gap-3 p-4">
-              <p className="text-xs leading-relaxed text-ink-600">{card.detail}</p>
               <LinkButton to={card.to} variant="secondary" size="sm" className="self-start">
                 {card.cta}
               </LinkButton>

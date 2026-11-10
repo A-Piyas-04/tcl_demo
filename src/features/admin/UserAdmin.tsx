@@ -28,13 +28,15 @@ import {
   Field,
   FieldGrid,
   FormRow,
-  Input,
+  HelpTip,
   InlineError,
   InlineWarning,
+  Input,
   NameCell,
+  NoteTip,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   RadioCards,
   RuleHint,
   Select,
@@ -295,47 +297,54 @@ export function UserAdmin() {
       <div className="grid gap-3 lg:grid-cols-2">
         <Panel>
           <PanelHeader title="Why there are only two roles" icon={<ShieldCheck className="h-4 w-4" />} />
-          <div className="space-y-3 p-3.5 text-xs leading-relaxed text-ink-600">
-            <p>
-              Everyone who does the work holds <span className="font-medium text-ink-800">Full Access</span>, which can
-              read every module and create, edit, delete, approve, export and administer. Interns, auditors and finance
-              reviewers hold <span className="font-medium text-ink-800">View Only</span>, which reads and exports every
-              module and changes nothing. Job titles such as BD officer or sourcing officer describe who owns a task in
-              the business, not what the software allows.
-            </p>
-            <p>
-              Management agreed two consequences of keeping it this simple, and both are worth saying out loud:
-            </p>
-            <ul className="ml-4 list-disc space-y-1.5">
-              <li>
+          <div className="space-y-3 p-3.5">
+            <dl className="grid gap-x-5 gap-y-1 sm:grid-cols-2">
+              <div className="flex items-center gap-1">
+                <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">Full Access</dt>
+                <HelpTip>Reads every module and may create, edit, delete, approve, export and administer.</HelpTip>
+              </div>
+              <div className="flex items-center gap-1">
+                <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">View Only</dt>
+                <HelpTip>Reads and exports every module, changes nothing.</HelpTip>
+              </div>
+            </dl>
+            <div className="flex flex-wrap gap-1.5">
+              <NoteTip label="Price and commission">
                 Price, cost and commission are visible to every user, including View Only. There is no field-level
                 restriction.
-              </li>
-              <li>
-                Any user can see which other clients take a given molecule. That confidentiality concern is real, and it
-                is managed by the audit trail, which records every cross-client view, rather than by permissions.
-              </li>
-            </ul>
-            <p>
-              A third role would be seeded rows in the role and permission tables, not a schema or code change, because
-              each check tests for a permission code such as <span className="font-mono">engagement.approve</span>.
-            </p>
+              </NoteTip>
+              <NoteTip label="Cross-client views">
+                Any user can see which other clients take a given molecule. That is managed by the audit trail, which
+                records every cross-client view, rather than by permissions.
+              </NoteTip>
+              <NoteTip label="A third role">
+                Would be seeded rows in the role and permission tables, not a schema or code change, because each check
+                tests for a permission code such as engagement.approve.
+              </NoteTip>
+            </div>
           </div>
         </Panel>
 
         <Panel>
           <PanelHeader title="What a role change does and does not touch" icon={<KeyRound className="h-4 w-4" />} />
           <div className="space-y-3 p-3.5">
-            <FieldGrid cols={2}>
-              <Field label="Takes effect">On the user's next request, not at their next sign-in</Field>
-              <Field label="Record ownership">Kept, so their clients and engagements stay theirs</Field>
-              <Field label="Written to">The audit log, with the identity of whoever made the change</Field>
-              <Field label="Deactivation">Blocks sign-in and keeps every historical record attributed</Field>
-            </FieldGrid>
-            <p className="text-xs leading-relaxed text-ink-500">
+            <dl className="grid gap-x-5 gap-y-2.5 sm:grid-cols-2">
+              {[
+                ['Takes effect', "On the user's next request, not at their next sign-in"],
+                ['Record ownership', 'Kept, so their clients and engagements stay theirs'],
+                ['Written to', 'The audit log, with the identity of whoever made the change'],
+                ['Deactivation', 'Blocks sign-in and keeps every historical record attributed'],
+              ].map(([label, value]) => (
+                <div key={label} className="min-w-0">
+                  <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">{label}</dt>
+                  <dd className="mt-0.5 text-xs leading-snug text-ink-700">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <NoteTip label="After a demotion">
               A demoted user still appears as the owner of their records and their "my engagements" filter still works.
               They can no longer edit any of it.
-            </p>
+            </NoteTip>
           </div>
         </Panel>
       </div>
@@ -458,10 +467,12 @@ function AddUserDialog({
 
         <div className="flex items-start gap-2 rounded border border-paper-300 bg-paper-50 p-2.5">
           <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-400" />
-          <p className="text-xs leading-relaxed text-ink-500">
-            On save, a single-use activation link is emailed. Until the person follows it and sets a password meeting
-            the policy, the account cannot sign in, and it does not count as a Full Access holder for the last-admin
-            guard. In this prototype no email is sent.
+          <p className="flex items-center gap-1 text-xs text-ink-500">
+            On save, a single-use activation link is emailed; no email is sent in this prototype.
+            <HelpTip>
+              Until the person follows the link and sets a password meeting the policy, the account cannot sign in, and
+              it does not count as a Full Access holder for the last-admin guard.
+            </HelpTip>
           </p>
         </div>
 

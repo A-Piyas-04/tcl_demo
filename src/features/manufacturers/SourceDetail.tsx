@@ -75,14 +75,15 @@ import {
   FieldGrid,
   FormGrid,
   FormRow,
-  Input,
   InlineError,
   InlineWarning,
+  Input,
   LinkButton,
+  NoteTip,
   NumberInput,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   PortfolioBadge,
   Select,
   SkeletonTable,
@@ -766,10 +767,10 @@ function PricesPanel({
               </ResponsiveContainer>
             </div>
           )}
-          <p className="mt-2 text-2xs leading-relaxed text-ink-400">
+          <NoteTip className="mt-2" label="Reading this chart">
             Rows for different incoterms and quantity tiers sit on the same line, so read it as the shape of the
             quotes received, not as one comparable series.
-          </p>
+          </NoteTip>
         </div>
       </Panel>
     </div>

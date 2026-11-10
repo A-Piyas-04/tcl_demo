@@ -36,13 +36,14 @@ import {
   DateInput,
   FormGrid,
   FormRow,
-  Input,
+  HelpTip,
   InlineError,
   InlineWarning,
+  Input,
   LinkButton,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   RadioCards,
   RuleHint,
   Select,
@@ -306,9 +307,12 @@ export function ManufacturerForm() {
                   ? ` Applied on ${fmtDate(blacklistedMatch.manufacturer.blacklistedOn)}.`
                   : ''}
               </p>
-              <p className="text-xs leading-relaxed text-ink-600">
-                This record cannot be created. If the decision has changed, reinstate the existing manufacturer by
-                changing its status, which needs a recorded reason.
+              <p className="flex items-center gap-1 text-xs text-ink-600">
+                This record cannot be created.
+                <HelpTip>
+                  If the decision has changed, reinstate the existing manufacturer by changing its status, which needs a
+                  recorded reason.
+                </HelpTip>
               </p>
               <div>
                 <Button

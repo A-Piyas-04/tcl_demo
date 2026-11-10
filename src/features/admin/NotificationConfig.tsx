@@ -16,10 +16,12 @@ import {
   Field,
   FieldGrid,
   FormRow,
+  HelpTip,
+  NoteTip,
   NumberInput,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   WriteButton,
 } from '@/components/ui'
 import { PrototypeNote } from './shared'
@@ -133,12 +135,14 @@ export function NotificationConfig() {
                 <p className="text-sm tabular text-ink-800">{settings.overshipmentTolerancePct}%</p>
               )}
             </FormRow>
-            <p className="text-xs leading-relaxed text-ink-500">
-              Currently {settings.overshipmentTolerancePct}%, so an indent for 1,000 KG accepts up to{' '}
+            <p className="flex items-center gap-1 text-xs text-ink-500">
+              An indent for 1,000 KG accepts up to{' '}
               {fmtNumber(Math.round(1000 * (1 + settings.overshipmentTolerancePct / 100)))} KG.
-              {settings.overshipmentTolerancePct === DEFAULT_SETTINGS.overshipmentTolerancePct
-                ? ' This is the default.'
-                : ` The default is ${DEFAULT_SETTINGS.overshipmentTolerancePct}%.`}
+              <HelpTip>
+                {settings.overshipmentTolerancePct === DEFAULT_SETTINGS.overshipmentTolerancePct
+                  ? 'This is the default.'
+                  : `The default is ${DEFAULT_SETTINGS.overshipmentTolerancePct}%.`}
+              </HelpTip>
             </p>
           </div>
         </Panel>
@@ -164,11 +168,13 @@ export function NotificationConfig() {
                 <p className="text-sm tabular text-ink-800">{settings.minShelfLifeMonths} months</p>
               )}
             </FormRow>
-            <p className="text-xs leading-relaxed text-ink-500">
+            <p className="flex items-center gap-1 text-xs text-ink-500">
               Currently {settings.minShelfLifeMonths} months.
-              {settings.minShelfLifeMonths === DEFAULT_SETTINGS.minShelfLifeMonths
-                ? ' This is the default.'
-                : ` The default is ${DEFAULT_SETTINGS.minShelfLifeMonths} months.`}
+              <HelpTip>
+                {settings.minShelfLifeMonths === DEFAULT_SETTINGS.minShelfLifeMonths
+                  ? 'This is the default.'
+                  : `The default is ${DEFAULT_SETTINGS.minShelfLifeMonths} months.`}
+              </HelpTip>
             </p>
           </div>
         </Panel>
@@ -196,22 +202,22 @@ export function NotificationConfig() {
         <PanelHeader title="Who a notification goes to" icon={<BellRing className="h-4 w-4" />} />
         <div className="space-y-3 p-3.5">
           <FieldGrid cols={2}>
-            <Field label="Record events">
+            <Field label="Record events" wrap>
               The owner of the record concerned, for example the owner of an ageing engagement or a shipment held at
               customs
             </Field>
-            <Field label="Company-wide events">
+            <Field label="Company-wide events" wrap>
               Every active Full Access user, for unsourced demand, a certificate about to expire, and a failed upload
               scan
             </Field>
-            <Field label="Never">A persona or a team, because the system has no concept of either</Field>
-            <Field label="Muting">Each user can mute categories from their own profile</Field>
+            <Field label="Never" wrap>A persona or a team, because the system has no concept of either</Field>
+            <Field label="Muting" wrap>Each user can mute categories from their own profile</Field>
           </FieldGrid>
-          <p className="text-xs leading-relaxed text-ink-500">
+          <NoteTip label="Why job titles are not addressed">
             Job titles such as BD officer or sourcing officer describe who owns a task in the business. They carry no
             permissions and cannot be addressed, so a notification is sent to the recorded owner or to everyone who
             could act on it.
-          </p>
+          </NoteTip>
         </div>
       </Panel>
     </div>

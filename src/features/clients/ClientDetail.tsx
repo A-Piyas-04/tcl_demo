@@ -76,12 +76,14 @@ import {
   FieldGrid,
   FormGrid,
   FormRow,
+  HelpTip,
   Input,
   LinkButton,
   Meter,
+  NoteTip,
+  PageHeading,
   Panel,
   PanelHeader,
-  PageHeading,
   Select,
   SkeletonTable,
   StageBadge,
@@ -212,11 +214,12 @@ export function ClientDetail() {
 
       {readOnly ? (
         <Panel className="max-w-2xl border-warn-200 bg-warn-50/60 p-3.5">
-          <p className="text-sm font-semibold text-warn-600">This client record is inactive</p>
-          <p className="mt-1 text-xs leading-relaxed text-ink-700">
-            The record was deactivated rather than deleted, so every engagement, order and document below remains
-            readable. Nothing on this page can be changed while it stays inactive. Reactivation is not part of this
-            prototype.
+          <p className="flex items-center gap-1 text-sm font-semibold text-warn-600">
+            This client record is inactive
+            <HelpTip>
+              Deactivated rather than deleted, so every engagement, order and document below remains readable, but
+              nothing on this page can be changed. Reactivation is not part of this prototype.
+            </HelpTip>
           </p>
         </Panel>
       ) : null}
@@ -1329,11 +1332,11 @@ function OrdersTab({
         <Panel>
           <PanelHeader title="What TCL earns from this client" subtitle="Commission on the indents above" />
           <div className="space-y-3 p-4">
-            <p className="text-xs leading-relaxed text-ink-700">
-              TCL does not buy the goods and sell them on. It raises an indent on the manufacturer for{' '}
-              {clientName}, and earns a commission from the client on the value of that indent. The client pays the
-              manufacturer directly, so there is no TCL selling price anywhere on this page.
-            </p>
+            <NoteTip label="How TCL is paid">
+              TCL does not buy the goods and sell them on. It raises an indent on the manufacturer for {clientName}, and
+              earns a commission from the client on the value of that indent. The client pays the manufacturer directly,
+              so there is no TCL selling price anywhere on this page.
+            </NoteTip>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded border border-paper-300 bg-paper-50 p-2.5">
                 <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Earned</p>

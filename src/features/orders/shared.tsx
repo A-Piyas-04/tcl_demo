@@ -14,7 +14,7 @@ import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { convertQty } from '@/data/reference'
 import { fmtDate } from '@/lib/utils'
 import type { Indent } from '@/data/types'
-import { Badge, Button, Meter, Panel, Tooltip } from '@/components/ui'
+import { Badge, Button, HelpTip, Meter, NoteTip, Panel, Tooltip, splitBlurb } from '@/components/ui'
 
 export {
   ActivityPanel,
@@ -152,18 +152,22 @@ export function StatCell({
     warn: 'text-warn-600',
     danger: 'text-danger-700',
   }[tone]
+  const { caption: hintCaption, tip: hintTip } = splitBlurb(hint)
   return (
     <Panel className="p-3.5">
-      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{label}</p>
+      <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+        {label}
+        <HelpTip>{hintTip}</HelpTip>
+      </p>
       <p className={`mt-1 truncate text-2xl font-semibold tabular ${valueTone}`}>{value}</p>
-      {hint ? <p className="mt-0.5 text-xs text-ink-500">{hint}</p> : null}
+      {hintCaption ? <p className="mt-0.5 text-xs text-ink-500">{hintCaption}</p> : null}
     </Panel>
   )
 }
 
-/** The copy that keeps the indenting model straight on every screen. */
+/** The copy that keeps the indenting model straight, parked on hover. */
 export function IndentingNote({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs leading-relaxed text-ink-500">{children}</p>
+  return <NoteTip label="How indenting works">{children}</NoteTip>
 }
 
 export function ClearFiltersButton({ onClear, count }: { onClear: () => void; count: number }) {

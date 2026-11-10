@@ -12,7 +12,7 @@ import { Download } from 'lucide-react'
 import { STAGE_LABEL, STAGE_STYLE } from '@/data/reference'
 import type { EngagementStage } from '@/data/types'
 import { cn } from '@/lib/utils'
-import { Button, Panel, PanelHeader, StageBadge } from '@/components/ui'
+import { Button, HelpTip, NoteTip, Panel, PanelHeader, StageBadge, splitBlurb } from '@/components/ui'
 
 // ------------------------------------------------------------- chart palette
 
@@ -94,11 +94,15 @@ export function StatCell({
   tone?: CellTone
   footer?: React.ReactNode
 }) {
+  const { caption: hintCaption, tip: hintTip } = splitBlurb(hint)
   return (
     <Panel className={cn('flex min-h-[8.5rem] flex-col justify-between gap-2 p-3.5', CELL_SURFACE[tone])}>
-      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{label}</p>
+      <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+        {label}
+        <HelpTip>{hintTip}</HelpTip>
+      </p>
       <p className={cn('text-2xl font-semibold leading-none tracking-tight tabular', CELL_VALUE[tone])}>{value}</p>
-      {hint ? <p className="text-xs leading-relaxed text-ink-500">{hint}</p> : null}
+      {hintCaption ? <p className="text-xs leading-relaxed text-ink-500">{hintCaption}</p> : null}
       {footer}
     </Panel>
   )
@@ -108,9 +112,9 @@ export function StatGrid({ children, className }: { children: React.ReactNode; c
   return <div className={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-4', className)}>{children}</div>
 }
 
-/** A short line of explanation under a heading or beside a total. */
+/** A short line of explanation, collapsed to a chip that reveals it on hover. */
 export function ReportNote({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cn('text-xs leading-relaxed text-ink-500', className)}>{children}</p>
+  return <NoteTip className={className}>{children}</NoteTip>
 }
 
 /** Exports are open to both roles and always written to the security log. */
