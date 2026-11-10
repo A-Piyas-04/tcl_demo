@@ -69,7 +69,6 @@ export function RequirementDetail() {
   const navigate = useNavigate()
   const [selected, setSelected] = React.useState<string[]>([])
   const [busy, setBusy] = React.useState(false)
-  const candidatesRef = React.useRef<HTMLDivElement>(null)
 
   const requirement = db.requirements.find((r) => r.id === id)
 
@@ -216,25 +215,24 @@ export function RequirementDetail() {
         }
       />
 
-      <NextStepCard
-        step={next}
-        onAction={() => candidatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-      />
+      <NextStepCard step={next} />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0 space-y-4">
           {engagementsFirst ? engagementsPanel : null}
 
-          <Panel ref={candidatesRef}>
-            <PanelHeader
-              title="Candidate sources"
-              subtitle={
-                requirement.requiredPharmacopoeia
+          <Panel>
+            <div className="flex flex-col items-center gap-3 border-b border-paper-200 bg-paper-50 px-4 py-4 text-center">
+              <h2 className="rounded-md border border-accent-700 bg-accent-800 px-6 py-2 text-xl font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_0_#10403b,0_8px_14px_-7px_rgba(7,19,26,0.45)]">
+                Pick sources
+              </h2>
+              <p className="text-base text-ink-600">
+                {requirement.requiredPharmacopoeia
                   ? `Represented and available, limited to ${requirement.requiredPharmacopoeia}`
-                  : 'Represented by TCL and available to offer'
-              }
-              actions={<Badge tone={candidates.length ? 'accent' : 'warn'}>{candidates.length}</Badge>}
-            />
+                  : 'Represented by TCL and available to offer'}
+                {' · '}{candidates.length} available
+              </p>
+            </div>
             {loading ? (
               <SkeletonTable rows={4} cols={6} />
             ) : candidates.length === 0 ? (

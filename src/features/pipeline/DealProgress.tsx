@@ -76,14 +76,14 @@ export function NextStepCard({
 }: {
   step: NextStep
   /** runs an in-page action (open a dialog); links navigate on their own */
-  onAction: () => void
+  onAction?: () => void
   /** when the suggested action cannot run yet, say why and offer the fix instead */
   blockedReason?: { text: string; href: string; label: string } | null
   className?: string
 }) {
   const canWrite = useCanWrite()
   const tone = TONE[step.tone]
-  const showAction = step.action && (canWrite || isReadOnlyLink(step))
+  const showAction = step.action && (canWrite || isReadOnlyLink(step)) && (step.action.kind === 'link' || onAction)
 
   return (
     <div className={cn('flex flex-col gap-2 rounded-md border p-3.5', tone.box, className)}>

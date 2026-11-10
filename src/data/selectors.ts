@@ -495,7 +495,6 @@ export type NextAction =
   | { kind: 'receipt'; roundId: ID }
   | { kind: 'outcome'; roundId: ID }
   | { kind: 'approve' }
-  | { kind: 'match' }
   | { kind: 'link'; href: string; label: string }
 
 export interface NextStep {
@@ -642,8 +641,6 @@ export function requirementNextStep(db: Database, r: Requirement): NextStep {
         tone: 'action',
         title: 'Choose which sources to offer',
         detail: `${candidates.length} represented ${candidates.length === 1 ? 'source makes' : 'sources make'} ${product}${r.requiredPharmacopoeia ? ` to ${r.requiredPharmacopoeia}` : ''}. Tick one or more below and open an engagement for each; the client may approve one, some or none.`,
-        action: { kind: 'match' },
-        actionLabel: 'Pick sources',
       }
     }
     const gap = sourcingGap(db, r.productId, r.requiredPharmacopoeia) ?? 'NO_SOURCE'
@@ -666,8 +663,6 @@ export function requirementNextStep(db: Database, r: Requirement): NextStep {
       tone: 'action',
       title: 'Every source so far has been closed',
       detail: 'Open another candidate below, reopen one of the engagements, or close the requirement as lost.',
-      action: { kind: 'match' },
-      actionLabel: 'Pick another source',
     }
   }
   if (best === 'COMMERCIAL') {
