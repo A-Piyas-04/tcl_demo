@@ -11,10 +11,13 @@ import type {
   Batch,
   Commission,
   Company,
+  Database,
   Engagement,
   EngagementStage,
   MpPrice,
+  OrderStatus,
   Product,
+  Shipment,
 } from './types'
 import { convertQty, stageConfig } from './reference'
 
@@ -118,6 +121,114 @@ export function checkStageChange(
 
 export function allowedNextStages(from: EngagementStage): EngagementStage[] {
   return STAGE_TRANSITIONS.filter((t) => t.from === from).map((t) => t.to)
+}
+
+/**
+ * Stages that mean a record exists: an offer was sent, a sample was asked for,
+ * dispatched or received. Moving into one of them by hand would leave the stage
+ * claiming paperwork that is not there, so they are reached by recording the
+ * offer or the sample round. Resuming from hold is the exception: the record
+ * already exists.
+ */
+export const STAGES_SET_BY_RECORDS: Partial<Record<EngagementStage, string>> = {
+  OFFERED: 'An engagement becomes Offered when an offer is recorded. Open the engagement and record the offer.',
+  SAMPLE_REQUESTED: 'A sample stage starts when a sample round is requested. Open the engagement and request the sample.',
+  SAMPLE_SENT: 'Sample sent follows from recording the dispatch on the sample round. Open the engagement to record it.',
+  UNDER_EVALUATION: "Under evaluation follows from recording the client's receipt of the sample. Open the engagement to record it.",
+}
+
+export function stageNeedsRecord(engagement: Engagement, to: EngagementStage): string | null {
+  if (engagement.stage === 'ON_HOLD') return null
+  return STAGES_SET_BY_RECORDS[to] ?? null
+}
+
+/** The manual moves: closing, pausing, resuming, reopening, approving and going commercial. */
+export function manualNextStages(engagement: Engagement): EngagementStage[] {
+  return allowedNextStages(engagement.stage).filter((s) => !stageNeedsRecord(engagement, s))
+}
+
+// ------------------------------------------------------- derived trade status
+
+/**
+ * Order, indent and shipment statuses follow from what has actually shipped and
+ * been delivered, so they cannot contradict the quantities on screen. Statuses a
+ * person sets deliberately (draft, on hold, cancelled) are left alone.
+ */
+export function deriveTradeStatuses(
+  db: Database,
+): Pick<Database, 'shipments' | 'clientOrders' | 'clientOrderLines' | 'indents' | 'indentLines'> {
+  const conv = (qty: number, from: string, to: string) => {
+    try {
+      return convertQty(qty, from, to)
+    } catch {
+      return qty
+    }
+  }
+  const live = new Set(db.shipments.filter((s) => s.status !== 'CANCELLED').map((s) => s.id))
+  const deliveredOnShipmentLine = (lineId: string, uom: string) =>
+    db.deliveries.filter((d) => d.shipmentLineId === lineId).reduce((n, d) => n + conv(d.deliveredQty, d.qtyUom, uom), 0)
+
+  const shipments = db.shipments.map((s) => {
+    if (s.status !== 'CLEARED' && s.status !== 'DELIVERED') return s
+    const lines = db.shipmentLines.filter((l) => l.shipmentId === s.id)
+    const allDelivered = lines.length > 0 && lines.every((l) => deliveredOnShipmentLine(l.id, l.qtyUom) >= l.qty - 1e-6)
+    const status = allDelivered ? 'DELIVERED' : 'CLEARED'
+    return status === s.status ? s : { ...s, status: status as Shipment['status'] }
+  })
+
+  const progress = (ordered: number, shipped: number, delivered: number): OrderStatus => {
+    if (delivered >= ordered - 1e-6) return 'COMPLETED'
+    if (shipped >= ordered - 1e-6) return 'SHIPPED'
+    if (shipped > 0) return 'PARTIALLY_SHIPPED'
+    return 'OPEN'
+  }
+  const deliberate = (s: OrderStatus) => s === 'DRAFT' || s === 'ON_HOLD' || s === 'CANCELLED'
+
+  const indentLines = db.indentLines.map((il) => {
+    if (deliberate(il.status)) return il
+    const sls = db.shipmentLines.filter((sl) => sl.indentLineId === il.id && live.has(sl.shipmentId))
+    const shipped = sls.reduce((n, sl) => n + conv(sl.qty, sl.qtyUom, il.qtyUom), 0)
+    const delivered = sls.reduce((n, sl) => n + conv(deliveredOnShipmentLine(sl.id, sl.qtyUom), sl.qtyUom, il.qtyUom), 0)
+    const status = progress(il.qty, shipped, delivered)
+    return status === il.status ? il : { ...il, status }
+  })
+
+  const clientOrderLines = db.clientOrderLines.map((line) => {
+    if (deliberate(line.status)) return line
+    const links = db.orderIndentLinks.filter((l) => l.clientOrderLineId === line.id)
+    let shipped = 0
+    for (const l of links) {
+      for (const sl of db.shipmentLines.filter((x) => x.indentLineId === l.indentLineId && live.has(x.shipmentId))) {
+        shipped += conv(sl.qty, sl.qtyUom, line.qtyUom)
+      }
+    }
+    const delivered = db.deliveries
+      .filter((d) => d.clientOrderLineId === line.id)
+      .reduce((n, d) => n + conv(d.deliveredQty, d.qtyUom, line.qtyUom), 0)
+    const status = progress(line.qty, Math.min(shipped, line.qty), delivered)
+    return status === line.status ? line : { ...line, status }
+  })
+
+  const rollUp = (statuses: OrderStatus[]): OrderStatus => {
+    if (statuses.length === 0) return 'OPEN'
+    if (statuses.every((s) => s === 'COMPLETED')) return 'COMPLETED'
+    if (statuses.every((s) => s === 'COMPLETED' || s === 'SHIPPED')) return 'SHIPPED'
+    if (statuses.some((s) => s !== 'OPEN')) return 'PARTIALLY_SHIPPED'
+    return 'OPEN'
+  }
+
+  const clientOrders = db.clientOrders.map((o) => {
+    if (deliberate(o.status)) return o
+    const status = rollUp(clientOrderLines.filter((l) => l.clientOrderId === o.id && !deliberate(l.status)).map((l) => l.status))
+    return status === o.status ? o : { ...o, status }
+  })
+  const indents = db.indents.map((i) => {
+    if (deliberate(i.status)) return i
+    const status = rollUp(indentLines.filter((l) => l.indentId === i.id && !deliberate(l.status)).map((l) => l.status))
+    return status === i.status ? i : { ...i, status }
+  })
+
+  return { shipments, clientOrders, clientOrderLines, indents, indentLines }
 }
 
 const label = (s: EngagementStage) => s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, ' ')

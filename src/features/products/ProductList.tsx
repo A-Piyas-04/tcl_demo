@@ -5,14 +5,13 @@
  * question the business cannot answer today.
  */
 
-import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FlaskConical, Plus, SlidersHorizontal, X } from 'lucide-react'
+import { FlaskConical, Plus, SlidersHorizontal } from 'lucide-react'
 import { useDb } from '@/data/store'
 import { engagementRows, sourceRows, clients as clientList, manufacturers as mfrList } from '@/data/selectors'
 import { PRODUCT_CATEGORY_LABEL, STAGE_LABEL, THERAPEUTIC_CATEGORIES } from '@/data/reference'
 import { logExport } from '@/data/api'
-import { useAsyncData, useDebounced, useUrlFilters } from '@/lib/hooks'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
 import { pluralise } from '@/lib/utils'
 import type { EngagementStage, Product } from '@/data/types'
 import {
@@ -22,12 +21,12 @@ import {
   DataTable,
   EmptyState,
   FilingDot,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
   PageHeading,
   Select,
-  SearchInput,
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
@@ -58,13 +57,7 @@ export function ProductList() {
   const db = useDb()
   const navigate = useNavigate()
   const { values, setValue, clear, activeCount, queryString } = useUrlFilters(DEFAULTS)
-  const [search, setSearch] = React.useState(values.q)
-  const debounced = useDebounced(search, 180)
-
-  React.useEffect(() => {
-    setValue('q', debounced)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced])
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
 
   const { data: rows, loading } = useAsyncData<Row[]>(() => {
     const all = sourceRows(db)
@@ -246,73 +239,83 @@ export function ProductList() {
       />
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Molecule, synonym or CAS…"
-            className="sm:col-span-2 lg:col-span-1"
-          />
-          <Select
-            value={values.manufacturer}
-            onChange={(v) => setValue('manufacturer', v)}
-            allowEmpty
-            emptyLabel="Any manufacturer"
-            placeholder="Any manufacturer"
-            options={mfrList(db)
-              .filter((m) => m.isActive)
-              .map((m) => ({ value: m.id, label: m.displayName }))}
-          />
-          <Select
-            value={values.client}
-            onChange={(v) => setValue('client', v)}
-            allowEmpty
-            emptyLabel="Any client"
-            placeholder="Any client"
-            options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
-          />
-          <Select
-            value={values.stage}
-            onChange={(v) => setValue('stage', v)}
-            allowEmpty
-            emptyLabel="Any stage"
-            placeholder="Any stage"
-            options={(Object.keys(STAGE_LABEL) as EngagementStage[]).map((s) => ({
-              value: s,
-              label: STAGE_LABEL[s],
-            }))}
-          />
-          <Select
-            value={values.category}
-            onChange={(v) => setValue('category', v)}
-            allowEmpty
-            emptyLabel="Any category"
-            placeholder="Any category"
-            options={Object.entries(PRODUCT_CATEGORY_LABEL).map(([value, label]) => ({ value, label }))}
-          />
-          <Select
-            value={values.therapeutic}
-            onChange={(v) => setValue('therapeutic', v)}
-            allowEmpty
-            emptyLabel="Any therapeutic area"
-            placeholder="Any therapeutic area"
-            options={THERAPEUTIC_CATEGORIES.map((t) => ({ value: t, label: t }))}
-          />
-          <div className="flex items-center gap-2">
-            <Button
-              variant={values.portfolio === '1' ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => setValue('portfolio', values.portfolio === '1' ? '' : '1')}
-            >
-              Represented only
-            </Button>
-            {filtersOn ? (
-              <Button variant="ghost" size="sm" icon={<X className="h-3.5 w-3.5" />} onClick={() => { clear(); setSearch('') }}>
-                Clear
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Molecule, synonym or CAS…"
+          activeCount={activeCount}
+          onClear={clear}
+          moreActive={['stage', 'category', 'therapeutic', 'archived'].filter((k) => values[k as keyof typeof values]).length}
+          primary={
+            <>
+              <Select
+                value={values.manufacturer}
+                onChange={(v) => setValue('manufacturer', v)}
+                allowEmpty
+                emptyLabel="Any manufacturer"
+                placeholder="Any manufacturer"
+                options={mfrList(db)
+                  .filter((m) => m.isActive)
+                  .map((m) => ({ value: m.id, label: m.displayName }))}
+              />
+              <Select
+                value={values.client}
+                onChange={(v) => setValue('client', v)}
+                allowEmpty
+                emptyLabel="Any client"
+                placeholder="Any client"
+                options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+              />
+              <Button
+                variant={values.portfolio === '1' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setValue('portfolio', values.portfolio === '1' ? '' : '1')}
+              >
+                Represented only
               </Button>
-            ) : null}
-          </div>
-        </div>
+            </>
+          }
+          more={
+            <>
+              <Select
+                value={values.stage}
+                onChange={(v) => setValue('stage', v)}
+                allowEmpty
+                emptyLabel="Any engagement stage"
+                placeholder="Any engagement stage"
+                options={(Object.keys(STAGE_LABEL) as EngagementStage[]).map((s) => ({
+                  value: s,
+                  label: STAGE_LABEL[s],
+                }))}
+              />
+              <Select
+                value={values.category}
+                onChange={(v) => setValue('category', v)}
+                allowEmpty
+                emptyLabel="Any category"
+                placeholder="Any category"
+                options={Object.entries(PRODUCT_CATEGORY_LABEL).map(([value, label]) => ({ value, label }))}
+              />
+              <Select
+                value={values.therapeutic}
+                onChange={(v) => setValue('therapeutic', v)}
+                allowEmpty
+                emptyLabel="Any therapeutic area"
+                placeholder="Any therapeutic area"
+                options={THERAPEUTIC_CATEGORIES.map((t) => ({ value: t, label: t }))}
+              />
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-600">
+                <input
+                  type="checkbox"
+                  checked={values.archived === '1'}
+                  onChange={(e) => setValue('archived', e.target.checked ? '1' : '')}
+                  className="h-3.5 w-3.5 rounded border-paper-400 text-accent-600"
+                />
+                Include discontinued products
+              </label>
+            </>
+          }
+        />
 
         <DataTable
           rows={rows ?? []}
@@ -328,15 +331,6 @@ export function ProductList() {
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'molecule') : '…'}
               {filtersOn ? <Badge tone="accent">{activeCount} filters</Badge> : null}
-              <label className="ml-1 flex cursor-pointer items-center gap-1.5 text-xs text-ink-500">
-                <input
-                  type="checkbox"
-                  checked={values.archived === '1'}
-                  onChange={(e) => setValue('archived', e.target.checked ? '1' : '')}
-                  className="h-3.5 w-3.5 rounded border-paper-400 text-accent-600"
-                />
-                Include discontinued
-              </label>
             </span>
           }
           empty={
@@ -356,7 +350,7 @@ export function ProductList() {
                     </LinkButton>
                   </WriteOnly>
                 ) : (
-                  <Button variant="secondary" size="sm" onClick={() => { clear(); setSearch('') }}>
+                  <Button variant="secondary" size="sm" onClick={clear}>
                     Clear filters
                   </Button>
                 )

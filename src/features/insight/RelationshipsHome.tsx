@@ -12,6 +12,7 @@ import { clients as clientList, manufacturers as mfrList } from '@/data/selector
 import { pluralise } from '@/lib/utils'
 import { AnimatedNumber, LinkButton, Panel, PanelHeader, PageHeading } from '@/components/ui'
 import { StatCell, StatGrid } from './shared'
+import { SectionNav } from '@/layout/sections'
 
 interface Card {
   to: string
@@ -61,10 +62,13 @@ export function RelationshipsHome() {
 
   return (
     <div className="space-y-5">
-      <PageHeading
-        title="Relationships"
-        subtitle="The client, product and manufacturer triangle, read from any direction."
-      />
+      <div>
+        <PageHeading
+          title="Reports"
+          subtitle="Relationship explorer: the client, product and manufacturer triangle, read from any direction. Each client, product and manufacturer page also shows its own side of it."
+        />
+        <SectionNav section="reports" />
+      </div>
 
       <StatGrid>
         <StatCell

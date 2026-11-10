@@ -6,16 +6,17 @@
  */
 
 import * as React from 'react'
-import { BarChart3, ClipboardList, Filter, PackageSearch, Wallet } from 'lucide-react'
+import { BarChart3, ClipboardList, FileText, Filter, Network, PackageSearch, Wallet } from 'lucide-react'
 import { useDb } from '@/data/store'
 import {
-  commissionTotals,
   developmentRegister,
+  documentRows,
   registerTotals,
   requirementRows,
 } from '@/data/selectors'
 import { useAsyncData } from '@/lib/hooks'
-import { fmtMoney, fmtMonth, pluralise } from '@/lib/utils'
+import { fmtMoneyTotals, fmtMonth, pluralise } from '@/lib/utils'
+import { SectionNav } from '@/layout/sections'
 import { LinkButton, Panel, PanelHeader, PageHeading, Skeleton } from '@/components/ui'
 import { ReportNote, monthEnd, monthStart } from './shared'
 
@@ -34,7 +35,6 @@ export function ReportsHome() {
   const { data, loading } = useAsyncData(() => {
     const thisMonth = `${new Date().toISOString().slice(0, 7)}-01`
     const register = registerTotals(developmentRegister(db, monthStart(thisMonth), monthEnd(thisMonth)))
-    const commission = commissionTotals(db)
     const offered = db.stageHistory.filter((h) => h.toStage === 'OFFERED').length
     const commercial = new Set(
       db.stageHistory.filter((h) => h.toStage === 'COMMERCIAL').map((h) => h.engagementId),
@@ -42,10 +42,14 @@ export function ReportsHome() {
     return {
       month: thisMonth,
       register,
-      commission,
+      outstanding: db.commissions
+        .filter((c) => c.status !== 'WRITTEN_OFF')
+        .map((c) => ({ amount: (c.amount ?? 0) - c.receivedAmount, currency: c.currency })),
       engagements: db.engagements.length,
+      commercial: db.engagements.filter((e) => e.stage === 'COMMERCIAL').length,
       conversion: offered > 0 ? Math.round((commercial / offered) * 100) : 0,
       unsourced: requirementRows(db, { unsourcedOnly: true, openOnly: true }).length,
+      expiringDocs: documentRows(db, { expiringOnly: true }).length,
     }
   }, [])
 
@@ -64,7 +68,7 @@ export function ReportsHome() {
       icon: <BarChart3 className="h-4 w-4" />,
       question: 'Where does the book stand by stage, by owner and by client?',
       figure: data ? String(data.engagements) : '—',
-      figureLabel: 'live engagements',
+      figureLabel: 'engagements on record',
     },
     {
       to: '/reports/funnel',
@@ -75,11 +79,11 @@ export function ReportsHome() {
       figureLabel: 'of offers reach commercial supply',
     },
     {
-      to: '/reports/commission',
+      to: '/commissions/analysis',
       title: 'Commission',
       icon: <Wallet className="h-4 w-4" />,
       question: 'What has TCL earned, billed and collected, and what is still owed?',
-      figure: data ? fmtMoney(data.commission.outstanding, 'USD', { compact: true, decimals: 0 }) : '—',
+      figure: data ? fmtMoneyTotals(data.outstanding, { compact: true, decimals: 0 }) : '—',
       figureLabel: 'outstanding from clients',
     },
     {
@@ -90,14 +94,33 @@ export function ReportsHome() {
       figure: data ? String(data.unsourced) : '—',
       figureLabel: 'open requirements with no represented source',
     },
+    {
+      to: '/relationships',
+      title: 'Relationship explorer',
+      icon: <Network className="h-4 w-4" />,
+      question: 'Which clients take which molecules, from which manufacturers?',
+      figure: data ? String(data.commercial) : '—',
+      figureLabel: 'client × source pairs in commercial supply',
+    },
+    {
+      to: '/documents',
+      title: 'Documents & certificates',
+      icon: <FileText className="h-4 w-4" />,
+      question: 'Which DMFs, CEPs, GMP certificates and COAs are on file, and which are expiring?',
+      figure: data ? String(data.expiringDocs) : '—',
+      figureLabel: 'expired or expiring within 90 days',
+    },
   ]
 
   return (
     <div className="space-y-5">
-      <PageHeading
-        title="Reports"
-        subtitle="Each report answers one question. Every export is open to both roles and is logged."
-      />
+      <div>
+        <PageHeading
+          title="Reports"
+          subtitle="Look back across the business. Each report answers one question; every export is open to both roles and is logged."
+        />
+        <SectionNav section="reports" />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (

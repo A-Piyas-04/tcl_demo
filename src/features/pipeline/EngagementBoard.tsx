@@ -26,10 +26,11 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, ChevronRight, GripVertical, KanbanSquare, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, GripVertical, KanbanSquare, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCanWrite, useCurrentUser, useDb } from '@/data/store'
 import {
+  approvalContext,
   clients as clientList,
   engagementRows,
   manufacturers as mfrList,
@@ -37,8 +38,9 @@ import {
 } from '@/data/selectors'
 import { PIPELINE_STAGES, STAGE_LABEL, STAGE_STYLE, stageConfig } from '@/data/reference'
 import { changeStage, logExport } from '@/data/api'
-import { checkStageChange } from '@/data/rules'
-import { runAction, useAsyncData, useLocalPreference, useUrlFilters } from '@/lib/hooks'
+import { checkStageChange, stageNeedsRecord } from '@/data/rules'
+import { runAction, useAsyncData, useLocalPreference, useUrlFilters, useUrlSearch } from '@/lib/hooks'
+import { SectionNav } from '@/layout/sections'
 import { cn, fmtDate, pluralise } from '@/lib/utils'
 import type { Engagement, EngagementStage } from '@/data/types'
 import {
@@ -49,11 +51,11 @@ import {
   Column,
   DataTable,
   EmptyState,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
   PageHeading,
-  SearchInput,
   SegmentedControl,
   Select,
   SkeletonTable,
@@ -91,7 +93,7 @@ export function EngagementBoard() {
   const [prefView, setPrefView] = useLocalPreference<'board' | 'table'>('engagements.view', 'board')
   const view = values.view === 'table' || values.view === 'board' ? values.view : prefView
 
-  const [search, setSearch] = React.useState(values.q)
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
   const [dragging, setDragging] = React.useState<string | null>(null)
   const [shaking, setShaking] = React.useState<string | null>(null)
   const [pending, setPending] = React.useState<{ engagement: Engagement; to: EngagementStage; name: string } | null>(
@@ -156,6 +158,18 @@ export function EngagementBoard() {
       setShaking(id)
       window.setTimeout(() => setShaking(null), 500)
       toast.error(check.error ?? 'That move is not allowed.', { duration: 7000 })
+      return
+    }
+
+    // Offers and samples are records, not just stages: send the user to record them.
+    const needsRecord = stageNeedsRecord(row.engagement, to)
+    if (needsRecord) {
+      setShaking(id)
+      window.setTimeout(() => setShaking(null), 500)
+      toast(needsRecord, {
+        duration: 8000,
+        action: { label: 'Open engagement', onClick: () => navigate(`/engagements/${id}?tab=work`) },
+      })
       return
     }
 
@@ -257,26 +271,18 @@ export function EngagementBoard() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Engagements"
-        subtitle="One client, one source, one stage. Drag a card to move it, and the machine decides whether it may."
-        meta={
-          <>
-            <Badge tone="neutral">{pluralise(rows.length, 'engagement')}</Badge>
-            <Badge tone="warn">{pluralise(rows.filter((r) => r.isAgeing).length, 'ageing')}</Badge>
-            {!canWrite ? <Badge tone="outline">Read only session</Badge> : null}
-          </>
-        }
-        actions={
-          <>
-            <SegmentedControl
-              value={values.mine === '1' ? 'mine' : 'all'}
-              onChange={(v) => setValue('mine', v === 'mine' ? '1' : '')}
-              options={[
-                { value: 'mine', label: 'Mine' },
-                { value: 'all', label: 'Everyone' },
-              ]}
-            />
+      <div>
+        <PageHeading
+          title="Engagements"
+          subtitle="Client × supplier deals. Each card is one client considering one manufacturer's product, from first offer to commercial supply. Open a card to see its next step."
+          meta={
+            <>
+              <Badge tone="neutral">{pluralise(rows.length, 'engagement')}</Badge>
+              <Badge tone="warn">{pluralise(rows.filter((r) => r.isAgeing).length, 'ageing')}</Badge>
+              {!canWrite ? <Badge tone="outline">Read only session</Badge> : null}
+            </>
+          }
+          actions={
             <SegmentedControl
               value={view}
               onChange={setView}
@@ -285,88 +291,99 @@ export function EngagementBoard() {
                 { value: 'table', label: 'Table' },
               ]}
             />
-          </>
-        }
-      />
+          }
+        />
+        <SectionNav section="engagements" />
+      </div>
 
       <Panel>
-        <div className="grid gap-2.5 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={(v) => {
-              setSearch(v)
-              setValue('q', v)
-            }}
-            placeholder="Client, molecule or manufacturer…"
-          />
-          <Select
-            value={values.client}
-            onChange={(v) => setValue('client', v)}
-            allowEmpty
-            emptyLabel="Any client"
-            placeholder="Any client"
-            options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
-          />
-          <Select
-            value={values.product}
-            onChange={(v) => setValue('product', v)}
-            allowEmpty
-            emptyLabel="Any molecule"
-            placeholder="Any molecule"
-            options={db.products.filter((p) => p.isActive).map((p) => ({ value: p.id, label: p.genericName }))}
-          />
-          <Select
-            value={values.manufacturer}
-            onChange={(v) => setValue('manufacturer', v)}
-            allowEmpty
-            emptyLabel="Any manufacturer"
-            placeholder="Any manufacturer"
-            options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
-          />
-          <Select
-            value={values.stage}
-            onChange={(v) => setValue('stage', v)}
-            allowEmpty
-            emptyLabel="Any stage"
-            placeholder="Any stage"
-            options={(Object.keys(STAGE_LABEL) as EngagementStage[]).map((s) => ({ value: s, label: STAGE_LABEL[s] }))}
-          />
-          <Select
-            value={values.owner}
-            onChange={(v) => setValue('owner', v)}
-            allowEmpty
-            emptyLabel="Any owner"
-            placeholder="Any owner"
-            disabled={values.mine === '1'}
-            options={db.users.filter((u) => u.isActive).map((u) => ({ value: u.id, label: u.fullName }))}
-          />
-          <div className="flex items-center gap-2 lg:col-span-2">
-            <Button
-              variant={values.ageing === '1' ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => setValue('ageing', values.ageing === '1' ? '' : '1')}
-            >
-              Ageing only
-            </Button>
-            {filtersOn ? (
-              <Button
-                variant="ghost"
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Client, molecule or manufacturer…"
+          activeCount={filtersOn ? activeCount - (values.view ? 1 : 0) : 0}
+          onClear={() =>
+            setMany({ q: '', stage: '', client: '', product: '', manufacturer: '', owner: '', ageing: '', mine: '' })
+          }
+          moreActive={['product', 'manufacturer', 'stage', 'owner'].filter((k) => values[k as keyof typeof values]).length}
+          primary={
+            <>
+              <Select
+                value={values.client}
+                onChange={(v) => setValue('client', v)}
+                allowEmpty
+                emptyLabel="Any client"
+                placeholder="Any client"
+                options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+              />
+              <SegmentedControl
                 size="sm"
-                icon={<X className="h-3.5 w-3.5" />}
-                onClick={() => {
-                  setMany({ q: '', stage: '', client: '', product: '', manufacturer: '', owner: '', ageing: '', mine: '' })
-                  setSearch('')
-                }}
+                value={values.mine === '1' ? 'mine' : 'all'}
+                onChange={(v) => setValue('mine', v === 'mine' ? '1' : '')}
+                options={[
+                  { value: 'all', label: 'Everyone' },
+                  { value: 'mine', label: 'Mine' },
+                ]}
+              />
+              <Button
+                variant={values.ageing === '1' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setValue('ageing', values.ageing === '1' ? '' : '1')}
               >
-                Clear
+                Ageing only
               </Button>
-            ) : null}
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-ink-500">
+            </>
+          }
+          more={
+            <>
+              <Select
+                value={values.product}
+                onChange={(v) => setValue('product', v)}
+                allowEmpty
+                emptyLabel="Any molecule"
+                placeholder="Any molecule"
+                options={db.products.filter((p) => p.isActive).map((p) => ({ value: p.id, label: p.genericName }))}
+              />
+              <Select
+                value={values.manufacturer}
+                onChange={(v) => setValue('manufacturer', v)}
+                allowEmpty
+                emptyLabel="Any manufacturer"
+                placeholder="Any manufacturer"
+                options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
+              />
+              <Select
+                value={values.stage}
+                onChange={(v) => setValue('stage', v)}
+                allowEmpty
+                emptyLabel="Any stage"
+                placeholder="Any stage"
+                options={(Object.keys(STAGE_LABEL) as EngagementStage[]).map((s) => ({ value: s, label: STAGE_LABEL[s] }))}
+              />
+              <Select
+                value={values.owner}
+                onChange={(v) => setValue('owner', v)}
+                allowEmpty
+                emptyLabel="Any owner"
+                placeholder="Any owner"
+                disabled={values.mine === '1'}
+                options={db.users.filter((u) => u.isActive).map((u) => ({ value: u.id, label: u.fullName }))}
+              />
+            </>
+          }
+          trailing={
+            <span className="flex items-center gap-1.5 text-xs text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {loading ? '…' : pluralise(rows.length, 'engagement')}
             </span>
-          </div>
-        </div>
+          }
+        />
+        {canWrite && view === 'board' ? (
+          <p className="px-3 py-2 text-2xs text-ink-500">
+            Drag a card to approve, pause or close it. Offers and samples are recorded on the engagement itself, which moves
+            the card for you.
+          </p>
+        ) : null}
       </Panel>
 
       {loading ? (
@@ -385,14 +402,7 @@ export function EngagementBoard() {
             }
             action={
               filtersOn ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    clear()
-                    setSearch('')
-                  }}
-                >
+                <Button variant="secondary" size="sm" onClick={clear}>
                   Clear filters
                 </Button>
               ) : (
@@ -497,6 +507,9 @@ export function EngagementBoard() {
         to={pending?.to ?? null}
         recordName={pending?.name ?? ''}
         onClose={() => setPending(null)}
+        requireNoteBecause={
+          pending?.to === 'APPROVED' ? approvalContext(db, pending.engagement).requireNoteBecause : null
+        }
       />
     </div>
   )

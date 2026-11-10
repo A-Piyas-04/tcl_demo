@@ -25,6 +25,7 @@ import {
   SkeletonText,
 } from '@/components/ui'
 import { ExportButton, ReportNote, StatCell, StatGrid } from './shared'
+import { SectionNav } from '@/layout/sections'
 
 interface Bucket {
   key: string
@@ -58,11 +59,11 @@ export function ExpiringDocuments() {
         rows: rows.filter((r) => (r.daysRemaining ?? 0) >= 0 && (r.daysRemaining ?? 0) <= 30),
       },
       {
-        key: '90',
-        title: 'Within 90 days',
+        key: 'later',
+        title: 'Later in the warning window',
         subtitle: 'Renewals to raise at the next review',
         tone: 'neutral',
-        rows: rows.filter((r) => (r.daysRemaining ?? 0) > 30 && (r.daysRemaining ?? 0) <= 90),
+        rows: rows.filter((r) => (r.daysRemaining ?? 0) > 30),
       },
     ]
   }, [])
@@ -76,24 +77,27 @@ export function ExpiringDocuments() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Expiring documents"
-        subtitle="A warning before a shipment is held, not after."
-        meta={
-          <>
-            <Badge tone="neutral">{pluralise(all.length, 'document')}</Badge>
-            <Badge tone="accent">Window {settings.docExpiryWarnDays} days</Badge>
-          </>
-        }
-        actions={
-          <>
-            <LinkButton to="/documents" variant="secondary" size="md">
-              Whole library
-            </LinkButton>
-            <ExportButton onClick={exportRows} disabled={all.length === 0} />
-          </>
-        }
-      />
+      <div>
+        <PageHeading
+          title="Reports"
+          subtitle="Expiring documents: a warning before a shipment is held, not after."
+          meta={
+            <>
+              <Badge tone="neutral">{pluralise(all.length, 'document')}</Badge>
+              <Badge tone="accent">Window {settings.docExpiryWarnDays} days</Badge>
+            </>
+          }
+          actions={
+            <>
+              <LinkButton to="/documents" variant="secondary" size="md">
+                Whole library
+              </LinkButton>
+              <ExportButton onClick={exportRows} disabled={all.length === 0} />
+            </>
+          }
+        />
+        <SectionNav section="reports" />
+      </div>
 
       <StatGrid>
         {(buckets ?? []).map((bucket) => (

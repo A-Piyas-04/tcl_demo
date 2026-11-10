@@ -7,9 +7,9 @@
  * glance whether sourcing has anything to offer.
  */
 
-import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardList, Plus, SearchX, SlidersHorizontal, X } from 'lucide-react'
+import { ClipboardList, Plus, SearchX, SlidersHorizontal } from 'lucide-react'
+import { SectionNav } from '@/layout/sections'
 import { useDb } from '@/data/store'
 import { clients as clientList, requirementRows, type RequirementRow } from '@/data/selectors'
 import {
@@ -17,7 +17,7 @@ import {
   REQUIREMENT_STATUS_LABEL,
 } from '@/data/reference'
 import { logExport } from '@/data/api'
-import { useAsyncData, useDebounced, useUrlFilters } from '@/lib/hooks'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
 import { fmtDate, fmtMoney, fmtQty, pluralise } from '@/lib/utils'
 import type { RequirementKind, RequirementStatus } from '@/data/types'
 import {
@@ -27,11 +27,11 @@ import {
   DataTable,
   DateInput,
   EmptyState,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
   PageHeading,
-  SearchInput,
   Select,
   StageBadge,
   Tooltip,
@@ -45,7 +45,6 @@ const DEFAULTS = {
   client: '',
   product: '',
   owner: '',
-  unsourced: '',
   from: '',
   to: '',
 }
@@ -56,20 +55,13 @@ export function RequirementList() {
   const db = useDb()
   const navigate = useNavigate()
   const { values, setValue, clear, activeCount, queryString } = useUrlFilters(DEFAULTS)
-  const [search, setSearch] = React.useState(values.q)
-  const debounced = useDebounced(search, 180)
-
-  React.useEffect(() => {
-    setValue('q', debounced)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced])
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
 
   const { data: rows, loading } = useAsyncData<RequirementRow[]>(() => {
     return requirementRows(db, {
       clientId: values.client || undefined,
       productId: values.product || undefined,
       kind: (values.kind as RequirementKind) || undefined,
-      unsourcedOnly: values.unsourced === '1',
     })
       .filter((row) => {
         const r = row.requirement
@@ -239,123 +231,103 @@ export function RequirementList() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Requirements"
-        subtitle="What clients have asked for, and whether TCL can answer it."
-        meta={
-          <>
-            <Badge tone="neutral">
-              {pluralise(db.requirements.filter((r) => OPEN_STATUSES.includes(r.status)).length, 'open requirement')}
-            </Badge>
-            {unsourcedCount > 0 ? (
-              <LinkButton to="/requirements/unsourced" variant="ghost" size="sm">
-                <Badge tone="warn">{pluralise(unsourcedCount, 'unsourced')}</Badge>
-              </LinkButton>
-            ) : null}
-          </>
-        }
-        actions={
-          <>
-            <LinkButton to="/requirements/unsourced" variant="secondary" size="md">
-              Unsourced demand
-            </LinkButton>
+      <div>
+        <PageHeading
+          title="Requirements"
+          subtitle="What clients have asked for. Open one to see who can supply it and what to do next."
+          meta={
+            <>
+              <Badge tone="neutral">
+                {pluralise(db.requirements.filter((r) => OPEN_STATUSES.includes(r.status)).length, 'open requirement')}
+              </Badge>
+              {unsourcedCount > 0 ? <Badge tone="warn">{pluralise(unsourcedCount, 'unsourced')}</Badge> : null}
+            </>
+          }
+          actions={
             <WriteOnly>
               <LinkButton to="/requirements/new" variant="primary" size="md" icon={<Plus className="h-3.5 w-3.5" />}>
                 Record a requirement
               </LinkButton>
             </WriteOnly>
-          </>
-        }
-      />
+          }
+        />
+        <SectionNav section="requirements" />
+      </div>
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Client, molecule or remark…"
-            className="sm:col-span-2 lg:col-span-1"
-          />
-          <Select
-            value={values.client}
-            onChange={(v) => setValue('client', v)}
-            allowEmpty
-            emptyLabel="Any client"
-            placeholder="Any client"
-            options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
-          />
-          <Select
-            value={values.product}
-            onChange={(v) => setValue('product', v)}
-            allowEmpty
-            emptyLabel="Any molecule"
-            placeholder="Any molecule"
-            options={db.products
-              .filter((p) => p.isActive)
-              .map((p) => ({ value: p.id, label: p.genericName }))}
-          />
-          <Select
-            value={values.kind}
-            onChange={(v) => setValue('kind', v)}
-            allowEmpty
-            emptyLabel="Any kind"
-            placeholder="Any kind"
-            options={(Object.keys(REQUIREMENT_KIND_LABEL) as RequirementKind[]).map((k) => ({
-              value: k,
-              label: REQUIREMENT_KIND_LABEL[k],
-            }))}
-          />
-          <Select
-            value={values.status}
-            onChange={(v) => setValue('status', v)}
-            allowEmpty
-            emptyLabel="Any status"
-            placeholder="Any status"
-            options={(Object.keys(REQUIREMENT_STATUS_LABEL) as RequirementStatus[]).map((s) => ({
-              value: s,
-              label: REQUIREMENT_STATUS_LABEL[s],
-            }))}
-          />
-          <Select
-            value={values.owner}
-            onChange={(v) => setValue('owner', v)}
-            allowEmpty
-            emptyLabel="Any owner"
-            placeholder="Any owner"
-            options={db.users.filter((u) => u.isActive).map((u) => ({ value: u.id, label: u.fullName }))}
-          />
-          <div className="flex items-center gap-1.5">
-            <DateInput
-              value={values.from}
-              onChange={(e) => setValue('from', e.target.value)}
-              aria-label="Enquiries from"
-            />
-            <span className="text-xs text-ink-400">to</span>
-            <DateInput value={values.to} onChange={(e) => setValue('to', e.target.value)} aria-label="Enquiries to" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={values.unsourced === '1' ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => setValue('unsourced', values.unsourced === '1' ? '' : '1')}
-            >
-              Unsourced only
-            </Button>
-            {filtersOn ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={<X className="h-3.5 w-3.5" />}
-                onClick={() => {
-                  clear()
-                  setSearch('')
-                }}
-              >
-                Clear
-              </Button>
-            ) : null}
-          </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Client, molecule or remark…"
+          activeCount={activeCount}
+          onClear={clear}
+          moreActive={['product', 'kind', 'owner', 'from', 'to'].filter((k) => values[k as keyof typeof values]).length}
+          primary={
+            <>
+              <Select
+                value={values.client}
+                onChange={(v) => setValue('client', v)}
+                allowEmpty
+                emptyLabel="Any client"
+                placeholder="Any client"
+                options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+              />
+              <Select
+                value={values.status}
+                onChange={(v) => setValue('status', v)}
+                allowEmpty
+                emptyLabel="Any status"
+                placeholder="Any status"
+                options={(Object.keys(REQUIREMENT_STATUS_LABEL) as RequirementStatus[]).map((s) => ({
+                  value: s,
+                  label: REQUIREMENT_STATUS_LABEL[s],
+                }))}
+              />
+            </>
+          }
+          more={
+            <>
+              <Select
+                value={values.product}
+                onChange={(v) => setValue('product', v)}
+                allowEmpty
+                emptyLabel="Any molecule"
+                placeholder="Any molecule"
+                options={db.products
+                  .filter((p) => p.isActive)
+                  .map((p) => ({ value: p.id, label: p.genericName }))}
+              />
+              <Select
+                value={values.kind}
+                onChange={(v) => setValue('kind', v)}
+                allowEmpty
+                emptyLabel="Any kind"
+                placeholder="Any kind"
+                options={(Object.keys(REQUIREMENT_KIND_LABEL) as RequirementKind[]).map((k) => ({
+                  value: k,
+                  label: REQUIREMENT_KIND_LABEL[k],
+                }))}
+              />
+              <Select
+                value={values.owner}
+                onChange={(v) => setValue('owner', v)}
+                allowEmpty
+                emptyLabel="Any owner"
+                placeholder="Any owner"
+                options={db.users.filter((u) => u.isActive).map((u) => ({ value: u.id, label: u.fullName }))}
+              />
+              <div className="flex items-center gap-1.5">
+                <DateInput
+                  value={values.from}
+                  onChange={(e) => setValue('from', e.target.value)}
+                  aria-label="Enquiries from"
+                />
+                <span className="text-xs text-ink-400">to</span>
+                <DateInput value={values.to} onChange={(e) => setValue('to', e.target.value)} aria-label="Enquiries to" />
+              </div>
+            </>
+          }
+        />
 
         <DataTable
           rows={rows ?? []}
@@ -380,14 +352,7 @@ export function RequirementList() {
                 title="No requirement matches these filters"
                 description="Try widening the date range or clearing the kind and status."
                 action={
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      clear()
-                      setSearch('')
-                    }}
-                  >
+                  <Button variant="secondary" size="sm" onClick={clear}>
                     Clear filters
                   </Button>
                 }

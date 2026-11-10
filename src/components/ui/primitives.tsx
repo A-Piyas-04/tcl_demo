@@ -8,7 +8,7 @@
  */
 
 import * as React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -421,6 +421,53 @@ export function PageHeading({
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
+  )
+}
+
+export interface SectionTab {
+  to: string
+  label: string
+  /** extra path prefixes that also make this tab active */
+  match?: string[]
+  count?: number
+}
+
+/**
+ * The second level of navigation: sibling views of one sidebar section
+ * (for example Client orders and Indents under Orders). Links, not state, so
+ * every view keeps its own URL.
+ */
+export function SectionTabs({ tabs, className }: { tabs: SectionTab[]; className?: string }) {
+  const location = useLocation()
+  const isActive = (t: SectionTab) => {
+    const prefixes = [t.to, ...(t.match ?? [])]
+    return prefixes.some((p) => location.pathname === p || location.pathname.startsWith(`${p}/`))
+  }
+  // the most specific match wins, so "/commissions/analysis" does not also light "/commissions"
+  const active = tabs
+    .filter(isActive)
+    .sort((a, b) => b.to.length - a.to.length)[0]
+  return (
+    <nav aria-label="Section views" className={cn('-mb-px flex gap-1 overflow-x-auto border-b border-paper-300', className)}>
+      {tabs.map((t) => {
+        const on = active?.to === t.to
+        return (
+          <Link
+            key={t.to}
+            to={t.to}
+            aria-current={on ? 'page' : undefined}
+            className={cn(
+              'relative whitespace-nowrap px-3 pb-2 pt-1 text-sm transition-colors',
+              on ? 'font-medium text-ink-900' : 'text-ink-500 hover:text-ink-800',
+            )}
+          >
+            {t.label}
+            {typeof t.count === 'number' ? <Count value={t.count} active={on} /> : null}
+            {on ? <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent-500" /> : null}
+          </Link>
+        )
+      })}
+    </nav>
   )
 }
 

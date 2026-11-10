@@ -11,7 +11,7 @@
  */
 
 import { store, newId, useStore } from './store'
-import { checkLastFullAccess, checkStageChange, today } from './rules'
+import { checkLastFullAccess, checkStageChange, deriveTradeStatuses, stageNeedsRecord, today } from './rules'
 import { stageConfig } from './reference'
 void stageConfig
 import type {
@@ -108,6 +108,13 @@ function security(
 }
 
 const write = (fn: (db: Database) => void) => useStore.getState().mutate(fn)
+
+/** A write that moves goods: order, indent and shipment statuses follow from it. */
+const writeTrade = (fn: (db: Database) => void) =>
+  write((db) => {
+    fn(db)
+    Object.assign(db, deriveTradeStatuses(db))
+  })
 
 const nowIso = () => new Date().toISOString()
 
@@ -614,6 +621,8 @@ export interface StageChangeInput {
   override?: boolean
   approvalReference?: string | null
   approvalConditions?: string | null
+  /** set by the offer and sample calls, which create the record the stage stands for */
+  fromRecord?: boolean
 }
 
 /** Mirrors change_engagement_stage(): the only way a stage ever changes. */
@@ -630,6 +639,8 @@ export async function changeStage(
 
   const check = checkStageChange(eng, to)
   if (!check.ok) throw new RuleError(check.error!)
+  const needsRecord = stageNeedsRecord(eng, to)
+  if (needsRecord && !input.fromRecord) throw new RuleError(needsRecord)
   if (check.requiresReason && !input.reasonCode) {
     throw new RuleError(`Moving to ${stageLabel(to)} needs a reason from the configured list.`)
   }
@@ -740,7 +751,7 @@ export async function createOffer(
 
   // The first offer advances the engagement; a revision leaves the stage alone.
   if (eng.stage === 'IDENTIFIED') {
-    await changeStage(input.engagementId, 'OFFERED', { note: `Offer v${versionNo} issued` })
+    await changeStage(input.engagementId, 'OFFERED', { note: `Offer v${versionNo} issued`, fromRecord: true })
   }
   return offer
 }
@@ -803,6 +814,7 @@ export async function createSampleRound(
   // Moving the stage first means a refusal leaves nothing behind.
   if (eng.stage !== 'SAMPLE_REQUESTED') {
     await changeStage(input.engagementId, 'SAMPLE_REQUESTED', {
+      fromRecord: true,
       override: opts.override,
       note: opts.override ? opts.overrideNote : `Sample round ${round.roundNo} requested`,
     })
@@ -833,7 +845,7 @@ export async function recordSampleDispatch(
   audit('UPDATE', 'sample_round', id, `Sample round ${round.roundNo}`, diff(round, patch))
   const eng = db.engagements.find((e) => e.id === round.engagementId)
   if (eng?.stage === 'SAMPLE_REQUESTED') {
-    await changeStage(eng.id, 'SAMPLE_SENT', { note: `Dispatched by ${patch.courierName ?? 'courier'}` })
+    await changeStage(eng.id, 'SAMPLE_SENT', { note: `Dispatched by ${patch.courierName ?? 'courier'}`, fromRecord: true })
   }
 }
 
@@ -852,7 +864,7 @@ export async function recordSampleReceipt(id: ID, receivedOn: string): Promise<v
   audit('UPDATE', 'sample_round', id, `Sample round ${round.roundNo}`, { receivedOn: { old: round.receivedOn, new: receivedOn } })
   const eng = db.engagements.find((e) => e.id === round.engagementId)
   if (eng?.stage === 'SAMPLE_SENT') {
-    await changeStage(eng.id, 'UNDER_EVALUATION', { note: 'Client confirmed receipt' })
+    await changeStage(eng.id, 'UNDER_EVALUATION', { note: 'Client confirmed receipt', fromRecord: true })
   }
 }
 
@@ -1152,7 +1164,7 @@ export async function updateShipment(id: ID, patch: Partial<Shipment>): Promise<
   if (patch.customsClearedOn && (patch.actualArrivalDate ?? before.actualArrivalDate) && patch.customsClearedOn < (patch.actualArrivalDate ?? before.actualArrivalDate)!) {
     throw new RuleError('Customs clearance cannot be dated before the shipment arrived.')
   }
-  write((db) => {
+  writeTrade((db) => {
     db.shipments = db.shipments.map((s) => (s.id === id ? { ...s, ...patch, updatedAt: nowIso() } : s))
   })
   audit('UPDATE', 'shipment', id, before.shipmentRef, diff(before, patch))
@@ -1266,7 +1278,7 @@ export async function addShipmentLine(input: {
     shortShelfLifeRemark: input.shortShelfLifeRemark ?? null,
   }
 
-  write((db2) => {
+  writeTrade((db2) => {
     if (newBatch) db2.batches = [newBatch, ...db2.batches]
     db2.shipmentLines = [...db2.shipmentLines, line]
   })
@@ -1331,7 +1343,7 @@ export async function recordDelivery(input: {
     grnReference: input.grnReference ?? null,
     remarks: null,
   }
-  write((db2) => {
+  writeTrade((db2) => {
     db2.deliveries = [...db2.deliveries, delivery]
   })
   audit('INSERT', 'delivery', delivery.id, `${delivery.deliveredQty} ${delivery.qtyUom} to ${site.name}`)

@@ -17,6 +17,7 @@ import {
   PORTS,
   THERAPEUTIC_CATEGORIES,
 } from './reference'
+import { deriveTradeStatuses } from './rules'
 import type {
   Activity,
   AuditEntry,
@@ -1464,7 +1465,523 @@ export function buildDatabase(seed = SEED): Database {
     return `${client} — ${product} (${mfr})`
   }
 
-  return {
+  // ------------------------------------------------- demonstration stories
+  // Hand-made records for the presentation route (see DEMO_STORIES). Built
+  // last, with fixed values, so the generated book above is unchanged.
+  const companyNamed = (name: string) => companies.find((c) => c.displayName === name)!
+  const square = companyNamed('Square')
+  const beximco = companyNamed('Beximco')
+  const biocon = companyNamed('Biocon')
+  const wockhardt = companyNamed('Wockhardt')
+  const budesonide = products.find((p) => p.genericName === 'Budesonide')!
+  const storyOwner = bdOfficers[0]!
+
+  /** A represented, priced, filed Budesonide source at this manufacturer. */
+  function storySource(m: Company, grade: string, pharmacopoeia: Pharmacopoeia, price: number): ManufacturerProduct {
+    let mp = manufacturerProducts.find((x) => x.manufacturerCompanyId === m.id && x.productId === budesonide.id)
+    if (!mp) {
+      mp = {
+        id: nextId('mpr'),
+        manufacturerCompanyId: m.id,
+        productId: budesonide.id,
+        siteId: sites.find((s) => s.companyId === m.id && s.kind === 'PLANT')?.id ?? null,
+        grade,
+        pharmacopoeia,
+        status: 'ACTIVE',
+        moqQty: 25,
+        moqUom: 'KG',
+        leadTimeDays: 45,
+        packingDetails: '5 KG aluminium can',
+        annualCapacityQty: 4000,
+        annualCapacityUom: 'KG',
+        remarks: null,
+        createdAt: isoT(daysAgo(420)),
+        updatedAt: isoT(daysAgo(30)),
+      }
+      manufacturerProducts.push(mp)
+    }
+    mp.status = 'ACTIVE'
+    if (!portfolio.some((p) => p.manufacturerProductId === mp!.id && p.isActive)) {
+      portfolio.push({
+        id: nextId('pfi'),
+        manufacturerProductId: mp.id,
+        representation: m.manufacturer?.representation ?? 'INDENT',
+        startedOn: iso(daysAgo(400)),
+        endedOn: null,
+        isActive: true,
+        remarks: null,
+      })
+    }
+    if (!prices.some((p) => p.manufacturerProductId === mp!.id && p.validTo >= iso(DEMO_TODAY))) {
+      prices.push({
+        id: nextId('prc'),
+        manufacturerProductId: mp.id,
+        price,
+        currency: 'USD',
+        perUom: 'KG',
+        incoterm: 'CIF',
+        minQty: 25,
+        validFrom: iso(daysAgo(240)),
+        validTo: iso(daysAhead(150)),
+        sourceReference: `Quotation QT-${m.displayName.slice(0, 3).toUpperCase()}-2026`,
+        remarks: null,
+        createdAt: isoT(daysAgo(240)),
+      })
+    }
+    if (!filings.some((f) => f.manufacturerProductId === mp!.id && f.kind === 'DMF')) {
+      filings.push({
+        id: nextId('fil'),
+        manufacturerProductId: mp.id,
+        kind: 'DMF',
+        authority: 'USFDA',
+        referenceNumber: m === biocon ? 'DMF-24417' : 'DMF-31902',
+        isActive: true,
+        documentId: null,
+        remarks: null,
+      })
+    }
+    return mp
+  }
+
+  const bioconBudesonide = storySource(biocon, 'Micronised', 'EP', 1840)
+  const wockhardtBudesonide = storySource(wockhardt, 'Micronised', 'USP', 1795)
+  const bdNow = (n: number) => iso(daysAgo(n))
+
+  /** A full pipeline history to Commercial, written the way the trigger would. */
+  function storyEngagement(mp: ManufacturerProduct, startDaysAgo: number): Engagement {
+    const id = nextId('eng')
+    const path: [EngagementStage, number][] = [
+      ['IDENTIFIED', startDaysAgo],
+      ['OFFERED', startDaysAgo - 8],
+      ['SAMPLE_REQUESTED', startDaysAgo - 20],
+      ['SAMPLE_SENT', startDaysAgo - 30],
+      ['UNDER_EVALUATION', startDaysAgo - 42],
+      ['APPROVED', startDaysAgo - 90],
+      ['COMMERCIAL', 93],
+    ]
+    path.forEach(([stage, ago], i) => {
+      stageHistory.push({
+        id: nextId('hst'),
+        engagementId: id,
+        fromStage: i === 0 ? null : path[i - 1]![0],
+        toStage: stage,
+        changedAt: isoT(daysAgo(ago)),
+        changedByUserId: i === 0 ? storyOwner.id : stage === 'APPROVED' ? regulatoryUser.id : storyOwner.id,
+        reasonCode: null,
+        remark: i === 0 ? 'Engagement created' : stage === 'COMMERCIAL' ? 'Automatic: first indent placed' : null,
+        isOverride: false,
+        daysInPreviousStage: i === 0 ? null : path[i - 1]![1] - ago,
+      })
+    })
+    const price = prices.find((p) => p.manufacturerProductId === mp.id && p.validTo >= iso(DEMO_TODAY))!
+    offers.push({
+      id: nextId('ofr'),
+      engagementId: id,
+      versionNo: 1,
+      offerDate: bdNow(startDaysAgo - 8),
+      offeredPrice: price.price,
+      currency: 'USD',
+      perUom: 'KG',
+      incoterm: 'CIF',
+      moqQty: 25,
+      moqUom: 'KG',
+      validUntil: bdNow(startDaysAgo - 68),
+      status: 'ACCEPTED',
+      sourcePriceId: price.id,
+      remarks: null,
+      createdAt: isoT(daysAgo(startDaysAgo - 8)),
+      createdByUserId: storyOwner.id,
+    })
+    samples.push({
+      id: nextId('smp'),
+      engagementId: id,
+      roundNo: 1,
+      purpose: 'EVALUATION',
+      requestedOn: bdNow(startDaysAgo - 20),
+      requestedQty: 250,
+      qtyUom: 'G',
+      expectedReceiptOn: bdNow(startDaysAgo - 40),
+      requestingContactId: contacts.find((c) => c.companyId === square.id)?.id ?? null,
+      dispatchedOn: bdNow(startDaysAgo - 30),
+      courierName: COURIERS[0]!,
+      trackingNumber: mp === bioconBudesonide ? '4410287765' : '4410291108',
+      batchNumber: mp === bioconBudesonide ? 'BUD-EP-2602' : 'BUD-US-2611',
+      receivedOn: bdNow(startDaysAgo - 42),
+      outcome: 'PASS',
+      outcomeOn: bdNow(startDaysAgo - 85),
+      outcomeByUserId: regulatoryUser.id,
+      rejectionReasonCode: null,
+      outcomeNotes: 'Assay, related substances and particle size within the inhalation specification.',
+    })
+    const eng: Engagement = {
+      id,
+      clientCompanyId: square.id,
+      manufacturerProductId: mp.id,
+      productId: mp.productId,
+      manufacturerCompanyId: mp.manufacturerCompanyId,
+      stage: 'COMMERCIAL',
+      stageChangedAt: isoT(daysAgo(93)),
+      stageReasonCode: null,
+      stageNote: null,
+      stageBeforeHold: null,
+      origin: 'PIPELINE',
+      ownerUserId: storyOwner.id,
+      firstOfferedOn: bdNow(startDaysAgo - 8),
+      firstSampleOn: bdNow(startDaysAgo - 20),
+      approvedOn: bdNow(startDaysAgo - 90),
+      approvalReference: mp === bioconBudesonide ? 'SQ/QA/APP/2026/118' : 'SQ/QA/APP/2026/121',
+      approvalConditions: null,
+      firstCommercialOn: bdNow(93),
+      isOverrideCreated: false,
+      remarks: null,
+      createdAt: isoT(daysAgo(startDaysAgo)),
+      updatedAt: isoT(daysAgo(93)),
+    }
+    engagements.push(eng)
+    engagementKey.add(`${square.id}:${mp.id}`)
+    addDoc({
+      typeCode: 'APPROVAL_LETTER',
+      entityType: 'ENGAGEMENT',
+      entityId: id,
+      title: `Square approval letter — Budesonide (${mp.manufacturerCompanyId === biocon.id ? 'Biocon' : 'Wockhardt'})`,
+      referenceNumber: eng.approvalReference,
+      issuingAuthority: null,
+      issuedOn: eng.approvedOn,
+      expiresOn: null,
+      fileName: `square-approval-budesonide-${mp.id}.pdf`,
+      uploadedAt: isoT(daysAgo(startDaysAgo - 89)),
+    })
+    return eng
+  }
+
+  // Story: Square, Budesonide, dual sourced from Biocon and Wockhardt, one order split across both.
+  const squareReq: Requirement = {
+    id: nextId('req'),
+    clientCompanyId: square.id,
+    productId: budesonide.id,
+    kind: 'ALTERNATE_SOURCE',
+    status: 'FULFILLED',
+    enquiryDate: bdNow(232),
+    requiredByDate: bdNow(100),
+    estAnnualQty: 1200,
+    qtyUom: 'KG',
+    qtyIsIndicative: false,
+    targetPrice: 1850,
+    targetCurrency: 'USD',
+    requiredPharmacopoeia: null,
+    requiredGrade: 'Micronised',
+    currentSourceNote: 'Single Chinese source for the inhaler line; wants a second approved source.',
+    alternateReason: 'DUAL_SOURCING',
+    requestingContactId: contacts.find((c) => c.companyId === square.id)?.id ?? null,
+    ownerUserId: storyOwner.id,
+    duplicateReason: null,
+    remarks: 'Inhalation grade. Square QA wants both sources registered before the next DGDA renewal.',
+    createdAt: isoT(daysAgo(232)),
+    updatedAt: isoT(daysAgo(93)),
+  }
+  requirements.push(squareReq)
+  const squareBiocon = storyEngagement(bioconBudesonide, 230)
+  const squareWockhardt = storyEngagement(wockhardtBudesonide, 225)
+  for (const e of [squareBiocon, squareWockhardt]) {
+    requirementEngagements.push({ requirementId: squareReq.id, engagementId: e.id, linkedAt: isoT(daysAgo(230)) })
+  }
+
+  const squareSite = sites.find((s) => s.companyId === square.id && s.isDeliveryDestination)!
+  const squareOrder: ClientOrder = {
+    id: nextId('cor'),
+    coNumber: `CO-2026-${String(coSeq++).padStart(5, '0')}`,
+    clientCompanyId: square.id,
+    deliverySiteId: squareSite.id,
+    orderDate: bdNow(96),
+    status: 'OPEN',
+    currency: 'USD',
+    incoterm: 'CIF',
+    paymentTermCode: 'LC_90D',
+    clientReference: 'SQU/PO/7731',
+    hasOverride: false,
+    cancelledReason: null,
+    remarks: 'First commercial order on the dual-sourced Budesonide: 300 kg from Biocon, 200 kg from Wockhardt.',
+    createdAt: isoT(daysAgo(96)),
+    updatedAt: isoT(daysAgo(30)),
+    createdByUserId: commercialUser.id,
+  }
+  clientOrders.push(squareOrder)
+
+  const storyLegs: { eng: Engagement; mp: ManufacturerProduct; qty: number; ratePct: number; paid: boolean; lc: string; bl: string; batch: string }[] = [
+    { eng: squareBiocon, mp: bioconBudesonide, qty: 300, ratePct: 3, paid: true, lc: 'LC/2026/48211', bl: 'MAEU482713', batch: 'BUD-EP-2607' },
+    { eng: squareWockhardt, mp: wockhardtBudesonide, qty: 200, ratePct: 3, paid: false, lc: 'LC/2026/48212', bl: 'MSCU561904', batch: 'BUD-US-2614' },
+  ]
+  storyLegs.forEach((leg, i) => {
+    const line: ClientOrderLine = {
+      id: nextId('col'),
+      clientOrderId: squareOrder.id,
+      lineNo: i + 1,
+      productId: budesonide.id,
+      manufacturerProductId: leg.mp.id,
+      engagementId: leg.eng.id,
+      qty: leg.qty,
+      qtyUom: 'KG',
+      targetPrice: 1850,
+      targetPriceUom: 'KG',
+      requiredDeliveryDate: bdNow(30),
+      status: 'OPEN',
+      overrideReason: null,
+      remarks: null,
+    }
+    clientOrderLines.push(line)
+    const unitPrice = prices.find((p) => p.manufacturerProductId === leg.mp.id && p.validTo >= iso(DEMO_TODAY))!.price
+    const ind: Indent = {
+      id: nextId('ind'),
+      indentNumber: `IND-2026-${String(indSeq++).padStart(5, '0')}`,
+      manufacturerCompanyId: leg.mp.manufacturerCompanyId,
+      clientCompanyId: square.id,
+      orderDate: bdNow(93),
+      status: 'OPEN',
+      currency: 'USD',
+      incoterm: 'CIF',
+      paymentTermCode: 'LC_90D',
+      lcNumber: leg.lc,
+      lcDate: bdNow(86),
+      lcBank: BANKS[0]!,
+      lcExpiryDate: bdNow(-75),
+      proformaInvoiceRef: `PI-${leg.mp.manufacturerCompanyId === biocon.id ? 'BIO' : 'WOC'}-0931/2026`,
+      expectedShipDate: bdNow(72),
+      cancelledReason: null,
+      remarks: null,
+      createdAt: isoT(daysAgo(93)),
+      updatedAt: isoT(daysAgo(30)),
+      createdByUserId: commercialUser.id,
+    }
+    indents.push(ind)
+    const il: IndentLine = {
+      id: nextId('inl'),
+      indentId: ind.id,
+      lineNo: 1,
+      manufacturerProductId: leg.mp.id,
+      qty: leg.qty,
+      qtyUom: 'KG',
+      unitPrice,
+      priceUom: 'KG',
+      status: 'OPEN',
+      remarks: null,
+    }
+    indentLines.push(il)
+    orderIndentLinks.push({
+      clientOrderLineId: line.id,
+      indentLineId: il.id,
+      manufacturerProductId: leg.mp.id,
+      linkedQty: leg.qty,
+      qtyUom: 'KG',
+      createdAt: isoT(daysAgo(93)),
+    })
+    const shp: Shipment = {
+      id: nextId('shp'),
+      shipmentRef: `SHP-2026-${String(shpSeq++).padStart(4, '0')}`,
+      indentId: ind.id,
+      mode: 'SEA',
+      status: 'CLEARED',
+      blAwbNumber: leg.bl,
+      carrier: i === 0 ? 'Maersk' : 'MSC',
+      forwarderName: FORWARDERS[0]!,
+      cnfAgentName: CNF_AGENTS[0]!,
+      portOfLoading: PORTS.loading[0]!,
+      portOfDischarge: PORTS.discharge[0]!,
+      etd: bdNow(70 - i * 3),
+      eta: bdNow(48 - i * 3),
+      actualArrivalDate: bdNow(46 - i * 3),
+      customsClearedOn: bdNow(40 - i * 3),
+      holdRemark: null,
+      remarks: null,
+      createdAt: isoT(daysAgo(70 - i * 3)),
+      updatedAt: isoT(daysAgo(35)),
+    }
+    shipments.push(shp)
+    const batch = getBatch(leg.mp.id, leg.batch, 130, 36)
+    const sl: ShipmentLine = {
+      id: nextId('sbl'),
+      shipmentId: shp.id,
+      indentId: ind.id,
+      indentLineId: il.id,
+      manufacturerProductId: leg.mp.id,
+      batchId: batch.id,
+      qty: leg.qty,
+      qtyUom: 'KG',
+      shortShelfLifeRemark: null,
+    }
+    shipmentLines.push(sl)
+    deliveries.push({
+      id: nextId('dlv'),
+      shipmentLineId: sl.id,
+      clientOrderLineId: line.id,
+      deliverySiteId: squareSite.id,
+      deliveredQty: leg.qty,
+      qtyUom: 'KG',
+      deliveredOn: bdNow(36 - i * 3),
+      grnReference: `SQ-GRN-${5521 + i}`,
+      remarks: null,
+    })
+    const value = unitPrice * leg.qty
+    const amount = Math.round(value * leg.ratePct) / 100
+    commissions.push({
+      id: nextId('com'),
+      indentId: ind.id,
+      payableBy: 'CLIENT',
+      basis: 'PERCENT_OF_VALUE',
+      ratePct: leg.ratePct,
+      baseAmount: value,
+      amount,
+      currency: 'USD',
+      status: leg.paid ? 'RECEIVED' : 'INVOICED',
+      invoiceReference: `TCL/COM/2026/${940 + i}`,
+      invoicedOn: bdNow(30),
+      receivedAmount: leg.paid ? amount : 0,
+      receivedOn: leg.paid ? bdNow(12) : null,
+      remarks: null,
+    })
+  })
+
+  // Story: Beximco has just asked for Budesonide, and two represented sources can answer it.
+  requirements.push({
+    id: nextId('req'),
+    clientCompanyId: beximco.id,
+    productId: budesonide.id,
+    kind: 'NEW_DEVELOPMENT',
+    status: 'OPEN',
+    enquiryDate: bdNow(2),
+    requiredByDate: bdNow(-120),
+    estAnnualQty: 600,
+    qtyUom: 'KG',
+    qtyIsIndicative: true,
+    targetPrice: 1800,
+    targetCurrency: 'USD',
+    requiredPharmacopoeia: null,
+    requiredGrade: 'Micronised',
+    currentSourceNote: null,
+    alternateReason: null,
+    requestingContactId: contacts.find((c) => c.companyId === beximco.id)?.id ?? null,
+    ownerUserId: storyOwner.id,
+    duplicateReason: null,
+    remarks: 'New inhaler development for the export range. Wants samples from two sources if possible.',
+    createdAt: isoT(daysAgo(2)),
+    updatedAt: isoT(daysAgo(2)),
+  })
+
+  // ------------------------------------------------------ consistency pass
+  repairChronology()
+  alignStatuses()
+
+  /**
+   * The generator above draws dates independently, so an indent could pre-date
+   * its order or a shipment its indent. Each record is moved to sit after the
+   * one it depends on, and nothing is left dated after the demonstration day.
+   */
+  function repairChronology() {
+    const today = iso(DEMO_TODAY)
+    const addDays = (d: string, n: number) => iso(new Date(new Date(`${d}T00:00:00Z`).getTime() + n * 86400000))
+    const diff = (a: string, b: string) => Math.round((Date.parse(a) - Date.parse(b)) / 86400000)
+    const atMost = (d: string) => (d > today ? today : d)
+
+    for (const ind of indents) {
+      const lineIds = new Set(indentLines.filter((l) => l.indentId === ind.id).map((l) => l.id))
+      const orderLineIds = new Set(orderIndentLinks.filter((l) => lineIds.has(l.indentLineId)).map((l) => l.clientOrderLineId))
+      const orderDates = clientOrderLines
+        .filter((l) => orderLineIds.has(l.id))
+        .map((l) => clientOrders.find((o) => o.id === l.clientOrderId)?.orderDate)
+        .filter((d): d is string => Boolean(d))
+        .sort()
+      const latestOrder = orderDates.at(-1)
+      if (latestOrder && ind.orderDate < latestOrder) {
+        ind.orderDate = atMost(addDays(latestOrder, 2))
+        ind.createdAt = ind.updatedAt = `${ind.orderDate}T09:00:00.000Z`
+      }
+      if (ind.lcDate && ind.lcDate < ind.orderDate) ind.lcDate = atMost(addDays(ind.orderDate, 6))
+      if (ind.lcDate && ind.lcExpiryDate && ind.lcExpiryDate <= ind.lcDate) ind.lcExpiryDate = addDays(ind.lcDate, 120)
+      if (ind.expectedShipDate && ind.expectedShipDate < ind.orderDate) ind.expectedShipDate = addDays(ind.orderDate, 30)
+    }
+
+    const dropDeliveries = new Set<ID>()
+    for (const s of shipments) {
+      const ind = indents.find((i) => i.id === s.indentId)
+      if (!ind || !s.etd) continue
+      const earliest = addDays(ind.orderDate, 10)
+      const shift = s.etd < earliest ? diff(earliest, s.etd) : 0
+      const move = (d: string | null) => (d ? addDays(d, shift) : null)
+      s.etd = move(s.etd)
+      s.eta = move(s.eta)
+      s.actualArrivalDate = move(s.actualArrivalDate)
+      s.customsClearedOn = move(s.customsClearedOn)
+
+      if (s.etd! > today) {
+        s.status = 'PLANNED'
+        s.actualArrivalDate = null
+        s.customsClearedOn = null
+        s.holdRemark = null
+      } else if (s.actualArrivalDate && s.actualArrivalDate > today) {
+        s.status = 'IN_TRANSIT'
+        s.actualArrivalDate = null
+        s.customsClearedOn = null
+        s.holdRemark = null
+      } else if (s.customsClearedOn && s.customsClearedOn > today) {
+        s.customsClearedOn = null
+        if (s.status !== 'HELD_AT_CUSTOMS') s.status = 'ARRIVED'
+      }
+      s.createdAt = s.updatedAt = `${s.etd}T09:00:00.000Z`
+
+      const lines = shipmentLines.filter((l) => l.shipmentId === s.id)
+      for (const l of lines) {
+        const batch = batches.find((b) => b.id === l.batchId)
+        if (batch && batch.manufacturingDate > s.etd!) batch.manufacturingDate = addDays(s.etd!, -30)
+        for (const d of deliveries.filter((x) => x.shipmentLineId === l.id)) {
+          if (!s.customsClearedOn) {
+            dropDeliveries.add(d.id)
+            continue
+          }
+          let on = addDays(d.deliveredOn, shift)
+          if (on <= s.customsClearedOn) on = addDays(s.customsClearedOn, 2)
+          if (on > today) dropDeliveries.add(d.id)
+          else d.deliveredOn = on
+        }
+      }
+    }
+    for (let i = deliveries.length - 1; i >= 0; i--) {
+      if (dropDeliveries.has(deliveries[i]!.id)) deliveries.splice(i, 1)
+    }
+
+    for (const c of commissions) {
+      const ind = indents.find((i) => i.id === c.indentId)
+      if (!ind) continue
+      if (c.invoicedOn && c.invoicedOn < ind.orderDate) c.invoicedOn = atMost(addDays(ind.orderDate, 14))
+      if (c.receivedOn && c.invoicedOn && c.receivedOn < c.invoicedOn) c.receivedOn = atMost(addDays(c.invoicedOn, 21))
+    }
+  }
+
+  /** Requirement and client statuses that agree with the engagements and orders behind them. */
+  function alignStatuses() {
+    for (const r of requirements) {
+      const linked = requirementEngagements
+        .filter((l) => l.requirementId === r.id)
+        .map((l) => engagements.find((e) => e.id === l.engagementId))
+        .filter((e): e is Engagement => Boolean(e))
+      if (linked.length === 0) {
+        if (r.status === 'ENGAGED' || r.status === 'FULFILLED') r.status = 'OPEN'
+      } else if (r.status !== 'CANCELLED' && r.status !== 'CLOSED_LOST') {
+        r.status = linked.some((e) => e.stage === 'COMMERCIAL') ? 'FULFILLED' : 'ENGAGED'
+      }
+    }
+    for (const c of clients) {
+      const trading =
+        engagements.some((e) => e.clientCompanyId === c.id && e.stage === 'COMMERCIAL') ||
+        clientOrders.some((o) => o.clientCompanyId === c.id)
+      const pursuing = engagements.some(
+        (e) => e.clientCompanyId === c.id && !['REJECTED', 'DISCONTINUED'].includes(e.stage),
+      )
+      if (c.client && (trading || pursuing) && (c.client.status === 'PROSPECT' || c.client.status === 'DORMANT')) {
+        c.client.status = trading ? 'ACTIVE' : 'PROSPECT'
+      }
+    }
+  }
+
+  const db: Database = {
     users,
     savedFilters: [
       {
@@ -1515,4 +2032,71 @@ export function buildDatabase(seed = SEED): Database {
     audit,
     security,
   }
+  // order, indent and shipment statuses follow from what shipped and was delivered
+  Object.assign(db, deriveTradeStatuses(db))
+  return db
 }
+
+/**
+ * The presentation route: one deal at each stage of the business, found by
+ * name so the list survives changes to the generated data.
+ */
+export interface DemoStory {
+  key: string
+  title: string
+  client: string
+  product: string
+  /** absent for a story about a requirement that has no engagement yet */
+  manufacturer?: string
+  point: string
+}
+
+export const DEMO_STORIES: DemoStory[] = [
+  {
+    key: 'enquiry',
+    title: 'A new enquiry',
+    client: 'Beximco',
+    product: 'Budesonide',
+    point: 'Two represented sources can supply it. Choose which to offer and open the engagements.',
+  },
+  {
+    key: 'offer',
+    title: 'An offer with the client',
+    client: 'Aristopharma',
+    product: 'Dextromethorphan Hydrobromide',
+    manufacturer: 'Moehs Iberica',
+    point: 'The next step is a sample for the client to evaluate.',
+  },
+  {
+    key: 'sample',
+    title: 'A sample under evaluation',
+    client: 'Ibn Sina',
+    product: 'Ibuprofen',
+    manufacturer: 'Biocon',
+    point: "The client's QC has the sample. Record pass or fail, then the approval.",
+  },
+  {
+    key: 'approved',
+    title: 'Approved, not yet ordered',
+    client: 'Healthcare',
+    product: 'Capecitabine',
+    manufacturer: 'Bajaj Healthcare',
+    point: 'Record the first client order straight from the engagement.',
+  },
+  {
+    key: 'transit',
+    title: 'Goods on the way',
+    client: 'Aristopharma',
+    product: 'Dextromethorphan Hydrobromide',
+    manufacturer: 'Bajaj Healthcare',
+    point: 'Order, indent and shipment are linked. Track arrival and clearance.',
+  },
+  {
+    key: 'complete',
+    title: 'Delivered and paid, dual sourced',
+    client: 'Square',
+    product: 'Budesonide',
+    manufacturer: 'Biocon',
+    point: 'One order split across Biocon and Wockhardt. Delivered; commission received.',
+  },
+]

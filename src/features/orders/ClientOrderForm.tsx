@@ -17,6 +17,7 @@
 import * as React from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Plus, Split, Trash2, TriangleAlert } from 'lucide-react'
+import { toast } from 'sonner'
 import { useDb, usePresenter } from '@/data/store'
 import { bestPrice, clients as clientList, engagementFor, latestPrice, sourceRows } from '@/data/selectors'
 import { checkSourceApproved } from '@/data/rules'
@@ -86,7 +87,13 @@ export function ClientOrderForm() {
   const [deliverySiteId, setDeliverySiteId] = React.useState('')
   const [clientReference, setClientReference] = React.useState('')
   const [remarks, setRemarks] = React.useState('')
-  const [lines, setLines] = React.useState<DraftLine[]>([newLine()])
+  // Arriving from an engagement: the client and that source are already known.
+  const [lines, setLines] = React.useState<DraftLine[]>(() => {
+    const source = params.get('source')
+    const mp = source ? db.manufacturerProducts.find((m) => m.id === source) : undefined
+    return [{ ...newLine(), mpId: mp?.id ?? '', qtyUom: mp?.moqUom ?? 'KG' }]
+  })
+  const fromEngagement = params.get('engagement')
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [saved, setSaved] = React.useState<{ id: string; coNumber: string } | null>(null)
@@ -268,10 +275,19 @@ export function ClientOrderForm() {
     <div className="mx-auto max-w-4xl space-y-4">
       <PageHeading
         title="Record a client order"
-        subtitle="What the client wants, and the source for each line. The indents on each manufacturer follow from this order."
+        subtitle={
+          fromEngagement
+            ? 'Started from an engagement, so the client and the first source are filled in. Add the quantity, and more lines if the client is ordering more.'
+            : 'What the client wants, and the source for each line. The indents on each manufacturer follow from this order.'
+        }
         actions={
-          <LinkButton to="/client-orders" variant="ghost" size="md" icon={<ArrowLeft className="h-3.5 w-3.5" />}>
-            Cancel
+          <LinkButton
+            to={fromEngagement ? `/engagements/${fromEngagement}` : '/client-orders'}
+            variant="ghost"
+            size="md"
+            icon={<ArrowLeft className="h-3.5 w-3.5" />}
+          >
+            Back
           </LinkButton>
         }
       />
@@ -288,8 +304,12 @@ export function ClientOrderForm() {
                 <Combobox
                   value={clientId}
                   onChange={(v) => {
+                    if (v === clientId) return
                     setClientId(v)
-                    setLines([newLine()])
+                    if (lines.some((l) => l.mpId)) {
+                      setLines([newLine()])
+                      toast.info('Lines cleared: the sources on offer depend on the client.')
+                    }
                   }}
                   options={clientList(db)
                     .filter((c) => c.isActive)

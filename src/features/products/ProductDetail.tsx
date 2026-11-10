@@ -292,6 +292,7 @@ function SourcesTab({
   productName: string
 }) {
   const navigate = useNavigate()
+  const { id: productId = '' } = useParams()
   const represented = sources.filter((s) => s.inPortfolio)
   const known = sources.filter((s) => !s.inPortfolio)
 
@@ -414,7 +415,7 @@ function SourcesTab({
             </WriteOnly>
           }
           secondary={
-            <LinkButton to="/requirements/new" variant="ghost" size="sm">
+            <LinkButton to={`/requirements/new?product=${productId}`} variant="ghost" size="sm">
               Record a client requirement
             </LinkButton>
           }
@@ -466,6 +467,7 @@ function SourcesTab({
 function ClientsTab({ loading, rows }: { loading: boolean; rows: ReturnType<typeof engagementRows> }) {
   const navigate = useNavigate()
   const db = useDb()
+  const { id: productId = '' } = useParams()
 
   // group by client so dual sourcing reads clearly
   const grouped = React.useMemo(() => {
@@ -497,7 +499,7 @@ function ClientsTab({ loading, rows }: { loading: boolean; rows: ReturnType<type
           description="Once a requirement is matched to a source, the engagement appears here with its stage."
           action={
             <WriteOnly>
-              <LinkButton to="/requirements/new" variant="primary" size="sm">
+              <LinkButton to={`/requirements/new?product=${productId}`} variant="primary" size="sm">
                 Record a requirement
               </LinkButton>
             </WriteOnly>

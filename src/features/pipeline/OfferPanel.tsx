@@ -210,7 +210,7 @@ function OfferRow({ offer }: { offer: Offer }) {
   )
 }
 
-function OfferDialog({
+export function OfferDialog({
   open,
   onOpenChange,
   engagement,

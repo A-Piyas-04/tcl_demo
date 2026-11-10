@@ -10,6 +10,7 @@ import { ShipmentDetail } from './ShipmentDetail'
 import { BatchList } from './BatchList'
 import { BatchDetail } from './BatchDetail'
 import { CommissionTracker } from './CommissionTracker'
+import { CommissionReport } from '@/features/insight/CommissionReport'
 
 export const ordersRoutes = (
   <>
@@ -39,6 +40,7 @@ export const ordersRoutes = (
     </Route>
     <Route path="commissions">
       <Route index element={<CommissionTracker />} />
+      <Route path="analysis" element={<CommissionReport />} />
     </Route>
   </>
 )

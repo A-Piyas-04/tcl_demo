@@ -13,23 +13,23 @@ import { Package, SlidersHorizontal } from 'lucide-react'
 import { useDb } from '@/data/store'
 import { batchRows, manufacturers as mfrList, type BatchRow } from '@/data/selectors'
 import { logExport } from '@/data/api'
-import { useAsyncData, useDebounced, useUrlFilters } from '@/lib/hooks'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
+import { SectionNav } from '@/layout/sections'
 import { fmtDate, fmtQty, pluralise } from '@/lib/utils'
 import {
   Badge,
   Column,
   DataTable,
   EmptyState,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
   PageHeading,
-  SearchInput,
   Select,
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
-import { ClearFiltersButton } from './shared'
 
 const DEFAULTS = {
   q: '',
@@ -48,13 +48,7 @@ export function BatchList() {
   const db = useDb()
   const navigate = useNavigate()
   const { values, setValue, clear, activeCount, queryString } = useUrlFilters(DEFAULTS)
-  const [search, setSearch] = React.useState(values.q)
-  const debounced = useDebounced(search, 180)
-
-  React.useEffect(() => {
-    setValue('q', debounced)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced])
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
 
   const { data: rows, loading } = useAsyncData<BatchRow[]>(() => {
     return batchRows(db)
@@ -197,54 +191,61 @@ export function BatchList() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Batches"
-        subtitle="Each batch is recorded once against its source, then reused by every shipment that carries it. One batch may serve several clients."
-        meta={
-          <>
-            <Badge tone="neutral">{pluralise(db.batches.length, 'batch', 'batches')}</Badge>
-            <Badge tone="warn">
-              {batchRows(db).filter((r) => r.state === 'expiring' || r.state === 'expired').length} expiring or expired
-            </Badge>
-          </>
-        }
-      />
+      <div>
+        <PageHeading
+          title="Shipments"
+          subtitle="Batches: each manufacturer batch is recorded once against its source, then reused by every shipment that carries it. One batch may serve several clients."
+          meta={
+            <>
+              <Badge tone="neutral">{pluralise(db.batches.length, 'batch', 'batches')}</Badge>
+              <Badge tone="warn">
+                {batchRows(db).filter((r) => r.state === 'expiring' || r.state === 'expired').length} expiring or expired
+              </Badge>
+            </>
+          }
+        />
+        <SectionNav section="shipments" />
+      </div>
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Batch number, product, party…"
-          />
-          <Select
-            value={values.manufacturer}
-            onChange={(v) => setValue('manufacturer', v)}
-            allowEmpty
-            emptyLabel="Any manufacturer"
-            placeholder="Any manufacturer"
-            options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
-          />
-          <Select
-            value={values.product}
-            onChange={(v) => setValue('product', v)}
-            allowEmpty
-            emptyLabel="Any product"
-            placeholder="Any product"
-            options={products.map((p) => ({ value: p.id, label: p.genericName }))}
-          />
-          <Select
-            value={values.expiry}
-            onChange={(v) => setValue('expiry', v)}
-            allowEmpty
-            emptyLabel="Any expiry state"
-            placeholder="Any expiry state"
-            options={(Object.keys(STATE_LABEL) as BatchRow['state'][]).map((s) => ({
-              value: s,
-              label: STATE_LABEL[s],
-            }))}
-          />
-        </div>
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Batch number, product, party…"
+          activeCount={activeCount}
+          onClear={clear}
+          primary={
+            <>
+              <Select
+                value={values.product}
+                onChange={(v) => setValue('product', v)}
+                allowEmpty
+                emptyLabel="Any product"
+                placeholder="Any product"
+                options={products.map((p) => ({ value: p.id, label: p.genericName }))}
+              />
+              <Select
+                value={values.manufacturer}
+                onChange={(v) => setValue('manufacturer', v)}
+                allowEmpty
+                emptyLabel="Any manufacturer"
+                placeholder="Any manufacturer"
+                options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
+              />
+              <Select
+                value={values.expiry}
+                onChange={(v) => setValue('expiry', v)}
+                allowEmpty
+                emptyLabel="Any expiry state"
+                placeholder="Any expiry state"
+                options={(Object.keys(STATE_LABEL) as BatchRow['state'][]).map((s) => ({
+                  value: s,
+                  label: STATE_LABEL[s],
+                }))}
+              />
+            </>
+          }
+        />
 
         <DataTable
           rows={rows ?? []}
@@ -260,13 +261,6 @@ export function BatchList() {
             <span className="flex flex-wrap items-center gap-2.5 text-xs text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'batch', 'batches') : '…'}
-              <ClearFiltersButton
-                count={activeCount}
-                onClear={() => {
-                  clear()
-                  setSearch('')
-                }}
-              />
             </span>
           }
           empty={

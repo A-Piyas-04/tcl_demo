@@ -12,7 +12,8 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip as RcTooltip, XAxis, YAxis } from 'recharts'
 import { AlertTriangle, Coins, Wallet } from 'lucide-react'
 import { useDb } from '@/data/store'
-import { commissionRows, commissionTotals, type CommissionRow } from '@/data/selectors'
+import { commissionEarnedOn, commissionRows, commissionTotals, type CommissionRow } from '@/data/selectors'
+import { SectionNav } from '@/layout/sections'
 import { COMMISSION_BASIS_LABEL, COMMISSION_STATUS_LABEL } from '@/data/reference'
 import { logExport } from '@/data/api'
 import { useAsyncData, useLocalPreference } from '@/lib/hooks'
@@ -87,7 +88,7 @@ export function CommissionReport() {
 
     const months = recentMonths(12)
     const byMonth: Group[] = months.map((month) => {
-      const earnedIn = rows.filter((r) => r.indent.orderDate.slice(0, 7) === month)
+      const earnedIn = rows.filter((r) => commissionEarnedOn(r.commission, r.indent)?.slice(0, 7) === month)
       const receivedIn = rows.filter((r) => r.commission.receivedOn?.slice(0, 7) === month)
       const earned = earnedIn.reduce((sum, r) => sum + (r.commission.amount ?? 0), 0)
       const received = receivedIn.reduce((sum, r) => sum + r.commission.receivedAmount, 0)
@@ -232,17 +233,20 @@ export function CommissionReport() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Commission"
-        subtitle="TCL's earnings on the indents it places, receivable from the client."
-        meta={
-          <>
-            <Badge tone="neutral">{pluralise(data?.rows.length ?? 0, 'commission record')}</Badge>
-            {totals && totals.tbdCount > 0 ? <Badge tone="warn">{totals.tbdCount} still to be agreed</Badge> : null}
-          </>
-        }
-        actions={<ExportButton onClick={exportRows} disabled={groups.length === 0} />}
-      />
+      <div>
+        <PageHeading
+          title="Commission"
+          subtitle="Analysis: TCL's earnings by client, by manufacturer and by month. All figures in USD, the currency every indent in the demonstration data is raised in."
+          meta={
+            <>
+              <Badge tone="neutral">{pluralise(data?.rows.length ?? 0, 'commission record')}</Badge>
+              {totals && totals.tbdCount > 0 ? <Badge tone="warn">{totals.tbdCount} still to be agreed</Badge> : null}
+            </>
+          }
+          actions={<ExportButton onClick={exportRows} disabled={groups.length === 0} />}
+        />
+        <SectionNav section="commission" />
+      </div>
 
       <StatGrid>
         <StatCell
@@ -274,7 +278,7 @@ export function CommissionReport() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartPanel
           title="Earned against received, by month"
-          subtitle="Earned in the month of the indent, received in the month of the payment"
+          subtitle="Earned in the month it was invoiced (or of the indent while pending), received in the month of the payment"
           icon={<Coins className="h-4 w-4" />}
         >
           <ResponsiveContainer width="100%" height="100%">

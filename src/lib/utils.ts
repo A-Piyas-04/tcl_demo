@@ -80,6 +80,24 @@ export function fmtMoney(
   })}`
 }
 
+/** Totals per currency. Amounts in different currencies are never added together. */
+export function sumByCurrency(items: { amount: number; currency: string }[]): { currency: string; amount: number }[] {
+  const totals = new Map<string, number>()
+  for (const i of items) totals.set(i.currency, (totals.get(i.currency) ?? 0) + i.amount)
+  return [...totals.entries()]
+    .map(([currency, amount]) => ({ currency, amount }))
+    .sort((a, b) => b.amount - a.amount)
+}
+
+export function fmtMoneyTotals(
+  items: { amount: number; currency: string }[],
+  opts: { compact?: boolean; decimals?: number } = {},
+): string {
+  const totals = sumByCurrency(items)
+  if (totals.length === 0) return fmtMoney(0, 'USD', opts)
+  return totals.map((t) => fmtMoney(t.amount, t.currency, opts)).join(' + ')
+}
+
 export function fmtQty(qty: number | null | undefined, uom?: string | null): string {
   if (qty == null) return '—'
   const n = qty.toLocaleString('en-US', { maximumFractionDigits: 4 })

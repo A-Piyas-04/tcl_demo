@@ -122,7 +122,10 @@ export function ManufacturerDetail() {
   const portfolioCount = data?.sources.filter((s) => s.inPortfolio).length ?? 0
   const clientCount = new Set((data?.engagements ?? []).map((e) => e.client.id)).size
   const openIndents = (data?.indents ?? []).filter((i) => OPEN_ORDER_STATUSES.includes(i.status))
-  const commissionEarned = (data?.commissions ?? []).reduce((sum, c) => sum + (c.amount ?? 0), 0)
+  const commissionEarned = (data?.commissions ?? []).reduce(
+    (sum, c) => (c.status === 'WRITTEN_OFF' ? sum : sum + (c.amount ?? 0)),
+    0,
+  )
   const commissionCurrency = data?.commissions[0]?.currency ?? 'USD'
 
   return (

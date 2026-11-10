@@ -8,28 +8,24 @@ import * as React from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
+  BarChart3,
   Bell,
   Boxes,
   ChevronsLeft,
   ChevronsRight,
   Eye,
   FactoryIcon,
-  FileText,
   Gauge,
   GitBranch,
   LogOut,
   Menu as MenuIcon,
   type LucideIcon,
-  Network,
   PanelsTopLeft,
   Pill,
   RefreshCw,
-  Rocket,
   Search,
   Settings,
-  ShieldCheck,
   Ship,
-  Timer,
   Users,
   Wallet,
   X,
@@ -69,8 +65,12 @@ interface NavItem {
   to: string
   label: string
   icon: LucideIcon
+  /** one line shown as a tooltip, in plain language */
+  hint?: string
   /** exact match only, for the dashboard */
   end?: boolean
+  /** other path prefixes that belong to this item (its section tabs and detail pages) */
+  match?: string[]
 }
 
 interface NavGroup {
@@ -78,49 +78,70 @@ interface NavGroup {
   items: NavItem[]
 }
 
+/**
+ * Four groups that follow the work: find a source, trade on it, look things
+ * up, and look back. Related lists share one item and switch with tabs.
+ */
 const NAV: NavGroup[] = [
   {
-    title: 'Overview',
-    items: [{ to: '/', label: 'Dashboard', icon: Gauge, end: true }],
+    title: 'Home',
+    items: [{ to: '/', label: 'Dashboard', icon: Gauge, end: true, hint: 'What needs attention today' }],
   },
   {
-    title: 'Register',
+    title: 'Sourcing',
     items: [
-      { to: '/products', label: 'Products', icon: Pill },
-      { to: '/manufacturers', label: 'Manufacturers', icon: FactoryIcon },
-      { to: '/clients', label: 'Clients', icon: Users },
-    ],
-  },
-  {
-    title: 'Pipeline',
-    items: [
-      { to: '/requirements', label: 'Requirements', icon: PanelsTopLeft },
-      { to: '/engagements', label: 'Engagements', icon: GitBranch },
-      { to: '/samples', label: 'Samples', icon: Timer },
+      { to: '/requirements', label: 'Requirements', icon: PanelsTopLeft, hint: 'What clients have asked for' },
+      {
+        to: '/engagements',
+        label: 'Engagements',
+        icon: GitBranch,
+        hint: 'Client × supplier deals: offers, samples, approval',
+        match: ['/samples'],
+      },
     ],
   },
   {
     title: 'Trade',
     items: [
-      { to: '/client-orders', label: 'Client orders', icon: Boxes },
-      { to: '/indents', label: 'Indents', icon: Rocket },
-      { to: '/shipments', label: 'Shipments', icon: Ship },
-      { to: '/commissions', label: 'Commission', icon: Wallet },
+      {
+        to: '/client-orders',
+        label: 'Orders',
+        icon: Boxes,
+        hint: 'Client orders and the indents placed on manufacturers',
+        match: ['/indents'],
+      },
+      { to: '/shipments', label: 'Shipments', icon: Ship, hint: 'Goods on the way, batches and deliveries', match: ['/batches'] },
+      { to: '/commissions', label: 'Commission', icon: Wallet, hint: "TCL's earnings from clients" },
+    ],
+  },
+  {
+    title: 'Directory',
+    items: [
+      { to: '/products', label: 'Products', icon: Pill, hint: 'Molecules and who makes them', match: ['/sources'] },
+      { to: '/manufacturers', label: 'Manufacturers', icon: FactoryIcon, hint: 'Suppliers TCL represents or knows' },
+      { to: '/clients', label: 'Clients', icon: Users, hint: 'Pharma companies TCL sells for' },
     ],
   },
   {
     title: 'Insight',
     items: [
-      { to: '/relationships', label: 'Relationships', icon: Network },
-      { to: '/documents', label: 'Documents', icon: FileText },
-      { to: '/reports', label: 'Reports', icon: ShieldCheck },
+      {
+        to: '/reports',
+        label: 'Reports',
+        icon: BarChart3,
+        hint: 'Registers, relationships and documents',
+        match: ['/relationships', '/documents'],
+      },
     ],
   },
-  {
-    title: 'Administration',
-    items: [{ to: '/admin', label: 'Admin', icon: Settings }],
-  },
 ]
+
+const ADMIN_ITEM: NavItem = { to: '/admin', label: 'Admin', icon: Settings, hint: 'Users, settings and audit log' }
+
+function itemIsActive(item: NavItem, pathname: string) {
+  if (item.end) return pathname === item.to
+  return [item.to, ...(item.match ?? [])].some((p) => pathname === p || pathname.startsWith(`${p}/`))
+}
 
 export function AppShell() {
   const [collapsed, setCollapsed] = React.useState(false)
@@ -164,6 +185,7 @@ export function AppShell() {
           i: '/indents',
           s: '/shipments',
           k: '/commissions',
+          a: '/reports',
         }
         const to = jump[e.key.toLowerCase()]
         if (to) {
@@ -218,7 +240,8 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="border-t border-ink-800 p-2">
+        <div className="space-y-0.5 border-t border-ink-800 p-2">
+          <RailLink item={ADMIN_ITEM} collapsed={collapsed} />
           <button
             onClick={() => setCollapsed((c) => !c)}
             className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-ink-500 transition-colors hover:bg-ink-850 hover:text-paper-200"
@@ -262,35 +285,33 @@ export function AppShell() {
 
 function RailLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const Icon = item.icon
+  const { pathname } = useLocation()
+  const isActive = itemIsActive(item, pathname)
   const link = (
     <NavLink
       to={item.to}
       end={item.end}
-      className={({ isActive }) =>
-        cn(
-          'group relative flex items-center gap-2.5 rounded px-2 py-1.5 text-sm transition-colors',
-          isActive ? 'bg-ink-800 font-medium text-white' : 'text-ink-400 hover:bg-ink-850 hover:text-paper-200',
-          collapsed && 'justify-center px-0',
-        )
-      }
-    >
-      {({ isActive }) => (
-        <>
-          {isActive ? (
-            <motion.span
-              layoutId="rail-active"
-              className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-r bg-accent-400"
-              transition={{ duration: 0.2 }}
-            />
-          ) : null}
-          <Icon className="h-4 w-4 shrink-0" />
-          {!collapsed ? <span className="truncate">{item.label}</span> : null}
-        </>
+      aria-current={isActive ? 'page' : undefined}
+      className={cn(
+        'group relative flex items-center gap-2.5 rounded px-2 py-1.5 text-sm transition-colors',
+        isActive ? 'bg-ink-800 font-medium text-white' : 'text-ink-400 hover:bg-ink-850 hover:text-paper-200',
+        collapsed && 'justify-center px-0',
       )}
+    >
+      {isActive ? (
+        <motion.span
+          layoutId="rail-active"
+          className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-r bg-accent-400"
+          transition={{ duration: 0.2 }}
+        />
+      ) : null}
+      <Icon className="h-4 w-4 shrink-0" />
+      {!collapsed ? <span className="truncate">{item.label}</span> : null}
     </NavLink>
   )
-  return collapsed ? (
-    <Tooltip content={item.label} side="right">
+  const tip = collapsed ? (item.hint ? `${item.label} — ${item.hint}` : item.label) : item.hint
+  return tip ? (
+    <Tooltip content={tip} side="right">
       {link}
     </Tooltip>
   ) : (
@@ -464,15 +485,15 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
 function MobileNav() {
   const [open, setOpen] = React.useState(false)
   const location = useLocation()
-  const items = [
+  const items: NavItem[] = [
     { to: '/', label: 'Home', icon: Gauge, end: true },
-    { to: '/products', label: 'Products', icon: Pill },
-    { to: '/clients', label: 'Clients', icon: Users },
-    { to: '/engagements', label: 'Pipeline', icon: GitBranch },
+    { to: '/requirements', label: 'Requests', icon: PanelsTopLeft },
+    { to: '/engagements', label: 'Deals', icon: GitBranch, match: ['/samples'] },
+    { to: '/client-orders', label: 'Orders', icon: Boxes, match: ['/indents'] },
   ]
-  const moreActive = NAV.some((group) => group.items.some((item) =>
-    !items.some((quick) => quick.to === item.to) &&
-    (location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)),
+  const sheetGroups: NavGroup[] = [...NAV, { title: 'Administration', items: [ADMIN_ITEM] }]
+  const moreActive = sheetGroups.some((group) => group.items.some((item) =>
+    !items.some((quick) => quick.to === item.to) && itemIsActive(item, location.pathname),
   ))
 
   React.useEffect(() => {
@@ -497,12 +518,10 @@ function MobileNav() {
                 <NavLink
                   to={item.to}
                   end={item.end}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
-                      isActive ? 'text-accent-300' : 'text-ink-400',
-                    )
-                  }
+                  className={cn(
+                    'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
+                    itemIsActive(item, location.pathname) ? 'text-accent-300' : 'text-ink-400',
+                  )}
                 >
                   <Icon className="h-5 w-5" />
                   <span className="truncate">{item.label}</span>
@@ -542,7 +561,7 @@ function MobileNav() {
               </DialogPrimitive.Close>
             </div>
             <nav aria-label="All sections" className="scroll-slim min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
-              {NAV.map((group) => (
+              {sheetGroups.map((group) => (
                 <div key={group.title} className="mb-4">
                   <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-400">{group.title}</p>
                   <ul className="grid grid-cols-2 gap-1">
@@ -554,9 +573,9 @@ function MobileNav() {
                             to={item.to}
                             end={item.end}
                             onClick={() => setOpen(false)}
-                            className={({ isActive }) => cn(
+                            className={cn(
                               'flex min-h-12 items-center gap-2 rounded-md px-3 text-sm active:bg-ink-700',
-                              isActive ? 'bg-ink-800 font-medium text-accent-300' : 'text-paper-200',
+                              itemIsActive(item, location.pathname) ? 'bg-ink-800 font-medium text-accent-300' : 'text-paper-200',
                             )}
                           >
                             <Icon className="h-4 w-4 shrink-0" />

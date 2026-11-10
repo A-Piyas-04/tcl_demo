@@ -8,7 +8,8 @@
  */
 
 import { useNavigate } from 'react-router-dom'
-import { FlaskConical, SlidersHorizontal, X } from 'lucide-react'
+import { FlaskConical, SlidersHorizontal } from 'lucide-react'
+import { SectionNav } from '@/layout/sections'
 import { useCurrentUser, useDb } from '@/data/store'
 import { clients as clientList, daysSince } from '@/data/selectors'
 import {
@@ -27,6 +28,7 @@ import {
   Column,
   DataTable,
   EmptyState,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
@@ -93,8 +95,7 @@ export function SampleTracker() {
 
     return out
       .filter((row) => {
-        if (values.outcome === 'pending' && row.round.outcome !== 'PENDING') return false
-        if (values.outcome && values.outcome !== 'pending' && row.round.outcome !== values.outcome) return false
+        if (values.outcome && row.round.outcome !== values.outcome.toUpperCase()) return false
         if (values.overdue === '1' && !row.isOverdue) return false
         if (values.client && row.client.id !== values.client) return false
         if (values.owner && row.engagement.ownerUserId !== values.owner) return false
@@ -232,82 +233,72 @@ export function SampleTracker() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Samples"
-        subtitle="Every round across the book, so nothing sits silently at a client."
-        meta={
-          <>
-            <Badge tone="neutral">{pluralise(all.length, 'round')}</Badge>
-            {overdueCount > 0 ? <Badge tone="warn">{pluralise(overdueCount, 'overdue')}</Badge> : null}
-            <Tooltip content="From the Under evaluation ageing threshold in the stage configuration.">
-              <Badge tone="outline">Threshold {threshold} days</Badge>
-            </Tooltip>
-          </>
-        }
-        actions={
-          <SegmentedControl
-            value={values.overdue === '1' ? 'overdue' : 'all'}
-            onChange={(v) => setValue('overdue', v === 'overdue' ? '1' : '')}
-            options={[
-              { value: 'all', label: 'All rounds' },
-              { value: 'overdue', label: 'Overdue only' },
-            ]}
-          />
-        }
-      />
+      <div>
+        <PageHeading
+          title="Engagements"
+          subtitle="Sample rounds across every engagement, so nothing sits silently at a client. Samples are requested and recorded on the engagement itself."
+          meta={
+            <>
+              <Badge tone="neutral">{pluralise(all.length, 'round')}</Badge>
+              {overdueCount > 0 ? <Badge tone="warn">{pluralise(overdueCount, 'overdue')}</Badge> : null}
+              <Tooltip content="From the Under evaluation ageing threshold in the stage configuration.">
+                <Badge tone="outline">Overdue after {threshold} days</Badge>
+              </Tooltip>
+            </>
+          }
+        />
+        <SectionNav section="engagements" />
+      </div>
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Select
-            value={values.outcome}
-            onChange={(v) => setValue('outcome', v)}
-            allowEmpty
-            emptyLabel="Any outcome"
-            placeholder="Any outcome"
-            options={[
-              { value: 'pending', label: 'Pending' },
-              { value: 'PASS', label: 'Pass' },
-              { value: 'FAIL', label: 'Fail' },
-              { value: 'CANCELLED', label: 'Cancelled' },
-            ]}
-          />
-          <Select
-            value={values.client}
-            onChange={(v) => setValue('client', v)}
-            allowEmpty
-            emptyLabel="Any client"
-            placeholder="Any client"
-            options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
-          />
-          <Select
-            value={values.owner}
-            onChange={(v) => setValue('owner', v)}
-            allowEmpty
-            emptyLabel="Any owner"
-            placeholder="Any owner"
-            options={db.users.filter((u) => u.isActive).map((u) => ({ value: u.id, label: u.fullName }))}
-          />
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setValue('owner', user?.id ?? '')}
-              disabled={!user || values.owner === user.id}
-            >
-              Mine
-            </Button>
-            {activeCount > 0 ? (
-              <Button
-                variant="ghost"
+        <FilterBar
+          activeCount={activeCount}
+          onClear={() => setMany({ outcome: '', overdue: '', client: '', owner: '' })}
+          primary={
+            <>
+              <SegmentedControl
                 size="sm"
-                icon={<X className="h-3.5 w-3.5" />}
-                onClick={() => setMany({ outcome: '', overdue: '', client: '', owner: '' })}
-              >
-                Clear
-              </Button>
-            ) : null}
-          </div>
-        </div>
+                value={values.overdue === '1' ? 'overdue' : 'all'}
+                onChange={(v) => setValue('overdue', v === 'overdue' ? '1' : '')}
+                options={[
+                  { value: 'all', label: 'All rounds' },
+                  { value: 'overdue', label: 'Overdue only' },
+                ]}
+              />
+              <Select
+                value={values.outcome}
+                onChange={(v) => setValue('outcome', v)}
+                allowEmpty
+                emptyLabel="Any outcome"
+                placeholder="Any outcome"
+                options={[
+                  { value: 'PENDING', label: 'Awaiting result' },
+                  { value: 'PASS', label: 'Pass' },
+                  { value: 'FAIL', label: 'Fail' },
+                  { value: 'CANCELLED', label: 'Cancelled' },
+                ]}
+              />
+              <Select
+                value={values.client}
+                onChange={(v) => setValue('client', v)}
+                allowEmpty
+                emptyLabel="Any client"
+                placeholder="Any client"
+                options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+              />
+              <Select
+                value={values.owner}
+                onChange={(v) => setValue('owner', v)}
+                allowEmpty
+                emptyLabel="Any owner"
+                placeholder="Any owner"
+                options={db.users
+                  .filter((u) => u.isActive)
+                  .map((u) => ({ value: u.id, label: u.id === user?.id ? `${u.fullName} (me)` : u.fullName }))}
+              />
+            </>
+          }
+        />
 
         <DataTable
           rows={all}

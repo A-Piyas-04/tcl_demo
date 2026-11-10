@@ -14,14 +14,18 @@
 
 import * as React from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { CircleSlash, Handshake, Pencil, Target } from 'lucide-react'
+import { ArrowRight, CircleSlash, Handshake, Pencil, Target } from 'lucide-react'
 import { useDb } from '@/data/store'
 import {
+  SOURCING_GAP_COPY,
   allSourcesFor,
   companyName,
   engagementFor,
   engagementRows,
   matchingSources,
+  nextStepFor,
+  requirementNextStep,
+  sourcingGap,
   userName,
   type SourceRow,
 } from '@/data/selectors'
@@ -51,11 +55,13 @@ import {
   PortfolioBadge,
   SkeletonTable,
   StageBadge,
+  StageRail,
   Tooltip,
   WriteButton,
   WriteOnly,
 } from '@/components/ui'
 import { NotFound } from '@/features/misc/Fallbacks'
+import { NextStepCard } from './DealProgress'
 
 export function RequirementDetail() {
   const { id = '' } = useParams()
@@ -63,6 +69,7 @@ export function RequirementDetail() {
   const navigate = useNavigate()
   const [selected, setSelected] = React.useState<string[]>([])
   const [busy, setBusy] = React.useState(false)
+  const candidatesRef = React.useRef<HTMLDivElement>(null)
 
   const requirement = db.requirements.find((r) => r.id === id)
 
@@ -87,6 +94,7 @@ export function RequirementDetail() {
   const product = db.products.find((p) => p.id === requirement.productId)
   const contact = db.contacts.find((c) => c.id === requirement.requestingContactId)
   const candidates = data?.candidates ?? []
+  const gap = sourcingGap(db, requirement.productId, requirement.requiredPharmacopoeia)
 
   const open = async () => {
     setBusy(true)
@@ -110,17 +118,79 @@ export function RequirementDetail() {
     }
   }
 
+  const next = requirementNextStep(db, requirement)
+  const engagementsFirst = (data?.engagements.length ?? 0) > 0
+
+  const engagementsPanel = (
+    <Panel>
+      <PanelHeader
+        title="Engagements for this requirement"
+        subtitle="One per source the client is considering, each with its own progress and next step"
+        actions={<Badge tone="neutral">{data?.engagements.length ?? 0}</Badge>}
+      />
+      {loading ? (
+        <SkeletonTable rows={3} cols={4} />
+      ) : (data?.engagements.length ?? 0) === 0 ? (
+        <div className="p-4">
+          <EmptyState
+            icon={<Handshake className="h-5 w-5" />}
+            title="No engagement has been opened yet"
+            description="An engagement is one client with one source, moving from offer to approval and supply. Select a candidate source to open one."
+            compact
+          />
+        </div>
+      ) : (
+        <ul className="divide-y divide-paper-200">
+          {data!.engagements.map((row) => {
+            const step = nextStepFor(db, row.engagement)
+            return (
+              <li key={row.engagement.id}>
+                <button
+                  onClick={() => navigate(`/engagements/${row.engagement.id}`)}
+                  className="grid w-full gap-x-4 gap-y-2 px-3 py-3 text-left transition-colors hover:bg-paper-100 md:grid-cols-[12rem_minmax(0,1fr)_14rem] md:items-center"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-ink-900">{row.manufacturer.displayName}</span>
+                    <span className="block truncate font-mono text-2xs text-ink-500">
+                      {row.mp.grade} · {row.mp.pharmacopoeia}
+                    </span>
+                  </span>
+                  <span className="min-w-0 space-y-1">
+                    <StageRail stage={row.stage} stageBeforeHold={row.engagement.stageBeforeHold} compact />
+                    <span className="flex items-center gap-2">
+                      <StageBadge stage={row.stage} size="sm" />
+                      <AgeingFlag days={row.daysInStage} threshold={stageConfig(row.stage).ageingThresholdDays} />
+                    </span>
+                  </span>
+                  <span className="flex min-w-0 items-center gap-1.5 text-xs text-ink-600">
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="text-ink-400">Next: </span>
+                      {step.title}
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-300" />
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Panel>
+  )
+
   return (
     <div className="space-y-4">
       <PageHeading
-        title={product?.genericName ?? 'Requirement'}
-        subtitle={`Asked for by ${companyName(db, requirement.clientCompanyId)} on ${fmtDate(requirement.enquiryDate)}.`}
+        title={`${companyName(db, requirement.clientCompanyId)} needs ${product?.genericName ?? 'a molecule'}`}
+        subtitle={`Requirement recorded on ${fmtDate(requirement.enquiryDate)}${requirement.estAnnualQty ? `, about ${fmtQty(requirement.estAnnualQty, requirement.qtyUom)} a year` : ''}.`}
         meta={
           <>
             <Badge tone={requirement.kind === 'NEW_DEVELOPMENT' ? 'info' : 'accent'}>
               {REQUIREMENT_KIND_LABEL[requirement.kind]}
             </Badge>
-            <Badge tone="neutral">{REQUIREMENT_STATUS_LABEL[requirement.status]}</Badge>
+            <Tooltip content="Set by hand on the requirement. It does not change automatically as engagements progress.">
+              <Badge tone="neutral">Status: {REQUIREMENT_STATUS_LABEL[requirement.status]}</Badge>
+            </Tooltip>
             {requirement.requiredPharmacopoeia ? (
               <Badge tone="outline">{requirement.requiredPharmacopoeia} required</Badge>
             ) : null}
@@ -146,9 +216,16 @@ export function RequirementDetail() {
         }
       />
 
+      <NextStepCard
+        step={next}
+        onAction={() => candidatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
+
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-4">
-          <Panel>
+        <div className="min-w-0 space-y-4">
+          {engagementsFirst ? engagementsPanel : null}
+
+          <Panel ref={candidatesRef}>
             <PanelHeader
               title="Candidate sources"
               subtitle={
@@ -164,11 +241,11 @@ export function RequirementDetail() {
               <div className="p-4">
                 <EmptyState
                   icon={<Target className="h-5 w-5" />}
-                  title="This requirement is unsourced demand"
+                  title={gap ? SOURCING_GAP_COPY[gap].label : 'No candidate source'}
                   description={
-                    requirement.requiredPharmacopoeia
-                      ? `No source TCL represents makes ${product?.genericName ?? 'this molecule'} to ${requirement.requiredPharmacopoeia}. It now appears on the sourcing shopping list.`
-                      : `No source TCL represents makes ${product?.genericName ?? 'this molecule'}. It now appears on the sourcing shopping list.`
+                    gap
+                      ? `${SOURCING_GAP_COPY[gap].detail}${['OPEN', 'SOURCING'].includes(requirement.status) ? ' It appears on the unsourced demand list.' : ''}`
+                      : 'No represented source matches this requirement.'
                   }
                   action={
                     <WriteOnly>
@@ -264,45 +341,7 @@ export function RequirementDetail() {
             )}
           </Panel>
 
-          <Panel>
-            <PanelHeader
-              title="Engagements opened from this requirement"
-              subtitle="One row per source the client is considering"
-              actions={<Badge tone="neutral">{data?.engagements.length ?? 0}</Badge>}
-            />
-            {loading ? (
-              <SkeletonTable rows={3} cols={4} />
-            ) : (data?.engagements.length ?? 0) === 0 ? (
-              <div className="p-4">
-                <EmptyState
-                  icon={<Handshake className="h-5 w-5" />}
-                  title="No engagement has been opened yet"
-                  description="An engagement is one client with one source, moving through the stages. Select a candidate above to open one."
-                  compact
-                />
-              </div>
-            ) : (
-              <ul className="divide-y divide-paper-200">
-                {data!.engagements.map((row) => (
-                  <li key={row.engagement.id}>
-                    <button
-                      onClick={() => navigate(`/engagements/${row.engagement.id}`)}
-                      className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5 text-left transition-colors hover:bg-paper-100"
-                    >
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-900">
-                        {row.manufacturer.displayName}
-                      </span>
-                      <span className="hidden font-mono text-2xs text-ink-500 sm:inline">
-                        {row.mp.grade} · {row.mp.pharmacopoeia}
-                      </span>
-                      <StageBadge stage={row.stage} size="sm" />
-                      <AgeingFlag days={row.daysInStage} threshold={stageConfig(row.stage).ageingThresholdDays} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
+          {engagementsFirst ? null : engagementsPanel}
         </div>
 
         <div className="space-y-4">
@@ -460,7 +499,7 @@ function CandidateRow({
             </Tooltip>
           )}
           {requirement.targetPrice != null && tier && tier.price > requirement.targetPrice ? (
-            <Badge tone="outline">
+            <Badge tone="outline" className="whitespace-normal">
               Above the client's target of{' '}
               {fmtMoney(requirement.targetPrice, requirement.targetCurrency ?? 'USD', { decimals: 0 })}
             </Badge>

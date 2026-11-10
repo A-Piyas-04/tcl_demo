@@ -5,6 +5,7 @@
  * "not permitted" page, never a silent redirect that hides the reason.
  */
 
+import * as React from 'react'
 import { useLocation } from 'react-router-dom'
 import { Compass, ShieldAlert } from 'lucide-react'
 import { Button, EmptyState, LinkButton, Panel } from '@/components/ui'
@@ -33,6 +34,19 @@ export function NotFound() {
 
 export function NotPermitted({ what }: { what?: string }) {
   const setRole = useStore((s) => s.setRole)
+  const location = useLocation()
+
+  // the refusal is recorded once per visit, as the server would record its 403
+  React.useEffect(() => {
+    const { currentUserId, pushSecurity } = useStore.getState()
+    pushSecurity({
+      eventType: 'PERMISSION_DENIED',
+      userId: currentUserId,
+      detail: `View Only session refused at ${location.pathname}${what ? ` (${what.toLowerCase()})` : ''}`,
+      rowCount: null,
+    })
+  }, [location.pathname, what])
+
   return (
     <div className="mx-auto max-w-xl py-10">
       <Panel className="p-6">

@@ -24,7 +24,8 @@ async function shot(page, name) {
 
 async function main() {
   await mkdir(OUT, { recursive: true })
-  const browser = await chromium.launch()
+  // PLAYWRIGHT_CHROMIUM_PATH lets a machine without Playwright's own build use an installed Chrome
+  const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined })
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const page = await context.newPage()
 
@@ -84,6 +85,101 @@ async function main() {
     step('Engagement detail opens from the table', false, 'no rows found')
   }
 
+  // --------------------------------- 2b. a stage that needs a record refuses a drag
+  await page.goto(`${BASE}/engagements`, { waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(1400)
+  const identifiedHandle = page
+    .locator('div.w-\\[17rem\\]')
+    .filter({ hasText: /^Identified/ })
+    .getByRole('button', { name: /^Move .+ for / })
+    .first()
+  const offeredColumn = page.locator('div.w-\\[17rem\\]').filter({ hasText: /^Offered/ }).first()
+  if ((await identifiedHandle.count()) > 0 && (await offeredColumn.count()) > 0) {
+    const from = await identifiedHandle.boundingBox()
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(from.x + 12, from.y + 12, { steps: 4 })
+    // the board may auto-scroll while dragging, so aim at where the column is now
+    for (let i = 0; i < 3; i++) {
+      const to = await offeredColumn.boundingBox()
+      // the drop target is decided by the card's rectangle, which hangs to the right of the grip
+      await page.mouse.move(to.x + 24, to.y + 140, { steps: 6 })
+      await page.waitForTimeout(150)
+    }
+    await page.mouse.up()
+    await page.waitForTimeout(700)
+    // dnd-kit auto-scroll can carry a synthetic drag one column on, so accept either record stage
+    const refusedDrag = await page
+      .getByText(/becomes Offered when an offer is recorded|starts when a sample round is requested/i)
+      .count()
+    step('Dragging into an offer or sample stage without the record is refused', refusedDrag > 0)
+    await shot(page, '04b-drag-refused')
+  } else {
+    step('Dragging into an offer or sample stage without the record is refused', false, 'no Identified card to drag')
+  }
+
+  // ------------------------------------------------- 2c. the story route
+  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(1200)
+  const storiesShown = await page.getByText('Demonstration stories').count()
+  const attention = await page.getByText('Needs attention').count()
+  step('Dashboard shows the needs-attention list and the demo stories', storiesShown > 0 && attention > 0)
+
+  await page.getByRole('link', { name: /A new enquiry/ }).click()
+  await page.waitForTimeout(1200)
+  step(
+    'New enquiry suggests choosing sources',
+    (await page.getByText('Choose which sources to offer').count()) > 0,
+    page.url().split('/').pop(),
+  )
+  await shot(page, '05a-requirement-next-step')
+
+  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(1000)
+  await page.getByRole('link', { name: /Approved, not yet ordered/ }).click()
+  await page.waitForTimeout(1200)
+  const recordOrder = page.getByRole('link', { name: 'Record client order' }).first()
+  step('Approved engagement offers to record the client order', (await recordOrder.count()) > 0)
+  await shot(page, '05b-approved-next-step')
+  if ((await recordOrder.count()) > 0) {
+    await recordOrder.click()
+    await page.waitForTimeout(1000)
+    const prefilled =
+      page.url().includes('/client-orders/new?client=') &&
+      (await page.getByText(/Started from an engagement/i).count()) > 0
+    step('Order form opens prefilled from the engagement', prefilled)
+    await shot(page, '05c-order-prefilled')
+  }
+
+  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(1000)
+  await page.getByRole('link', { name: /Delivered and paid/ }).click()
+  await page.waitForTimeout(1200)
+  step(
+    'Completed story reads as delivered and paid',
+    (await page.getByText('Complete: delivered and paid').count()) > 0,
+  )
+  await page.getByRole('tab', { name: /Orders & shipments/ }).click()
+  await page.waitForTimeout(600)
+  // order ids start "cor_"; "/client-orders/new" is the record-an-order button
+  const linkedOrder = await page.locator('a[href^="/client-orders/cor_"]').count()
+  const linkedShipment = await page.locator('a[href^="/shipments/"]').count()
+  step('Engagement lists its order and shipments', linkedOrder > 0 && linkedShipment > 0)
+  await shot(page, '05d-complete-trade-tab')
+
+  if (linkedOrder > 0) {
+    await page.locator('a[href^="/client-orders/cor_"]').first().click()
+    await page.waitForTimeout(1200)
+    const split = await page.getByText(/Split sourced across 2 manufacturers/i).count()
+    const fulfilment = await page.getByText('Fulfilment').count()
+    step('Client order shows split sourcing and its fulfilment chain', split > 0 && fulfilment > 0)
+    await shot(page, '05e-order-fulfilment')
+  }
+
+  await page.goto(`${BASE}/commissions/analysis`, { waitUntil: 'domcontentloaded' })
+  await page.waitForTimeout(1200)
+  step('Commission analysis sits under Commission', (await page.getByRole('link', { name: 'Tracker' }).count()) > 0)
+
   // ------------------------------------------------------- 3. client order
   await page.goto(`${BASE}/client-orders`, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1200)
@@ -95,7 +191,7 @@ async function main() {
     await page.locator('tbody tr').first().click()
     await page.waitForTimeout(1200)
     const hasIndent = await page.getByText(/indent/i).count()
-    step('Client order detail shows its indents', hasIndent > 0)
+    step('Client order detail shows its fulfilment', hasIndent > 0)
     await shot(page, '07-client-order-detail')
   }
 

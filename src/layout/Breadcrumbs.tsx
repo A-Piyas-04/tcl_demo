@@ -55,6 +55,12 @@ const SECTION_LABEL: Record<string, string> = {
   reasons: 'Reasons',
   incoterms: 'Incoterms',
   'payment-terms': 'Payment terms',
+  analysis: 'Analysis',
+}
+
+/** Path prefixes whose own list lives elsewhere. */
+const SECTION_HOME: Record<string, string> = {
+  '/sources': '/products',
 }
 
 export function Breadcrumbs() {
@@ -79,7 +85,9 @@ export function Breadcrumbs() {
     } else if (!SECTION_LABEL[part]) {
       label = part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' ')
     }
-    crumbs.push({ label, to: i === parts.length - 1 ? location.pathname + location.search : path })
+    // a source has no list of its own; sources are browsed from Products
+    const to = i === parts.length - 1 ? location.pathname + location.search : SECTION_HOME[path] ?? path
+    crumbs.push({ label: i === 0 && part === 'sources' ? 'Products' : label, to })
   })
 
   return (

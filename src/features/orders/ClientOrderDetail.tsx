@@ -21,7 +21,7 @@ import {
   userName,
   type OrderLineStatus,
 } from '@/data/selectors'
-import { ORDER_STATUS_LABEL, paymentTermLabel } from '@/data/reference'
+import { paymentTermLabel } from '@/data/reference'
 import { raiseIndents } from '@/data/api'
 import { runAction, useAsyncData } from '@/lib/hooks'
 import { fmtDate, fmtMoney, fmtQty, pluralise } from '@/lib/utils'
@@ -49,13 +49,36 @@ import {
 import { NotFound } from '@/features/misc/Fallbacks'
 import {
   ActivityPanel,
+  CommissionStatusBadge,
   DocumentsPanel,
   IndentingNote,
   LcBadge,
   OrderStatusBadge,
+  ShipmentStatusBadge,
   StatCell,
   sumQty,
 } from './shared'
+
+/** Where an order line came from: the engagement, and the requirement behind it. */
+function LineOrigin({ lineId }: { lineId: string }) {
+  const db = useDb()
+  const line = db.clientOrderLines.find((l) => l.id === lineId)
+  const engagementId = line?.engagementId
+  if (!engagementId) return null
+  const requirementId = db.requirementEngagements.find((l) => l.engagementId === engagementId)?.requirementId
+  return (
+    <span className="mt-0.5 flex flex-wrap gap-x-2 text-2xs">
+      <Link to={`/engagements/${engagementId}`} className="text-accent-700 hover:underline">
+        Engagement
+      </Link>
+      {requirementId ? (
+        <Link to={`/requirements/${requirementId}`} className="text-accent-700 hover:underline">
+          Requirement
+        </Link>
+      ) : null}
+    </span>
+  )
+}
 
 export function ClientOrderDetail() {
   const { id = '' } = useParams()
@@ -243,6 +266,7 @@ export function ClientOrderDetail() {
                           {line.productName}
                         </Link>
                         <span className="block text-xs text-ink-500">{line.sourceName}</span>
+                        <LineOrigin lineId={line.lineId} />
                         {line.overrideReason ? (
                           <span className="mt-1 flex items-start gap-1.5">
                             <Badge tone="warn">Override</Badge>
@@ -280,11 +304,11 @@ export function ClientOrderDetail() {
         )}
       </Panel>
 
-      {/* ---------------------------------------------------------- indents */}
+      {/* ------------------------------------------------------- fulfilment */}
       <Panel>
         <PanelHeader
-          title="Indents raised"
-          subtitle="One per manufacturer, each placed for this client"
+          title="Fulfilment"
+          subtitle="Each indent placed on a manufacturer for this order, its letter of credit, its shipments and TCL's commission"
           actions={<Badge tone="neutral">{pluralise(indents.length, 'indent')}</Badge>}
         />
         {loading ? (
@@ -304,27 +328,71 @@ export function ClientOrderDetail() {
           </div>
         ) : (
           <ul className="divide-y divide-paper-200">
-            {indents.map((indent) => (
-              <li key={indent.id}>
-                <Link
-                  to={`/indents/${indent.id}`}
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3 transition-colors hover:bg-paper-100"
-                >
-                  <span className="font-mono text-[0.8rem] tabular font-medium text-ink-900">
-                    {indent.indentNumber}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-ink-800">
-                    on {db.companies.find((c) => c.id === indent.manufacturerCompanyId)?.displayName ?? '—'}
-                  </span>
-                  <span className="text-sm font-medium tabular text-ink-900">
-                    {fmtMoney(indentValue(db, indent.id), indent.currency, { decimals: 0 })}
-                  </span>
-                  <LcBadge indent={indent} />
-                  <Badge tone="neutral">{ORDER_STATUS_LABEL[indent.status]}</Badge>
-                  <ArrowRight className="h-3.5 w-3.5 text-ink-400" />
-                </Link>
-              </li>
-            ))}
+            {indents.map((indent) => {
+              const shipments = db.shipments.filter((s) => s.indentId === indent.id)
+              const commission = db.commissions.find((c) => c.indentId === indent.id)
+              return (
+                <li key={indent.id} className="px-4 py-3">
+                  <Link
+                    to={`/indents/${indent.id}`}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded transition-colors hover:text-accent-700"
+                  >
+                    <span className="font-mono text-[0.8rem] tabular font-medium text-ink-900">
+                      {indent.indentNumber}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink-800">
+                      placed on {db.companies.find((c) => c.id === indent.manufacturerCompanyId)?.displayName ?? '—'}
+                    </span>
+                    <span className="text-sm font-medium tabular text-ink-900">
+                      {fmtMoney(indentValue(db, indent.id), indent.currency, { decimals: 0 })}
+                    </span>
+                    <LcBadge indent={indent} />
+                    <OrderStatusBadge status={indent.status} />
+                    <ArrowRight className="h-3.5 w-3.5 text-ink-400" />
+                  </Link>
+                  <div className="mt-2 grid gap-2 border-l-2 border-paper-200 pl-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Shipments</p>
+                      {shipments.length === 0 ? (
+                        <p className="text-xs text-ink-400">None yet. Added on the indent when the manufacturer despatches.</p>
+                      ) : (
+                        shipments.map((s) => (
+                          <Link
+                            key={s.id}
+                            to={`/shipments/${s.id}`}
+                            className="flex items-center gap-2 text-xs text-ink-700 hover:text-accent-700"
+                          >
+                            <span className="font-mono">{s.shipmentRef}</span>
+                            <ShipmentStatusBadge status={s.status} />
+                            <span className="text-ink-400">
+                              {s.actualArrivalDate ? `arrived ${fmtDate(s.actualArrivalDate)}` : s.eta ? `ETA ${fmtDate(s.eta)}` : ''}
+                            </span>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">TCL commission</p>
+                      {commission ? (
+                        <p className="flex flex-wrap items-center gap-2 text-xs text-ink-700">
+                          <CommissionStatusBadge status={commission.status} />
+                          {commission.amount != null
+                            ? fmtMoney(commission.amount, commission.currency, { decimals: 0 })
+                            : 'terms to be agreed'}
+                          {commission.receivedAmount > 0 ? (
+                            <span className="text-ink-400">
+                              · {fmtMoney(commission.receivedAmount, commission.currency, { decimals: 0 })} received
+                            </span>
+                          ) : null}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-ink-400">No commission record.</p>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         )}
       </Panel>

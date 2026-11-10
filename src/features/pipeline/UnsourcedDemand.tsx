@@ -15,7 +15,16 @@
 import { Link } from 'react-router-dom'
 import { Building2, Download, PackageSearch, Target } from 'lucide-react'
 import { useDb } from '@/data/store'
-import { allSourcesFor, requirementRows, type RequirementRow, type SourceRow } from '@/data/selectors'
+import { SectionNav } from '@/layout/sections'
+import {
+  SOURCING_GAP_COPY,
+  allSourcesFor,
+  requirementRows,
+  sourcingGap,
+  type RequirementRow,
+  type SourceRow,
+  type SourcingGap,
+} from '@/data/selectors'
 import { convertQty, REQUIREMENT_KIND_LABEL } from '@/data/reference'
 import { logExport } from '@/data/api'
 import { useAsyncData } from '@/lib/hooks'
@@ -35,33 +44,8 @@ import {
   WriteOnly,
 } from '@/components/ui'
 
-type Gap = 'NO_SOURCE' | 'NOT_REPRESENTED' | 'PHARMACOPOEIA' | 'SOURCE_UNAVAILABLE'
-
-const GAP_COPY: Record<Gap, { label: string; tone: 'danger' | 'warn' | 'accent'; detail: string }> = {
-  NO_SOURCE: {
-    label: 'No source in the register',
-    tone: 'danger',
-    detail: 'Nobody in the register makes this molecule. Sourcing has to find and register a manufacturer.',
-  },
-  NOT_REPRESENTED: {
-    label: 'Source exists, not represented',
-    tone: 'warn',
-    detail:
-      'The register already holds a manufacturer for this molecule that TCL does not represent. This is an agency conversation, not a search.',
-  },
-  PHARMACOPOEIA: {
-    label: 'Wrong pharmacopoeia',
-    tone: 'accent',
-    detail:
-      'TCL represents a source for this molecule, but not to the standard the client named. Either a second grade from the same plant or another source is needed.',
-  },
-  SOURCE_UNAVAILABLE: {
-    label: 'Source blocked',
-    tone: 'warn',
-    detail:
-      'Every known source is discontinued, or its manufacturer is inactive or blacklisted, so none of them can be offered.',
-  },
-}
+type Gap = SourcingGap
+const GAP_COPY = SOURCING_GAP_COPY
 
 interface Group {
   productId: string
@@ -94,16 +78,8 @@ export function UnsourcedDemand() {
       const product = list[0]!.product
       const known = allSourcesFor(db, productId)
       const unrepresented = known.filter((s) => !s.inPortfolio && s.sourceAvailable)
-      const representedAvailable = known.filter((s) => s.inPortfolio && s.sourceAvailable)
-
-      const gap: Gap =
-        known.length === 0
-          ? 'NO_SOURCE'
-          : representedAvailable.length > 0
-            ? 'PHARMACOPOEIA'
-            : unrepresented.length > 0
-              ? 'NOT_REPRESENTED'
-              : 'SOURCE_UNAVAILABLE'
+      // the molecule-level reason, ignoring the pharmacopoeia each client named
+      const gap: Gap = sourcingGap(db, productId) ?? 'PHARMACOPOEIA'
 
       out.push({
         productId,
@@ -171,20 +147,17 @@ export function UnsourcedDemand() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Unsourced demand"
-        subtitle="Open requirements TCL cannot answer today, ranked by the weight of demand behind each molecule."
-        meta={
-          <>
-            <Badge tone="warn">{pluralise(all.length, 'molecule')}</Badge>
-            <Badge tone="neutral">{pluralise(requirementCount, 'open requirement')}</Badge>
-          </>
-        }
-        actions={
-          <>
-            <LinkButton to="/requirements" variant="ghost" size="md">
-              All requirements
-            </LinkButton>
+      <div>
+        <PageHeading
+          title="Requirements"
+          subtitle="Unsourced demand: open requirements TCL cannot answer today, ranked by the weight of demand behind each molecule."
+          meta={
+            <>
+              <Badge tone="warn">{pluralise(all.length, 'molecule')}</Badge>
+              <Badge tone="neutral">{pluralise(requirementCount, 'open requirement')}</Badge>
+            </>
+          }
+          actions={
             <Button
               variant="secondary"
               size="md"
@@ -194,9 +167,10 @@ export function UnsourcedDemand() {
             >
               Export
             </Button>
-          </>
-        }
-      />
+          }
+        />
+        <SectionNav section="requirements" />
+      </div>
 
       {loading ? (
         <SkeletonTiles count={4} />

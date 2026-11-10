@@ -9,14 +9,14 @@
  * consignment (assumption A7).
  */
 
-import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldAlert, Ship, SlidersHorizontal } from 'lucide-react'
+import { SectionNav } from '@/layout/sections'
 import { useDb } from '@/data/store'
 import { clients as clientList, manufacturers as mfrList } from '@/data/selectors'
 import { SHIPMENT_MODE_LABEL, SHIPMENT_STATUS_LABEL } from '@/data/reference'
 import { logExport } from '@/data/api'
-import { useAsyncData, useDebounced, useUrlFilters } from '@/lib/hooks'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
 import { fmtDate, fmtQty, pluralise, todayIso } from '@/lib/utils'
 import type { Indent, Shipment, ShipmentMode, ShipmentStatus } from '@/data/types'
 import {
@@ -24,16 +24,16 @@ import {
   Column,
   DataTable,
   EmptyState,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
   PageHeading,
-  SearchInput,
   Select,
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
-import { ClearFiltersButton, ShipmentStatusBadge, sumQty } from './shared'
+import { ShipmentStatusBadge, sumQty } from './shared'
 
 interface Row {
   shipment: Shipment
@@ -58,14 +58,8 @@ export function ShipmentList() {
   const db = useDb()
   const navigate = useNavigate()
   const { values, setValue, clear, activeCount, queryString } = useUrlFilters(DEFAULTS)
-  const [search, setSearch] = React.useState(values.q)
-  const debounced = useDebounced(search, 180)
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
   const today = todayIso()
-
-  React.useEffect(() => {
-    setValue('q', debounced)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced])
 
   const { data: rows, loading } = useAsyncData<Row[]>(() => {
     return db.shipments
@@ -273,77 +267,81 @@ export function ShipmentList() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Shipments"
-        subtitle="What the manufacturers have despatched against each indent, and where it has reached. Clearance applies to the whole consignment."
-        meta={
-          <>
-            <Badge tone="neutral">{pluralise(db.shipments.length, 'shipment')}</Badge>
-            {held > 0 ? (
-              <Badge tone="danger">
-                <ShieldAlert className="h-3 w-3" />
-                {held} held at customs
-              </Badge>
-            ) : null}
-            {overdue > 0 ? <Badge tone="warn">{overdue} past ETA with no arrival</Badge> : null}
-          </>
-        }
-        actions={
-          <WriteOnly>
-            <LinkButton to="/indents" variant="secondary" size="md">
-              Open an indent to add a shipment
-            </LinkButton>
-          </WriteOnly>
-        }
-      />
+      <div>
+        <PageHeading
+          title="Shipments"
+          subtitle="What the manufacturers have despatched against each indent, and where it has reached. A shipment is added from its indent once the manufacturer confirms despatch."
+          meta={
+            <>
+              <Badge tone="neutral">{pluralise(db.shipments.length, 'shipment')}</Badge>
+              {held > 0 ? (
+                <Badge tone="danger">
+                  <ShieldAlert className="h-3 w-3" />
+                  {held} held at customs
+                </Badge>
+              ) : null}
+              {overdue > 0 ? <Badge tone="warn">{overdue} past ETA with no arrival</Badge> : null}
+            </>
+          }
+        />
+        <SectionNav section="shipments" />
+      </div>
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Shipment, indent, BL or party…"
-            className="sm:col-span-2 lg:col-span-1"
-          />
-          <Select
-            value={values.status}
-            onChange={(v) => setValue('status', v)}
-            allowEmpty
-            emptyLabel="Any status"
-            placeholder="Any status"
-            options={(Object.keys(SHIPMENT_STATUS_LABEL) as ShipmentStatus[]).map((s) => ({
-              value: s,
-              label: SHIPMENT_STATUS_LABEL[s],
-            }))}
-          />
-          <Select
-            value={values.mode}
-            onChange={(v) => setValue('mode', v)}
-            allowEmpty
-            emptyLabel="Any mode"
-            placeholder="Any mode"
-            options={(Object.keys(SHIPMENT_MODE_LABEL) as ShipmentMode[]).map((m) => ({
-              value: m,
-              label: SHIPMENT_MODE_LABEL[m],
-            }))}
-          />
-          <Select
-            value={values.manufacturer}
-            onChange={(v) => setValue('manufacturer', v)}
-            allowEmpty
-            emptyLabel="Any manufacturer"
-            placeholder="Any manufacturer"
-            options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
-          />
-          <Select
-            value={values.client}
-            onChange={(v) => setValue('client', v)}
-            allowEmpty
-            emptyLabel="Any client"
-            placeholder="Any client"
-            options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
-          />
-        </div>
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Shipment, indent, BL or party…"
+          activeCount={activeCount}
+          onClear={clear}
+          moreActive={['mode', 'manufacturer'].filter((k) => values[k as keyof typeof values]).length}
+          primary={
+            <>
+              <Select
+                value={values.status}
+                onChange={(v) => setValue('status', v)}
+                allowEmpty
+                emptyLabel="Any status"
+                placeholder="Any status"
+                options={(Object.keys(SHIPMENT_STATUS_LABEL) as ShipmentStatus[]).map((s) => ({
+                  value: s,
+                  label: SHIPMENT_STATUS_LABEL[s],
+                }))}
+              />
+              <Select
+                value={values.client}
+                onChange={(v) => setValue('client', v)}
+                allowEmpty
+                emptyLabel="Any client"
+                placeholder="Any client"
+                options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+              />
+            </>
+          }
+          more={
+            <>
+              <Select
+                value={values.mode}
+                onChange={(v) => setValue('mode', v)}
+                allowEmpty
+                emptyLabel="Any mode"
+                placeholder="Any mode"
+                options={(Object.keys(SHIPMENT_MODE_LABEL) as ShipmentMode[]).map((m) => ({
+                  value: m,
+                  label: SHIPMENT_MODE_LABEL[m],
+                }))}
+              />
+              <Select
+                value={values.manufacturer}
+                onChange={(v) => setValue('manufacturer', v)}
+                allowEmpty
+                emptyLabel="Any manufacturer"
+                placeholder="Any manufacturer"
+                options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
+              />
+            </>
+          }
+        />
 
         <DataTable
           rows={rows ?? []}
@@ -371,13 +369,6 @@ export function ShipmentList() {
               <span className="flex items-center gap-1">
                 <span className="h-2.5 w-2.5 rounded-sm border border-warn-200 bg-warn-50" /> past ETA
               </span>
-              <ClearFiltersButton
-                count={activeCount}
-                onClear={() => {
-                  clear()
-                  setSearch('')
-                }}
-              />
             </span>
           }
           empty={

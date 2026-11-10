@@ -129,6 +129,29 @@ export async function runAction<T>(
   }
 }
 
+/**
+ * A search box bound to a URL filter: typing is instant on screen and written
+ * to the query string a moment later.
+ */
+export function useUrlSearch(urlValue: string, write: (value: string) => void, ms = 180): [string, (value: string) => void] {
+  const [text, setText] = React.useState(urlValue)
+  const debounced = useDebounced(text, ms)
+  const writeRef = React.useRef(write)
+  writeRef.current = write
+
+  React.useEffect(() => {
+    if (debounced !== urlValue) writeRef.current(debounced)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounced])
+
+  // a cleared filter set clears the box too
+  React.useEffect(() => {
+    if (!urlValue) setText('')
+  }, [urlValue])
+
+  return [text, setText]
+}
+
 /** Debounced value, for search boxes. */
 export function useDebounced<T>(value: T, ms = 200): T {
   const [debounced, setDebounced] = React.useState(value)

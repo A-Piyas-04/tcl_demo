@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom'
+import { Navigate, Route } from 'react-router-dom'
 import { RelationshipsHome } from './RelationshipsHome'
 import { ConnectionTree } from './ConnectionTree'
 import { RelationshipMatrix } from './RelationshipMatrix'
@@ -8,8 +8,6 @@ import { ReportsHome } from './ReportsHome'
 import { DevelopmentRegister } from './DevelopmentRegister'
 import { PipelineReport } from './PipelineReport'
 import { ConversionFunnel } from './ConversionFunnel'
-import { CommissionReport } from './CommissionReport'
-
 /**
  * Relationships, documents and reports. Everything here reads and exports, so
  * no route needs RequireWrite: the only write in the area is the document
@@ -32,7 +30,7 @@ export const insightRoutes = (
       <Route path="development-register" element={<DevelopmentRegister />} />
       <Route path="pipeline" element={<PipelineReport />} />
       <Route path="funnel" element={<ConversionFunnel />} />
-      <Route path="commission" element={<CommissionReport />} />
+      <Route path="commission" element={<Navigate to="/commissions/analysis" replace />} />
     </Route>
   </>
 )

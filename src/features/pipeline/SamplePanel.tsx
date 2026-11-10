@@ -60,6 +60,36 @@ import {
 
 type Step = 'request' | 'dispatch' | 'receipt' | 'outcome'
 
+/** Stages from which the rules let a (further) sample round start. */
+const CAN_REQUEST_FROM: EngagementStage[] = ['IDENTIFIED', 'OFFERED', 'SAMPLE_REQUESTED', 'UNDER_EVALUATION']
+
+export function canRequestSample(stage: EngagementStage) {
+  return CAN_REQUEST_FROM.includes(stage)
+}
+
+/** One step of the sample cycle as a dialog, so it can be opened from outside the panel. */
+export function SampleStepDialog({
+  engagement,
+  step,
+  onClose,
+}: {
+  engagement: Engagement
+  step: { kind: Step; roundId?: string } | null
+  onClose: () => void
+}) {
+  const db = useDb()
+  if (!step) return null
+  const rounds = db.samples.filter((s) => s.engagementId === engagement.id)
+  const round = step.roundId ? rounds.find((r) => r.id === step.roundId) : undefined
+  if (step.kind === 'request') {
+    return <RequestDialog engagement={engagement} nextRound={rounds.length + 1} onClose={onClose} />
+  }
+  if (!round) return null
+  if (step.kind === 'dispatch') return <DispatchDialog round={round} onClose={onClose} />
+  if (step.kind === 'receipt') return <ReceiptDialog round={round} onClose={onClose} />
+  return <OutcomeDialog round={round} onClose={onClose} />
+}
+
 export function SamplePanel({
   engagement,
   onRequestStage,
@@ -75,27 +105,31 @@ export function SamplePanel({
     .filter((s) => s.engagementId === engagement.id)
     .sort((a, b) => b.roundNo - a.roundNo)
 
-  const lastFailed = rounds.find((r) => r.outcome === 'FAIL')
+  const latest = rounds[0]
+  const lastFailed = latest?.outcome === 'FAIL' ? latest : undefined
+  const lastPassed = latest?.outcome === 'PASS' && engagement.stage === 'UNDER_EVALUATION' ? latest : undefined
   const closed = engagement.stage === 'REJECTED' || engagement.stage === 'DISCONTINUED'
+  const canRequest = canRequestSample(engagement.stage)
 
   return (
     <Panel>
       <PanelHeader
         title="Sample rounds"
-        subtitle="Every round is kept with its own dates and outcome"
+        subtitle="Request, dispatch, client receipt, result. Each step moves the stage for you."
         icon={<FlaskConical className="h-4 w-4" />}
         actions={
           <>
             <Badge tone="neutral">{rounds.length}</Badge>
-            <WriteButton
-              variant="secondary"
-              size="sm"
-              icon={<Plus className="h-3.5 w-3.5" />}
-              disabled={closed}
-              onClick={() => setStep({ kind: 'request' })}
-            >
-              Request a sample
-            </WriteButton>
+            {canRequest && rounds.length > 0 ? (
+              <WriteButton
+                variant="secondary"
+                size="sm"
+                icon={<Plus className="h-3.5 w-3.5" />}
+                onClick={() => setStep({ kind: 'request' })}
+              >
+                Request a sample
+              </WriteButton>
+            ) : null}
           </>
         }
       />
@@ -123,9 +157,11 @@ export function SamplePanel({
             }
             compact
             action={
-              <WriteButton variant="primary" size="sm" disabled={closed} onClick={() => setStep({ kind: 'request' })}>
-                Request a sample
-              </WriteButton>
+              canRequest ? (
+                <WriteButton variant="primary" size="sm" onClick={() => setStep({ kind: 'request' })}>
+                  Request a sample
+                </WriteButton>
+              ) : undefined
             }
           />
         </div>
@@ -137,7 +173,21 @@ export function SamplePanel({
         </ul>
       )}
 
-      {lastFailed && !closed ? (
+      {lastPassed ? (
+        <WriteOnly>
+          <div className="flex flex-wrap items-center gap-2 border-t border-paper-200 bg-ok-50/60 p-3">
+            <p className="min-w-0 flex-1 text-sm text-ok-600">
+              <span className="font-semibold">Round {lastPassed.roundNo} passed.</span> Record the client&apos;s approval to
+              open ordering.
+            </p>
+            <Button variant="primary" size="sm" onClick={() => onRequestStage('APPROVED')}>
+              Record approval
+            </Button>
+          </div>
+        </WriteOnly>
+      ) : null}
+
+      {lastFailed && !closed && engagement.stage === 'UNDER_EVALUATION' ? (
         <WriteOnly>
           <div className="space-y-2 border-t border-paper-200 bg-warn-50/60 p-3">
             <p className="flex items-center gap-1.5 text-sm font-semibold text-warn-600">
@@ -264,7 +314,7 @@ function RoundRow({
               Record client receipt
             </Button>
           ) : null}
-          {round.outcome === 'PENDING' ? (
+          {round.outcome === 'PENDING' && round.receivedOn ? (
             <Button variant="secondary" size="sm" disabled={disabled} onClick={() => onStep('outcome')}>
               Record outcome
             </Button>
@@ -630,8 +680,8 @@ function OutcomeDialog({ round, onClose }: { round: SampleRound; onClose: () => 
       () => recordSampleOutcome(round.id, outcome, { outcomeOn, reasonCode: reasonCode || null, notes: notes.trim() || null }),
       {
         success:
-          outcome === 'PASS'
-            ? 'Pass recorded. Move the engagement to Approved from the stage control when the client confirms.'
+            outcome === 'PASS'
+              ? 'Pass recorded. Record the approval when the client confirms it.'
             : 'Fail recorded. Choose whether to raise another round or reject the engagement.',
         onError: setError,
       },

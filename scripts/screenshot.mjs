@@ -1,5 +1,5 @@
 /**
- * Visits every route at desktop and phone width, captures a screenshot of each,
+ * Visits every route at desktop, tablet and phone width, captures a screenshot of each,
  * and reports console errors and any element wider than the viewport.
  *
  * Usage:  node scripts/screenshot.mjs [baseUrl] [outDir]
@@ -32,6 +32,7 @@ const ROUTES = [
   ['shipments', '/shipments'],
   ['batches', '/batches'],
   ['commissions', '/commissions'],
+  ['commissions-analysis', '/commissions/analysis'],
   ['relationships', '/relationships'],
   ['relationships-tree', '/relationships/tree'],
   ['matrix-client-product', '/relationships/client-product'],
@@ -99,11 +100,14 @@ async function discoverDetailRoutes(page) {
 
 async function main() {
   await mkdir(OUT, { recursive: true })
-  const browser = await chromium.launch()
+  // PLAYWRIGHT_CHROMIUM_PATH lets a machine without Playwright's own build use an installed Chrome
+  const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined })
   const report = { consoleErrors: [], overflow: [], failed: [], shots: 0 }
+  let detailRoutes = null
 
   for (const [widthName, viewport] of [
     ['desktop', { width: 1280, height: 900 }],
+    ['tablet', { width: 820, height: 1180 }],
     ['phone', { width: 390, height: 844 }],
   ]) {
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
@@ -124,7 +128,9 @@ async function main() {
     })
 
     await signIn(page)
-    const routes = widthName === 'desktop' ? [...ROUTES, ...(await discoverDetailRoutes(page))] : ROUTES
+    // detail pages are found once, on the first pass, and reused at every width
+    if (!detailRoutes) detailRoutes = await discoverDetailRoutes(page)
+    const routes = [...ROUTES, ...detailRoutes]
 
     for (const [name, route] of routes) {
       try {

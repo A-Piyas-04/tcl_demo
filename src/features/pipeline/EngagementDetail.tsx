@@ -1,111 +1,100 @@
 /**
- * Engagement detail: the record of one relationship (FR-M6-05, UC-06 to UC-08).
+ * Engagement detail: the workspace for one deal (FR-M6-05, UC-06 to UC-10).
  *
- * One client, one source, one stage. The header carries the lifecycle and the
- * only control that may change it, which offers nothing but the transitions the
- * machine allows from here. Offers and sample rounds sit in the main column
- * because they are the work; the source, the client, the requirements served
- * and the paperwork sit in a bounded right-hand rail because they are context.
+ * One client, one manufacturer's product. The top of the page answers "where
+ * is this and what do I do next": the sourcing stages, the trade steps that
+ * follow approval, and one suggested next step whose button opens the right
+ * dialog. Underneath, tabs hold the detail: offers and samples, the orders,
+ * indents, shipments and commission that came of it, its documents, and its
+ * history. Nothing about the deal needs another screen to be understood.
  */
 
 import * as React from 'react'
-import { Link, useParams } from 'react-router-dom'
-import {
-  Activity as ActivityIcon,
-  Building2,
-  ChevronDown,
-  FileText,
-  History,
-  Plus,
-  Users,
-} from 'lucide-react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Building2, ChevronDown, History, Users } from 'lucide-react'
 import { useDb } from '@/data/store'
 import {
+  approvalContext,
   companyName,
   currentPriceTiers,
-  documentRows,
+  dealProgress,
   latestPrice,
+  nextStepFor,
   userName,
+  type NextStep,
 } from '@/data/selectors'
 import { STAGE_LABEL, countryName, stageConfig } from '@/data/reference'
-import { allowedNextStages } from '@/data/rules'
-import { logActivity } from '@/data/api'
-import { runAction, useAsyncData } from '@/lib/hooks'
-import { fmtDate, fmtDateTime, fmtMoney, fmtQty, pluralise, todayIso } from '@/lib/utils'
-import type { ActivityKind, EngagementStage } from '@/data/types'
+import { manualNextStages } from '@/data/rules'
+import { fmtDate, fmtMoney, fmtQty, pluralise } from '@/lib/utils'
+import type { EngagementStage } from '@/data/types'
 import {
   AgeingFlag,
-  Avatar,
   Badge,
   Button,
-  Dialog,
   EmptyState,
   Field,
   FieldGrid,
   FilingDot,
-  FormRow,
   InlineWarning,
-  Input,
   LinkButton,
   Menu,
   MenuContent,
   MenuItem,
   MenuLabel,
+  MenuSeparator,
   MenuTrigger,
   Panel,
   PanelHeader,
   PageHeading,
   PortfolioBadge,
-  Select,
   StageBadge,
   StageRail,
   StageTimeline,
-  Textarea,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
   Tooltip,
-  WriteButton,
   WriteOnly,
 } from '@/components/ui'
+import {
+  ActivityPanel,
+  CommissionStatusBadge,
+  DocumentsPanel,
+  OrderStatusBadge,
+  ShipmentStatusBadge,
+} from '@/components/ui/records'
 import { NotFound } from '@/features/misc/Fallbacks'
+import { lcState } from '@/features/orders/shared'
 import { StageChangeDialog } from './StageDialogs'
-import { OfferPanel } from './OfferPanel'
-import { SamplePanel } from './SamplePanel'
+import { OfferDialog, OfferPanel } from './OfferPanel'
+import { SamplePanel, SampleStepDialog } from './SamplePanel'
+import { NextStepCard, TradeSteps } from './DealProgress'
+
+const TABS = ['overview', 'work', 'trade', 'documents', 'history'] as const
+type TabKey = (typeof TABS)[number]
 
 export function EngagementDetail() {
   const { id = '' } = useParams()
   const db = useDb()
+  const [params, setParams] = useSearchParams()
   const [target, setTarget] = React.useState<EngagementStage | null>(null)
-  const [logging, setLogging] = React.useState(false)
+  const [offerOpen, setOfferOpen] = React.useState(false)
+  const [sampleStep, setSampleStep] = React.useState<{
+    kind: 'request' | 'dispatch' | 'receipt' | 'outcome'
+    roundId?: string
+  } | null>(null)
+
+  const tabParam = params.get('tab') as TabKey | null
+  const tab: TabKey = tabParam && TABS.includes(tabParam) ? tabParam : 'overview'
+  const setTab = (next: string) => {
+    const p = new URLSearchParams(params)
+    if (next === 'overview') p.delete('tab')
+    else p.set('tab', next)
+    setParams(p, { replace: true })
+  }
 
   const engagement = db.engagements.find((e) => e.id === id)
-
-  const { data } = useAsyncData(
-    () => {
-      const eng = db.engagements.find((e) => e.id === id)
-      if (!eng) return null
-      const links = db.requirementEngagements.filter((l) => l.engagementId === eng.id)
-      return {
-        history: db.stageHistory.filter((h) => h.engagementId === eng.id),
-        requirements: links
-          .map((l) => db.requirements.find((r) => r.id === l.requirementId))
-          .filter((r): r is NonNullable<typeof r> => Boolean(r)),
-        orderLines: db.clientOrderLines.filter((l) => l.engagementId === eng.id),
-        indentLines: db.indentLines.filter((l) => {
-          if (l.manufacturerProductId !== eng.manufacturerProductId) return false
-          const indent = db.indents.find((i) => i.id === l.indentId)
-          return indent?.clientCompanyId === eng.clientCompanyId
-        }),
-        documents: documentRows(db, { entityType: 'ENGAGEMENT', entityId: eng.id }),
-        activities: db.activities
-          .filter((a) => a.entityType === 'ENGAGEMENT' && a.entityId === eng.id)
-          .sort((a, b) => (a.occurredAt < b.occurredAt ? 1 : -1)),
-        peers: db.engagements.filter(
-          (o) => o.productId === eng.productId && o.clientCompanyId !== eng.clientCompanyId,
-        ).length,
-      }
-    },
-    [id],
-  )
-
   if (!engagement) return <NotFound />
 
   const product = db.products.find((p) => p.id === engagement.productId)
@@ -115,40 +104,72 @@ export function EngagementDetail() {
   const filings = db.filings.filter((f) => f.manufacturerProductId === engagement.manufacturerProductId && f.isActive)
   const tiers = currentPriceTiers(db, engagement.manufacturerProductId)
   const expired = latestPrice(db, engagement.manufacturerProductId)
-  const inPortfolio = db.portfolio.some(
-    (p) => p.manufacturerProductId === engagement.manufacturerProductId && p.isActive,
-  )
+  const inPortfolio = db.portfolio.some((p) => p.manufacturerProductId === engagement.manufacturerProductId && p.isActive)
+  const history = db.stageHistory.filter((h) => h.engagementId === engagement.id)
+  const requirements = db.requirementEngagements
+    .filter((l) => l.engagementId === engagement.id)
+    .map((l) => db.requirements.find((r) => r.id === l.requirementId))
+    .filter((r): r is NonNullable<typeof r> => Boolean(r))
+  const peers = db.engagements.filter(
+    (o) => o.productId === engagement.productId && o.clientCompanyId !== engagement.clientCompanyId,
+  ).length
+  const offerCount = db.offers.filter((o) => o.engagementId === engagement.id).length
+  const sampleCount = db.samples.filter((s) => s.engagementId === engagement.id).length
+
+  const deal = dealProgress(db, engagement)
+  const next = nextStepFor(db, engagement)
+  const approval = approvalContext(db, engagement)
+  const manual = manualNextStages(engagement)
+  const daysInStage = Math.max(0, Math.round((Date.now() - new Date(engagement.stageChangedAt).getTime()) / 86400000))
 
   const recordName = `${product?.genericName ?? 'This molecule'} (${manufacturer?.displayName ?? 'source'}) for ${client?.displayName ?? 'the client'}`
-  const next = allowedNextStages(engagement.stage)
-  const samples = db.samples.filter((s) => s.engagementId === engagement.id)
-  const hasPassedSample = samples.some((s) => s.outcome === 'PASS')
-  const siblingApproved = db.engagements.filter(
-    (e) =>
-      e.id !== engagement.id &&
-      e.clientCompanyId === engagement.clientCompanyId &&
-      e.productId === engagement.productId &&
-      (e.stage === 'APPROVED' || e.stage === 'COMMERCIAL'),
-  ).length
+
+  const runNext = (step: NextStep) => {
+    const action = step.action
+    if (!action) return
+    switch (action.kind) {
+      case 'offer':
+        setOfferOpen(true)
+        break
+      case 'sample':
+        setSampleStep({ kind: 'request' })
+        break
+      case 'dispatch':
+      case 'receipt':
+      case 'outcome':
+        setSampleStep({ kind: action.kind, roundId: action.roundId })
+        break
+      case 'approve':
+        setTarget('APPROVED')
+        break
+      case 'link':
+        break
+    }
+  }
+
+  const offerBlocked =
+    next.action?.kind === 'offer' && tiers.length === 0
+      ? {
+          text: expired
+            ? `No offer can be made: the source price expired on ${fmtDate(expired.validTo)}.`
+            : 'No offer can be made: this source has no price on record.',
+          href: `/sources/${engagement.manufacturerProductId}`,
+          label: 'Renew the source price',
+        }
+      : null
 
   return (
     <div className="space-y-4">
       <PageHeading
-        title={`${product?.genericName ?? 'Engagement'} (${manufacturer?.displayName ?? '—'})`}
-        subtitle={`For ${client?.displayName ?? 'an unknown client'}. ${mp ? `${mp.grade}, ${mp.pharmacopoeia}.` : ''}`}
+        title={`${client?.displayName ?? 'Client'} · ${product?.genericName ?? 'Engagement'}`}
+        subtitle={`From ${manufacturer?.displayName ?? 'an unknown manufacturer'}${mp ? `, ${mp.grade}, ${mp.pharmacopoeia}` : ''}. An engagement follows one client considering one manufacturer's product, from first offer to commercial supply.`}
         meta={
           <>
             <StageBadge stage={engagement.stage} />
             <Tooltip content={`Ageing threshold for this stage is ${stageConfig(engagement.stage).ageingThresholdDays} days.`}>
               <span className="inline-flex items-center gap-1">
                 <span className="text-xs text-ink-500">in stage</span>
-                <AgeingFlag
-                  days={Math.max(
-                    0,
-                    Math.round((Date.now() - new Date(engagement.stageChangedAt).getTime()) / 86400000),
-                  )}
-                  threshold={stageConfig(engagement.stage).ageingThresholdDays}
-                />
+                <AgeingFlag days={daysInStage} threshold={stageConfig(engagement.stage).ageingThresholdDays} />
               </span>
             </Tooltip>
             {engagement.origin === 'MIGRATED' ? (
@@ -163,21 +184,25 @@ export function EngagementDetail() {
           <WriteOnly>
             <Menu>
               <MenuTrigger asChild>
-                <Button variant="primary" size="md" icon={<ChevronDown className="h-3.5 w-3.5" />}>
+                <Button variant="secondary" size="md" icon={<ChevronDown className="h-3.5 w-3.5" />}>
                   Change stage
                 </Button>
               </MenuTrigger>
               <MenuContent>
-                <MenuLabel>Allowed from {STAGE_LABEL[engagement.stage]}</MenuLabel>
-                {next.length === 0 ? (
-                  <MenuItem disabled>Nothing is allowed from here</MenuItem>
+                <MenuLabel>From {STAGE_LABEL[engagement.stage]}</MenuLabel>
+                {manual.length === 0 ? (
+                  <MenuItem disabled>Nothing to change by hand</MenuItem>
                 ) : (
-                  next.map((stage) => (
+                  manual.map((stage) => (
                     <MenuItem key={stage} onSelect={() => setTarget(stage)}>
                       {STAGE_LABEL[stage]}
                     </MenuItem>
                   ))
                 )}
+                <MenuSeparator />
+                <p className="max-w-[15rem] px-2 py-1 text-2xs leading-relaxed text-ink-400">
+                  Offers and samples move the stage when they are recorded, on the Offers &amp; samples tab.
+                </p>
               </MenuContent>
             </Menu>
           </WriteOnly>
@@ -185,29 +210,26 @@ export function EngagementDetail() {
       />
 
       <Panel>
-        <div className="space-y-3 p-4">
-          <StageRail
-            stage={engagement.stage}
-            history={data?.history}
-            stageBeforeHold={engagement.stageBeforeHold}
-          />
-          <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="First offered">{fmtDate(engagement.firstOfferedOn)}</Field>
-            <Field label="First sample">{fmtDate(engagement.firstSampleOn)}</Field>
-            <Field label="Approved on">{fmtDate(engagement.approvedOn)}</Field>
-            <Field label="First commercial supply">{fmtDate(engagement.firstCommercialOn)}</Field>
+        <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="min-w-0 space-y-4">
+            <div className="space-y-1.5">
+              <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Sourcing</p>
+              <StageRail stage={engagement.stage} history={history} stageBeforeHold={engagement.stageBeforeHold} />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Trade</p>
+              <TradeSteps steps={deal.steps} />
+            </div>
+            <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label="First offered">{fmtDate(engagement.firstOfferedOn)}</Field>
+              <Field label="First sample">{fmtDate(engagement.firstSampleOn)}</Field>
+              <Field label="Approved on">{fmtDate(engagement.approvedOn)}</Field>
+              <Field label="First commercial supply">{fmtDate(engagement.firstCommercialOn)}</Field>
+            </div>
           </div>
+          <NextStepCard step={next} onAction={() => runNext(next)} blockedReason={offerBlocked} />
         </div>
       </Panel>
-
-      {engagement.isOverrideCreated ? (
-        <InlineWarning>
-          <span>
-            This engagement was created by override on a source TCL does not represent. Sourcing should settle the
-            representation before the client is offered anything.
-          </span>
-        </InlineWarning>
-      ) : null}
 
       {engagement.approvalConditions ? (
         <InlineWarning>
@@ -218,12 +240,132 @@ export function EngagementDetail() {
         </InlineWarning>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-4">
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabList>
+          <Tab value="overview">Overview</Tab>
+          <Tab value="work">
+            Offers &amp; samples
+            <span className="ml-1.5 text-2xs text-ink-400">{offerCount + sampleCount}</span>
+          </Tab>
+          <Tab value="trade">
+            Orders &amp; shipments
+            <span className="ml-1.5 text-2xs text-ink-400">{deal.orders.length}</span>
+          </Tab>
+          <Tab value="documents">Documents</Tab>
+          <Tab value="history">History</Tab>
+        </TabList>
+
+        <TabPanel value="overview" className="pt-4">
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Panel>
+              <PanelHeader
+                title="The source"
+                subtitle={manufacturer ? countryName(manufacturer.countryCode) : undefined}
+                icon={<Building2 className="h-4 w-4" />}
+                actions={<PortfolioBadge inPortfolio={inPortfolio} offerable={inPortfolio && tiers.length > 0} />}
+              />
+              <div className="space-y-3 p-4">
+                <FieldGrid cols={2}>
+                  <Field label="Manufacturer">
+                    <Link to={`/manufacturers/${engagement.manufacturerCompanyId}`} className="text-accent-700 hover:underline">
+                      {manufacturer?.displayName ?? '—'}
+                    </Link>
+                  </Field>
+                  <Field label="Grade">{mp?.grade ?? '—'}</Field>
+                  <Field label="Pharmacopoeia">{mp?.pharmacopoeia ?? '—'}</Field>
+                  <Field label="Lead time">{mp?.leadTimeDays ? `${mp.leadTimeDays} days` : '—'}</Field>
+                  <Field label="MOQ">{fmtQty(mp?.moqQty ?? null, mp?.moqUom ?? null)}</Field>
+                  <Field label="Price from">
+                    {tiers[0] ? (
+                      `${fmtMoney(tiers[0].price, tiers[0].currency, { decimals: 0 })}/${tiers[0].perUom}`
+                    ) : (
+                      <span className="text-warn-600">{expired ? `expired ${fmtDate(expired.validTo)}` : 'none'}</span>
+                    )}
+                  </Field>
+                </FieldGrid>
+                <div className="flex flex-wrap gap-1.5">
+                  <FilingDot present={filings.some((f) => f.kind === 'DMF' || f.kind === 'ASMF')} label="DMF" />
+                  <FilingDot present={filings.some((f) => f.kind === 'CEP')} label="CEP" />
+                </div>
+                <LinkButton to={`/sources/${engagement.manufacturerProductId}`} variant="secondary" size="sm">
+                  Open the source
+                </LinkButton>
+              </div>
+            </Panel>
+
+            <Panel>
+              <PanelHeader title="The client" icon={<Users className="h-4 w-4" />} />
+              <div className="space-y-3 p-4">
+                <FieldGrid cols={2}>
+                  <Field label="Client">
+                    <Link to={`/clients/${engagement.clientCompanyId}`} className="text-accent-700 hover:underline">
+                      {companyName(db, engagement.clientCompanyId)}
+                    </Link>
+                  </Field>
+                  <Field label="Country">{client ? countryName(client.countryCode) : '—'}</Field>
+                </FieldGrid>
+                {approval.siblingApproved > 0 ? (
+                  <p className="text-xs leading-relaxed text-ink-500">
+                    This client also has {pluralise(approval.siblingApproved, 'other approved source')} for{' '}
+                    {product?.genericName ?? 'this molecule'}. Dual sourcing is normal and regulator-encouraged.
+                  </p>
+                ) : null}
+                <LinkButton to={`/engagements/${id}/peers`} variant="ghost" size="sm">
+                  Other clients taking this molecule
+                  <span className="ml-1 text-2xs text-ink-400">{peers}</span>
+                </LinkButton>
+              </div>
+            </Panel>
+
+            <Panel>
+              <PanelHeader title="Requirements served" subtitle="The client enquiries this engagement answers" />
+              {requirements.length > 0 ? (
+                <ul className="divide-y divide-paper-200">
+                  {requirements.map((r) => (
+                    <li key={r.id} className="px-3 py-2">
+                      <Link
+                        to={`/requirements/${r.id}`}
+                        className="flex items-center justify-between gap-2 text-sm text-ink-800 hover:text-accent-700"
+                      >
+                        <span className="truncate">Enquiry of {fmtDate(r.enquiryDate)}</span>
+                        <span className="shrink-0 text-xs tabular text-ink-500">{fmtQty(r.estAnnualQty, r.qtyUom)}/yr</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="p-3">
+                  <EmptyState
+                    title="Not linked to a requirement"
+                    description="Engagements loaded at go-live have no originating enquiry."
+                    compact
+                  />
+                </div>
+              )}
+            </Panel>
+          </div>
+        </TabPanel>
+
+        <TabPanel value="work" className="space-y-4 pt-4">
           <OfferPanel engagement={engagement} />
-
           <SamplePanel engagement={engagement} onRequestStage={setTarget} />
+        </TabPanel>
 
+        <TabPanel value="trade" className="pt-4">
+          <TradeTab dealData={deal} next={next} />
+        </TabPanel>
+
+        <TabPanel value="documents" className="pt-4">
+          <DocumentsPanel
+            entityType="ENGAGEMENT"
+            entityId={engagement.id}
+            title="Documents"
+            subtitle="Quotations, COAs, specifications and the client's approval letter"
+            emptyHint="Quotations, COAs and the client's approval letter belong on this engagement."
+          />
+        </TabPanel>
+
+        <TabPanel value="history" className="grid gap-4 pt-4 lg:grid-cols-2">
           <Panel>
             <PanelHeader
               title="Stage history"
@@ -231,400 +373,162 @@ export function EngagementDetail() {
               icon={<History className="h-4 w-4" />}
             />
             <div className="p-4">
-              {data && data.history.length > 0 ? (
-                <StageTimeline history={data.history} userName={(uid) => userName(db, uid)} />
+              {history.length > 0 ? (
+                <StageTimeline history={history} userName={(uid) => userName(db, uid)} />
               ) : (
                 <EmptyState title="No stage change has been recorded yet" compact />
               )}
             </div>
           </Panel>
-
-          <Panel>
-            <PanelHeader
-              title="Activity"
-              subtitle="Calls, emails and visits on this engagement"
-              icon={<ActivityIcon className="h-4 w-4" />}
-              actions={
-                <WriteButton
-                  variant="secondary"
-                  size="sm"
-                  icon={<Plus className="h-3.5 w-3.5" />}
-                  onClick={() => setLogging(true)}
-                >
-                  Log an activity
-                </WriteButton>
-              }
-            />
-            {data && data.activities.length > 0 ? (
-              <ul className="divide-y divide-paper-200">
-                {data.activities.map((a) => (
-                  <li key={a.id} className="px-3 py-2.5">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge tone="outline">{a.kind.charAt(0) + a.kind.slice(1).toLowerCase()}</Badge>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-900">{a.subject}</span>
-                      <span className="text-xs tabular text-ink-400">{fmtDateTime(a.occurredAt)}</span>
-                      <Avatar name={userName(db, a.createdByUserId)} size="xs" />
-                    </div>
-                    {a.body ? <p className="mt-1 text-xs leading-relaxed text-ink-600">{a.body}</p> : null}
-                    {a.followUpDate && !a.isCompleted ? (
-                      <p className="mt-1 text-2xs text-warn-600">Follow up by {fmtDate(a.followUpDate)}</p>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="p-4">
-                <EmptyState
-                  title="Nothing has been logged against this engagement"
-                  description="A short note after a call is what makes the history readable six months later."
-                  compact
-                  action={
-                    <WriteButton variant="primary" size="sm" onClick={() => setLogging(true)}>
-                      Log an activity
-                    </WriteButton>
-                  }
-                />
-              </div>
-            )}
-          </Panel>
-        </div>
-
-        <div className="space-y-4">
-          <Panel>
-            <PanelHeader
-              title="The source"
-              subtitle={manufacturer ? countryName(manufacturer.countryCode) : undefined}
-              icon={<Building2 className="h-4 w-4" />}
-              actions={<PortfolioBadge inPortfolio={inPortfolio} offerable={inPortfolio && tiers.length > 0} />}
-            />
-            <div className="space-y-3 p-4">
-              <FieldGrid cols={2}>
-                <Field label="Manufacturer">
-                  <Link
-                    to={`/manufacturers/${engagement.manufacturerCompanyId}`}
-                    className="text-accent-700 hover:underline"
-                  >
-                    {manufacturer?.displayName ?? '—'}
-                  </Link>
-                </Field>
-                <Field label="Grade">{mp?.grade ?? '—'}</Field>
-                <Field label="Pharmacopoeia">{mp?.pharmacopoeia ?? '—'}</Field>
-                <Field label="Plant">{mp?.siteId ? (db.sites.find((s) => s.id === mp.siteId)?.name ?? '—') : '—'}</Field>
-                <Field label="MOQ">{fmtQty(mp?.moqQty ?? null, mp?.moqUom ?? null)}</Field>
-                <Field label="Lead time">{mp?.leadTimeDays ? `${mp.leadTimeDays} days` : '—'}</Field>
-              </FieldGrid>
-
-              <div className="flex flex-wrap gap-1.5">
-                <FilingDot present={filings.some((f) => f.kind === 'DMF' || f.kind === 'ASMF')} label="DMF" />
-                <FilingDot present={filings.some((f) => f.kind === 'CEP')} label="CEP" />
-                {filings.map((f) => (
-                  <Tooltip key={f.id} content={`${f.authority} · ${f.referenceNumber}`}>
-                    <Badge tone="outline">{f.kind}</Badge>
-                  </Tooltip>
-                ))}
-              </div>
-
-              <div>
-                <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Current price tiers</p>
-                {tiers.length === 0 ? (
-                  <p className="mt-1 text-xs text-warn-600">
-                    No valid price
-                    {expired ? `, the last one expired on ${fmtDate(expired.validTo)}` : ' has ever been recorded'}.
-                  </p>
-                ) : (
-                  <ul className="mt-1 space-y-1">
-                    {tiers.map((t) => (
-                      <li key={t.id} className="flex items-baseline justify-between gap-2 text-xs">
-                        <span className="text-ink-500">
-                          from {fmtQty(t.minQty, t.perUom)} {t.incoterm}
-                        </span>
-                        <span className="font-medium tabular text-ink-900">
-                          {fmtMoney(t.price, t.currency, { decimals: 0 })}/{t.perUom}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <LinkButton to={`/sources/${engagement.manufacturerProductId}`} variant="secondary" size="sm">
-                Open the source
-              </LinkButton>
-            </div>
-          </Panel>
-
-          <Panel>
-            <PanelHeader title="The client" icon={<Users className="h-4 w-4" />} />
-            <div className="space-y-3 p-4">
-              <FieldGrid cols={2}>
-                <Field label="Client">{companyName(db, engagement.clientCompanyId)}</Field>
-                <Field label="Country">{client ? countryName(client.countryCode) : '—'}</Field>
-              </FieldGrid>
-              <div className="flex flex-wrap gap-2">
-                <LinkButton to={`/clients/${engagement.clientCompanyId}`} variant="secondary" size="sm">
-                  Open the client
-                </LinkButton>
-                <LinkButton to={`/engagements/${id}/peers`} variant="ghost" size="sm">
-                  Other clients taking this API
-                  {data ? <span className="ml-1 text-2xs text-ink-400">{data.peers}</span> : null}
-                </LinkButton>
-              </div>
-              {siblingApproved > 0 ? (
-                <p className="text-xs leading-relaxed text-ink-500">
-                  This client already has {pluralise(siblingApproved, 'approved source')} for{' '}
-                  {product?.genericName ?? 'this molecule'}. Dual sourcing is normal and regulator-encouraged.
-                </p>
-              ) : null}
-            </div>
-          </Panel>
-
-          <Panel>
-            <PanelHeader title="Requirements served" subtitle="The enquiries this engagement answers" />
-            {data && data.requirements.length > 0 ? (
-              <ul className="divide-y divide-paper-200">
-                {data.requirements.map((r) => (
-                  <li key={r.id} className="px-3 py-2">
-                    <Link
-                      to={`/requirements/${r.id}`}
-                      className="flex items-center justify-between gap-2 text-sm text-ink-800 hover:text-accent-700"
-                    >
-                      <span className="truncate">{fmtDate(r.enquiryDate)}</span>
-                      <span className="shrink-0 text-xs tabular text-ink-500">{fmtQty(r.estAnnualQty, r.qtyUom)}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="p-3">
-                <EmptyState
-                  title="Not linked to a requirement"
-                  description="Engagements loaded at go-live have no originating enquiry."
-                  compact
-                />
-              </div>
-            )}
-          </Panel>
-
-          <Panel>
-            <PanelHeader title="Orders and indents" subtitle="Where this source has actually been used" />
-            {data && (data.orderLines.length > 0 || data.indentLines.length > 0) ? (
-              <ul className="divide-y divide-paper-200">
-                {data.orderLines.map((line) => {
-                  const order = db.clientOrders.find((o) => o.id === line.clientOrderId)
-                  return (
-                    <li key={line.id} className="px-3 py-2">
-                      <Link
-                        to={`/orders/${line.clientOrderId}`}
-                        className="flex items-center justify-between gap-2 text-sm text-ink-800 hover:text-accent-700"
-                      >
-                        <span className="truncate font-mono text-xs">{order?.coNumber ?? 'Client order'}</span>
-                        <span className="shrink-0 text-xs tabular text-ink-500">{fmtQty(line.qty, line.qtyUom)}</span>
-                      </Link>
-                    </li>
-                  )
-                })}
-                {data.indentLines.map((line) => {
-                  const indent = db.indents.find((i) => i.id === line.indentId)
-                  return (
-                    <li key={line.id} className="px-3 py-2">
-                      <Link
-                        to={`/indents/${line.indentId}`}
-                        className="flex items-center justify-between gap-2 text-sm text-ink-800 hover:text-accent-700"
-                      >
-                        <span className="truncate font-mono text-xs">{indent?.indentNumber ?? 'Indent'}</span>
-                        <span className="shrink-0 text-xs tabular text-ink-500">{fmtQty(line.qty, line.qtyUom)}</span>
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            ) : (
-              <div className="p-3">
-                <EmptyState
-                  title="Nothing has been ordered through this source yet"
-                  description="Ordering opens up once the engagement is approved."
-                  compact
-                />
-              </div>
-            )}
-          </Panel>
-
-          <Panel>
-            <PanelHeader title="Documents" icon={<FileText className="h-4 w-4" />} />
-            {data && data.documents.length > 0 ? (
-              <ul className="divide-y divide-paper-200">
-                {data.documents.map((d) => (
-                  <li key={d.document.id} className="flex items-center gap-2 px-3 py-2">
-                    <FileText className="h-3.5 w-3.5 shrink-0 text-ink-400" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm text-ink-800">{d.document.title}</span>
-                      <span className="block truncate text-2xs text-ink-500">
-                        {d.document.typeCode} · {fmtDate(d.document.uploadedAt)}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="p-3">
-                <EmptyState
-                  title="No document is filed here"
-                  description="Quotations, COAs and the client's approval letter belong on this engagement."
-                  compact
-                />
-              </div>
-            )}
-          </Panel>
-        </div>
-      </div>
+          <ActivityPanel
+            entityType="ENGAGEMENT"
+            entityId={engagement.id}
+            subtitle="Calls, emails and visits on this engagement"
+            emptyHint="A short note after a call is what makes the history readable six months later."
+          />
+        </TabPanel>
+      </Tabs>
 
       <StageChangeDialog
         engagement={target ? engagement : null}
         to={target}
         recordName={recordName}
         onClose={() => setTarget(null)}
-        requireNoteBecause={
-          target === 'APPROVED' && !hasPassedSample
-            ? 'No sample round on this engagement has a recorded pass. Approving without an evaluation is unusual, so write down what the approval rests on.'
-            : null
-        }
+        requireNoteBecause={target === 'APPROVED' ? approval.requireNoteBecause : null}
         notice={
-          target === 'APPROVED' && siblingApproved > 0 ? (
+          target === 'APPROVED' && approval.siblingApproved > 0 ? (
             <InlineWarning>
               <span>
-                {client?.displayName ?? 'This client'} already has {pluralise(siblingApproved, 'approved source')} for{' '}
-                {product?.genericName ?? 'this molecule'}. That is permitted, and worth knowing so the duplication is
+                {client?.displayName ?? 'This client'} already has {pluralise(approval.siblingApproved, 'approved source')}{' '}
+                for {product?.genericName ?? 'this molecule'}. That is permitted, and worth knowing so the duplication is
                 deliberate.
               </span>
             </InlineWarning>
           ) : null
         }
       />
-
-      <LogActivityDialog open={logging} onClose={() => setLogging(false)} engagementId={id} clientId={engagement.clientCompanyId} />
+      {offerOpen ? (
+        <OfferDialog open={offerOpen} onOpenChange={setOfferOpen} engagement={engagement} revision={offerCount > 0} />
+      ) : null}
+      <SampleStepDialog engagement={engagement} step={sampleStep} onClose={() => setSampleStep(null)} />
     </div>
   )
 }
 
-const ACTIVITY_KINDS: ActivityKind[] = ['CALL', 'EMAIL', 'MEETING', 'VISIT', 'NOTE', 'TASK']
-
-function LogActivityDialog({
-  open,
-  onClose,
-  engagementId,
-  clientId,
-}: {
-  open: boolean
-  onClose: () => void
-  engagementId: string
-  clientId: string
-}) {
+/** Everything ordered through this client and source, in the order it happens. */
+function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress>; next: NextStep }) {
   const db = useDb()
-  const contacts = db.contacts.filter((c) => c.companyId === clientId && c.isActive)
-  const [kind, setKind] = React.useState<ActivityKind>('CALL')
-  const [subject, setSubject] = React.useState('')
-  const [body, setBody] = React.useState('')
-  const [contactId, setContactId] = React.useState('')
-  const [followUpDate, setFollowUpDate] = React.useState('')
-  const [saving, setSaving] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
+  const { orders, indents, shipments, commissions, lineStatuses } = dealData
 
-  React.useEffect(() => {
-    if (!open) return
-    setKind('CALL')
-    setSubject('')
-    setBody('')
-    setContactId('')
-    setFollowUpDate('')
-    setError(null)
-  }, [open])
-
-  const submit = async () => {
-    setError(null)
-    if (!subject.trim()) {
-      setError('Write a one-line subject, so the log reads as a list.')
-      return
-    }
-    setSaving(true)
-    const result = await runAction(
-      () =>
-        logActivity({
-          kind,
-          entityType: 'ENGAGEMENT',
-          entityId: engagementId,
-          subject: subject.trim(),
-          body: body.trim() || null,
-          occurredAt: new Date().toISOString(),
-          contactId: contactId || null,
-          followUpDate: followUpDate || null,
-          isCompleted: false,
-        }),
-      { success: 'Activity logged.', onError: setError },
+  if (orders.length === 0) {
+    return (
+      <Panel className="p-4">
+        <EmptyState
+          title="Nothing has been ordered through this source yet"
+          description="Once the client approves the source, their order is recorded here, then the indent TCL places on the manufacturer, the shipments and TCL's commission."
+          action={
+            next.action?.kind === 'link' && next.action.href.includes('/client-orders/new') ? (
+              <WriteOnly>
+                <LinkButton to={next.action.href} variant="primary" size="sm">
+                  Record client order
+                </LinkButton>
+              </WriteOnly>
+            ) : undefined
+          }
+        />
+      </Panel>
     )
-    setSaving(false)
-    if (result) onClose()
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) onClose()
-      }}
-      width="md"
-      title="Log an activity"
-      description="What happened, in one line, plus anything worth keeping."
-      footer={
-        <>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" size="sm" loading={saving} onClick={() => void submit()}>
-            Log it
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-3.5">
-        <FormRow label="Kind">
-          <Select
-            value={kind}
-            onChange={(v) => setKind(v as ActivityKind)}
-            options={ACTIVITY_KINDS.map((k) => ({ value: k, label: k.charAt(0) + k.slice(1).toLowerCase() }))}
-          />
-        </FormRow>
-        <FormRow label="Subject">
-          <Input
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="Client confirmed the sample arrived"
-          />
-        </FormRow>
-        <FormRow label="Detail">
-          <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} />
-        </FormRow>
-        <FormRow label="Contact">
-          <Select
-            value={contactId}
-            onChange={setContactId}
-            allowEmpty
-            emptyLabel="Not recorded"
-            placeholder="Not recorded"
-            disabled={contacts.length === 0}
-            options={contacts.map((c) => ({ value: c.id, label: c.fullName }))}
-          />
-        </FormRow>
-        <FormRow label="Follow up by">
-          <Input
-            type="date"
-            value={followUpDate}
-            min={todayIso()}
-            onChange={(e) => setFollowUpDate(e.target.value)}
-            mono
-          />
-        </FormRow>
-        {error ? <p className="text-xs text-danger-700">{error}</p> : null}
-      </div>
-    </Dialog>
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Panel>
+        <PanelHeader title="Client orders" subtitle="What the client ordered from this source" />
+        <ul className="divide-y divide-paper-200">
+          {orders.map((o) => {
+            const lines = lineStatuses.filter((l) => l.orderId === o.id)
+            return (
+              <li key={o.id} className="px-4 py-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link to={`/client-orders/${o.id}`} className="font-mono text-xs font-medium text-accent-700 hover:underline">
+                    {o.coNumber}
+                  </Link>
+                  <OrderStatusBadge status={o.status} />
+                  <span className="ml-auto text-xs text-ink-500">{fmtDate(o.orderDate)}</span>
+                </div>
+                {lines.map((l) => (
+                  <p key={l.lineId} className="mt-1 text-xs tabular text-ink-600">
+                    {fmtQty(l.orderedQty, l.uom)} ordered · {fmtQty(l.shippedQty, l.uom)} shipped ·{' '}
+                    {fmtQty(l.deliveredQty, l.uom)} delivered
+                  </p>
+                ))}
+              </li>
+            )
+          })}
+        </ul>
+      </Panel>
+
+      <Panel>
+        <PanelHeader title="Indents" subtitle="Placed on the manufacturer for this client" />
+        {indents.length === 0 ? (
+          <div className="p-3">
+            <EmptyState title="No indent placed yet" description="Raise it from the client order." compact />
+          </div>
+        ) : (
+          <ul className="divide-y divide-paper-200">
+            {indents.map((i) => {
+              const lc = lcState(i).state
+              const commission = commissions.find((c) => c.indentId === i.id)
+              return (
+                <li key={i.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
+                  <Link to={`/indents/${i.id}`} className="font-mono text-xs font-medium text-accent-700 hover:underline">
+                    {i.indentNumber}
+                  </Link>
+                  <OrderStatusBadge status={i.status} />
+                  <Badge tone={lc === 'none' ? 'outline' : lc === 'expired' ? 'danger' : lc === 'expiring' ? 'warn' : 'ok'}>
+                    {lc === 'none' ? 'No LC yet' : lc === 'expired' ? 'LC expired' : lc === 'expiring' ? 'LC expiring' : 'LC on file'}
+                  </Badge>
+                  {commission ? (
+                    <span className="ml-auto flex items-center gap-1.5 text-xs text-ink-500">
+                      Commission
+                      <CommissionStatusBadge status={commission.status} />
+                      {commission.amount != null ? (
+                        <span className="tabular">{fmtMoney(commission.amount, commission.currency, { decimals: 0 })}</span>
+                      ) : null}
+                    </span>
+                  ) : null}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Panel>
+
+      <Panel className="lg:col-span-2">
+        <PanelHeader title="Shipments" subtitle="Against the indents above" />
+        {shipments.length === 0 ? (
+          <div className="p-3">
+            <EmptyState title="Nothing shipped yet" description="A shipment is added on the indent once the manufacturer confirms despatch." compact />
+          </div>
+        ) : (
+          <ul className="divide-y divide-paper-200">
+            {shipments.map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
+                <Link to={`/shipments/${s.id}`} className="font-mono text-xs font-medium text-accent-700 hover:underline">
+                  {s.shipmentRef}
+                </Link>
+                <ShipmentStatusBadge status={s.status} />
+                <span className="text-xs text-ink-500">
+                  {db.indents.find((i) => i.id === s.indentId)?.indentNumber ?? ''}
+                </span>
+                <span className="ml-auto text-xs tabular text-ink-500">
+                  {s.actualArrivalDate ? `arrived ${fmtDate(s.actualArrivalDate)}` : s.eta ? `ETA ${fmtDate(s.eta)}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
+    </div>
   )
 }

@@ -19,7 +19,7 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react'
-import { useDb, useSettings } from '@/data/store'
+import { useCanWrite, useDb, useSettings } from '@/data/store'
 import { READ_ONLY_PERMISSIONS, STAGE_CONFIG, WRITE_PERMISSIONS } from '@/data/reference'
 import { STAGE_TRANSITIONS } from '@/data/rules'
 import { fmtDateTime, pluralise } from '@/lib/utils'
@@ -38,6 +38,7 @@ import { REFERENCE_SETS } from './ReferenceData'
 export function AdminHome() {
   const db = useDb()
   const settings = useSettings()
+  const canWrite = useCanWrite()
 
   const figures = React.useMemo(() => {
     const activeUsers = db.users.filter((u) => u.isActive)
@@ -85,8 +86,8 @@ export function AdminHome() {
           value={figures.activeUsers}
           unit={`of ${figures.totalUsers}`}
           icon={<Users className="h-4 w-4" />}
-          to="/admin/users"
-          hint="Add a user, change a role, hand over a leaver's records."
+          to={canWrite ? '/admin/users' : undefined}
+          hint={canWrite ? "Add a user, change a role, hand over a leaver's records." : 'Managed by a Full Access user.'}
         />
         <KpiTile
           label="Roles and permissions"
@@ -117,7 +118,7 @@ export function AdminHome() {
           value={Object.keys(settings).length}
           unit="settings"
           icon={<SlidersHorizontal className="h-4 w-4" />}
-          to="/admin/notifications"
+          to={canWrite ? '/admin/notifications' : undefined}
           hint={`Over-shipment tolerance is ${settings.overshipmentTolerancePct}%, minimum shelf life ${settings.minShelfLifeMonths} months.`}
         />
         <KpiTile
@@ -186,9 +187,11 @@ export function AdminHome() {
             title="Users pending activation"
             icon={<UserPlus className="h-4 w-4" />}
             actions={
-              <LinkButton to="/admin/users" variant="secondary" size="sm">
-                Users
-              </LinkButton>
+              canWrite ? (
+                <LinkButton to="/admin/users" variant="secondary" size="sm">
+                  Users
+                </LinkButton>
+              ) : undefined
             }
           />
           <div className="p-3">
@@ -198,9 +201,11 @@ export function AdminHome() {
                 title="Everyone has activated"
                 description="An invited user cannot sign in until they set a password from the activation link."
                 action={
-                  <LinkButton to="/admin/users" variant="ghost" size="sm">
-                    Add a user
-                  </LinkButton>
+                  canWrite ? (
+                    <LinkButton to="/admin/users" variant="ghost" size="sm">
+                      Add a user
+                    </LinkButton>
+                  ) : undefined
                 }
               />
             ) : (

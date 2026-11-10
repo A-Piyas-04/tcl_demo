@@ -9,7 +9,7 @@
  * view belongs to the discovery module.
  */
 
-import { Route } from 'react-router-dom'
+import { Navigate, Route } from 'react-router-dom'
 import { RequireWrite } from '@/features/misc/Fallbacks'
 import { RequirementList } from './RequirementList'
 import { RequirementDetail } from './RequirementDetail'
@@ -50,7 +50,7 @@ export const pipelineRoutes = (
 
     <Route path="samples">
       <Route index element={<SampleTracker />} />
-      <Route path=":id" element={<SampleTracker />} />
+      <Route path=":id" element={<Navigate to="/samples" replace />} />
     </Route>
   </>
 )

@@ -7,14 +7,13 @@
  * which of our clients already takes it from them".
  */
 
-import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Factory, Plus, SlidersHorizontal, X } from 'lucide-react'
+import { Factory, Plus, SlidersHorizontal } from 'lucide-react'
 import { useDb } from '@/data/store'
 import { engagementRows, sourceRows, clients as clientList } from '@/data/selectors'
 import { COUNTRIES, MANUFACTURER_STATUS_LABEL, REPRESENTATION_LABEL, countryName } from '@/data/reference'
 import { logExport } from '@/data/api'
-import { useAsyncData, useDebounced, useUrlFilters } from '@/lib/hooks'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
 import { fmtDate, pluralise, todayIso } from '@/lib/utils'
 import type { Company, ManufacturerStatus, RepresentationKind } from '@/data/types'
 import {
@@ -23,13 +22,13 @@ import {
   Column,
   DataTable,
   EmptyState,
+  FilterBar,
   LinkButton,
   ManufacturerStatusBadge,
   NameCell,
   Panel,
   PageHeading,
   Select,
-  SearchInput,
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
@@ -59,13 +58,7 @@ export function ManufacturerList() {
   const db = useDb()
   const navigate = useNavigate()
   const { values, setValue, clear, activeCount, queryString } = useUrlFilters(DEFAULTS)
-  const [search, setSearch] = React.useState(values.q)
-  const debounced = useDebounced(search, 180)
-
-  React.useEffect(() => {
-    setValue('q', debounced)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced])
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
 
   const { data: rows, loading } = useAsyncData<Row[]>(() => {
     const sources = sourceRows(db)
@@ -259,75 +252,68 @@ export function ManufacturerList() {
       />
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Name, legal name or country…"
-            className="sm:col-span-2 lg:col-span-1"
-          />
-          <Select
-            value={values.product}
-            onChange={(v) => setValue('product', v)}
-            allowEmpty
-            emptyLabel="Any product"
-            placeholder="Any product"
-            options={db.products
-              .filter((p) => p.isActive)
-              .slice()
-              .sort((a, b) => a.genericName.localeCompare(b.genericName))
-              .map((p) => ({ value: p.id, label: p.genericName }))}
-          />
-          <Select
-            value={values.client}
-            onChange={(v) => setValue('client', v)}
-            allowEmpty
-            emptyLabel="Any client"
-            placeholder="Any client"
-            options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
-          />
-          <Select
-            value={values.status}
-            onChange={(v) => setValue('status', v)}
-            allowEmpty
-            emptyLabel="Any status"
-            placeholder="Any status"
-            options={(Object.keys(MANUFACTURER_STATUS_LABEL) as ManufacturerStatus[]).map((s) => ({
-              value: s,
-              label: MANUFACTURER_STATUS_LABEL[s],
-            }))}
-          />
-          <Select
-            value={values.country}
-            onChange={(v) => setValue('country', v)}
-            allowEmpty
-            emptyLabel="Any country"
-            placeholder="Any country"
-            options={COUNTRIES.map((c) => ({ value: c.code, label: c.name }))}
-          />
-          <div className="flex items-center gap-2">
-            <Button
-              variant={values.portfolio === '1' ? 'primary' : 'secondary'}
-              size="sm"
-              onClick={() => setValue('portfolio', values.portfolio === '1' ? '' : '1')}
-            >
-              Portfolio only
-            </Button>
-            {filtersOn ? (
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Name, legal name or country…"
+          activeCount={activeCount}
+          onClear={clear}
+          moreActive={['status', 'country'].filter((k) => values[k as keyof typeof values]).length}
+          primary={
+            <>
+              <Select
+                value={values.product}
+                onChange={(v) => setValue('product', v)}
+                allowEmpty
+                emptyLabel="Any product"
+                placeholder="Any product"
+                options={db.products
+                  .filter((p) => p.isActive)
+                  .slice()
+                  .sort((a, b) => a.genericName.localeCompare(b.genericName))
+                  .map((p) => ({ value: p.id, label: p.genericName }))}
+              />
+              <Select
+                value={values.client}
+                onChange={(v) => setValue('client', v)}
+                allowEmpty
+                emptyLabel="Any client"
+                placeholder="Any client"
+                options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+              />
               <Button
-                variant="ghost"
+                variant={values.portfolio === '1' ? 'primary' : 'secondary'}
                 size="sm"
-                icon={<X className="h-3.5 w-3.5" />}
-                onClick={() => {
-                  clear()
-                  setSearch('')
-                }}
+                onClick={() => setValue('portfolio', values.portfolio === '1' ? '' : '1')}
               >
-                Clear
+                Represented only
               </Button>
-            ) : null}
-          </div>
-        </div>
+            </>
+          }
+          more={
+            <>
+              <Select
+                value={values.status}
+                onChange={(v) => setValue('status', v)}
+                allowEmpty
+                emptyLabel="Any status"
+                placeholder="Any status"
+                options={(Object.keys(MANUFACTURER_STATUS_LABEL) as ManufacturerStatus[]).map((s) => ({
+                  value: s,
+                  label: MANUFACTURER_STATUS_LABEL[s],
+                }))}
+              />
+              <Select
+                value={values.country}
+                onChange={(v) => setValue('country', v)}
+                allowEmpty
+                emptyLabel="Any country"
+                placeholder="Any country"
+                options={COUNTRIES.map((c) => ({ value: c.code, label: c.name }))}
+              />
+            </>
+          }
+        />
 
         <DataTable
           rows={rows ?? []}
@@ -375,14 +361,7 @@ export function ManufacturerList() {
               }
               secondary={
                 filtersOn ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      clear()
-                      setSearch('')
-                    }}
-                  >
+                  <Button variant="secondary" size="sm" onClick={clear}>
                     Clear filters
                   </Button>
                 ) : null

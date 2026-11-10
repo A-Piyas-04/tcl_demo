@@ -215,8 +215,8 @@ export function ClientDetail() {
           <p className="text-sm font-semibold text-warn-600">This client record is inactive</p>
           <p className="mt-1 text-xs leading-relaxed text-ink-700">
             The record was deactivated rather than deleted, so every engagement, order and document below remains
-            readable. Nothing on this page can be changed while it stays inactive. An administrator can reactivate it
-            from the client list.
+            readable. Nothing on this page can be changed while it stays inactive. Reactivation is not part of this
+            prototype.
           </p>
         </Panel>
       ) : null}
@@ -362,6 +362,7 @@ export function ClientDetail() {
 
           <TabPanel value="orders">
             <OrdersTab
+              clientId={id}
               loading={loading}
               orders={data?.orders ?? []}
               lines={data?.lines ?? []}
@@ -1163,6 +1164,7 @@ function ContactDialog({
 // ------------------------------------------------------------------- orders
 
 function OrdersTab({
+  clientId,
   loading,
   orders,
   lines,
@@ -1171,6 +1173,7 @@ function OrdersTab({
   clientName,
   readOnly,
 }: {
+  clientId: string
   loading: boolean
   orders: ReturnType<typeof useDb>['clientOrders']
   lines: OrderLineStatus[]
@@ -1197,7 +1200,7 @@ function OrdersTab({
           action={
             readOnly ? undefined : (
               <WriteOnly>
-                <LinkButton to="/client-orders/new" variant="primary" size="sm">
+                <LinkButton to={`/client-orders/new?client=${clientId}`} variant="primary" size="sm">
                   Record a client order
                 </LinkButton>
               </WriteOnly>

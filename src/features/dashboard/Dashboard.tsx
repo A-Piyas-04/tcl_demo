@@ -1,34 +1,41 @@
 /**
  * The dashboard (doc 04 §5).
  *
- * Both roles see the same figures; only the action buttons differ. Laid out as
- * a bento grid of near-square tiles — the pipeline tile is the anchor, and
- * nothing stretches into a full-width band.
+ * It answers one question first: what should I do today? The "needs
+ * attention" list groups the work by the action it needs, and every item opens
+ * the record where that action is taken. Beside it, the pipeline and the
+ * commission book give the shape of the business; underneath, the trade in
+ * progress. Both roles see the same figures; only the action buttons differ.
  */
 
 import * as React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  AlertTriangle,
+  ArrowRight,
   ArrowUpRight,
+  BookOpen,
+  Boxes,
   CalendarClock,
+  CheckCircle2,
   FileWarning,
-  FlaskConical,
-  Handshake,
   PackageSearch,
   Ship,
-  Timer,
-  TriangleAlert,
   Wallet,
 } from 'lucide-react'
-import { useCurrentUser, useDb } from '@/data/store'
-import { dashboard, type DashboardData } from '@/data/selectors'
+import { useCurrentUser, useDb, usePresenter } from '@/data/store'
+import {
+  attentionGroups,
+  commissionMoney,
+  dashboard,
+  demoStories,
+  type AttentionGroup,
+  type DashboardData,
+} from '@/data/selectors'
 import { STAGE_LABEL, STAGE_STYLE } from '@/data/reference'
 import { useAsyncData, useLocalPreference } from '@/lib/hooks'
-import { fmtDate, fmtMoney, pluralise } from '@/lib/utils'
+import { cn, fmtMoneyTotals, pluralise } from '@/lib/utils'
 import {
-  AgeingFlag,
   AnimatedNumber,
   Badge,
   EmptyState,
@@ -38,16 +45,15 @@ import {
   PanelHeader,
   PageHeading,
   SegmentedControl,
-  Skeleton,
   SkeletonTiles,
   StageBadge,
   TileGrid,
-  Tooltip,
 } from '@/components/ui'
 
 export function Dashboard() {
   const db = useDb()
   const user = useCurrentUser()
+  const presenter = usePresenter()
   const [scope, setScope] = useLocalPreference<'mine' | 'all'>('dash.scope', 'all')
 
   const ownsAnything = React.useMemo(
@@ -56,10 +62,11 @@ export function Dashboard() {
       db.requirements.some((r) => r.ownerUserId === user?.id),
     [db, user],
   )
+  const ownerId = scope === 'mine' && user ? user.id : undefined
 
-  const { data, loading } = useAsyncData<DashboardData>(
-    () => dashboard(db, scope === 'mine' && user ? user.id : undefined),
-    [scope, user?.id],
+  const { data, loading } = useAsyncData(
+    () => ({ dash: dashboard(db, ownerId), attention: attentionGroups(db, ownerId) }),
+    [ownerId],
   )
 
   const greeting = React.useMemo(() => {
@@ -71,15 +78,15 @@ export function Dashboard() {
     <div className="space-y-5">
       <PageHeading
         title={`${greeting}, ${user?.fullName.split(' ')[0]}`}
-        subtitle="What needs attention today, across the whole book."
+        subtitle="What needs attention today. Every item opens the record where the work is done."
         actions={
           ownsAnything ? (
             <SegmentedControl
               value={scope}
               onChange={setScope}
               options={[
-                { value: 'mine', label: 'Mine' },
                 { value: 'all', label: 'Everyone' },
+                { value: 'mine', label: 'Mine' },
               ]}
             />
           ) : null
@@ -90,155 +97,159 @@ export function Dashboard() {
         <SkeletonTiles count={8} />
       ) : (
         <>
-          <TileGrid>
-            <PipelineTile data={data} />
+          {presenter.showRuleHints ? <DemoStories /> : null}
 
-            <KpiTile
-              label="Approved, not ordered"
-              value={<AnimatedNumber value={data.approvedNotOrdered.length} />}
-              unit="sources"
-              tone={data.approvedNotOrdered.length > 0 ? 'accent' : 'default'}
-              icon={<Handshake className="h-4 w-4" />}
-              to="/engagements?stage=APPROVED"
-              hint="Approved business sitting idle. The cheapest revenue in the company."
-            />
-
-            <KpiTile
-              label="Samples awaiting outcome"
-              value={<AnimatedNumber value={data.samplesAwaiting.length} />}
-              unit="with clients"
-              icon={<FlaskConical className="h-4 w-4" />}
-              to="/samples?outcome=pending"
-              hint={
-                data.samplesAwaiting[0]
-                  ? `Longest: ${data.samplesAwaiting[0].daysInStage} days, ${data.samplesAwaiting[0].client.displayName}`
-                  : 'Nothing outstanding.'
-              }
-            />
-
-            <KpiTile
-              label="Overdue follow-ups"
-              value={<AnimatedNumber value={data.overdueFollowUps.length} />}
-              unit="past threshold"
-              tone={data.overdueFollowUps.length > 4 ? 'warn' : 'default'}
-              icon={<Timer className="h-4 w-4" />}
-              to="/engagements?ageing=1"
-              hint="Offers and samples with no client response beyond the configured window."
-            />
-
-            <CommissionTile data={data} />
-
-            <KpiTile
-              label="Unsourced demand"
-              value={<AnimatedNumber value={data.unsourced.length} />}
-              unit="molecules"
-              tone={data.unsourced.length > 0 ? 'warn' : 'default'}
-              icon={<PackageSearch className="h-4 w-4" />}
-              to="/requirements/unsourced"
-              hint="Clients asked and TCL has no represented source. This is sourcing's shopping list."
-            />
-
-            <KpiTile
-              label="Shipments"
-              icon={<Ship className="h-4 w-4" />}
-              to="/shipments"
-              value={<AnimatedNumber value={data.shipmentsInTransit} />}
-              unit="in transit"
-              footer={
-                <div className="mt-1 space-y-1">
-                  {data.shipmentsHeld > 0 ? (
-                    <span className="flex items-center gap-1 text-danger-700">
-                      <TriangleAlert className="h-3 w-3" />
-                      {pluralise(data.shipmentsHeld, 'shipment')} held at customs
-                    </span>
-                  ) : (
-                    <span>Nothing held at customs.</span>
-                  )}
-                  {data.deliveriesDue > 0 ? <span className="block">{data.deliveriesDue} cleared, awaiting delivery</span> : null}
-                </div>
-              }
-            />
-
-            <KpiTile
-              label="Certificates expiring"
-              value={<AnimatedNumber value={data.documentsExpiring.length} />}
-              unit="within 90 days"
-              tone={data.documentsExpiring.some((d) => d.state === 'expired') ? 'danger' : 'default'}
-              icon={<FileWarning className="h-4 w-4" />}
-              to="/documents/expiring"
-              hint={
-                data.documentsExpiring.filter((d) => d.state === 'expired').length > 0
-                  ? `${data.documentsExpiring.filter((d) => d.state === 'expired').length} already expired.`
-                  : 'A warning before a shipment is held, not after.'
-              }
-            />
-
-            <KpiTile
-              label="Letters of credit"
-              value={<AnimatedNumber value={data.lcsExpiring.length} />}
-              unit="expiring soon"
-              icon={<CalendarClock className="h-4 w-4" />}
-              to="/indents?lc=expiring"
-              hint="Opened by the client in the manufacturer's favour. TCL chases, never holds."
-            />
-          </TileGrid>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <AttentionList
-              title="Awaiting client feedback"
-              subtitle="Samples sent or under evaluation, longest first"
-              rows={data.samplesAwaiting}
-              emptyText="No samples are waiting on a client."
-              href="/samples"
-            />
-            <AttentionList
-              title="Approved but never ordered"
-              subtitle="Approval won, no order raised yet"
-              rows={data.approvedNotOrdered}
-              emptyText="Every approved source has an order against it."
-              href="/engagements?stage=APPROVED"
-              showApprovedOn
-            />
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+            <AttentionPanel groups={data.attention} mineOnly={Boolean(ownerId)} />
+            <div className="grid content-start gap-4 sm:grid-cols-2 xl:grid-cols-1">
+              <PipelineTile data={data.dash} />
+              <CommissionTile />
+            </div>
           </div>
 
-          {data.unsourced.length > 0 ? (
-            <Panel>
-              <PanelHeader
-                title="Molecules clients asked for that TCL cannot supply"
-                subtitle={`${data.unsourced.length} open requirements with no represented source`}
-                icon={<PackageSearch className="h-4 w-4" />}
-                actions={
-                  <Link to="/requirements/unsourced" className="text-xs font-medium text-accent-700 hover:underline">
-                    Open the report
-                  </Link>
+          <div>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-500">Trade in progress</h2>
+            <TileGrid>
+              <KpiTile
+                label="Client orders open"
+                value={
+                  <AnimatedNumber
+                    value={db.clientOrders.filter((o) => !['COMPLETED', 'CANCELLED'].includes(o.status)).length}
+                  />
+                }
+                unit="not yet delivered"
+                icon={<Boxes className="h-4 w-4" />}
+                to="/client-orders"
+                hint={`${pluralise(db.clientOrders.filter((o) => o.status === 'COMPLETED').length, 'order')} completed`}
+              />
+              <KpiTile
+                label="Shipments on the way"
+                value={<AnimatedNumber value={data.dash.shipmentsInTransit} />}
+                unit="planned or in transit"
+                icon={<Ship className="h-4 w-4" />}
+                to="/shipments"
+                hint={
+                  data.dash.shipmentsHeld > 0
+                    ? `${pluralise(data.dash.shipmentsHeld, 'shipment')} held at customs`
+                    : 'Nothing held at customs.'
+                }
+                tone={data.dash.shipmentsHeld > 0 ? 'warn' : 'default'}
+              />
+              <KpiTile
+                label="Letters of credit"
+                value={<AnimatedNumber value={data.dash.lcsExpiring.length} />}
+                unit="expiring within 45 days"
+                icon={<CalendarClock className="h-4 w-4" />}
+                to="/indents?lc=expiring"
+                hint="Opened by the client in the manufacturer's favour. TCL chases, never holds."
+              />
+              <KpiTile
+                label="Certificates"
+                value={<AnimatedNumber value={data.dash.documentsExpiring.length} />}
+                unit="expired or expiring"
+                tone={data.dash.documentsExpiring.some((d) => d.state === 'expired') ? 'danger' : 'default'}
+                icon={<FileWarning className="h-4 w-4" />}
+                to="/documents/expiring"
+                hint={
+                  data.dash.documentsExpiring.filter((d) => d.state === 'expired').length > 0
+                    ? `${data.dash.documentsExpiring.filter((d) => d.state === 'expired').length} already expired.`
+                    : 'A warning before a shipment is held, not after.'
                 }
               />
-              <ul className="divide-y divide-paper-200">
-                {data.unsourced.slice(0, 5).map((r) => (
-                  <li key={r.requirement.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
-                    <Link
-                      to={`/requirements/${r.requirement.id}`}
-                      className="min-w-0 flex-1 truncate text-sm font-medium text-ink-900 hover:text-accent-700"
-                    >
-                      {r.product.genericName}
-                    </Link>
-                    <span className="truncate text-xs text-ink-500">{r.client.displayName}</span>
-                    <Badge tone={r.requirement.kind === 'NEW_DEVELOPMENT' ? 'info' : 'accent'}>
-                      {r.requirement.kind === 'NEW_DEVELOPMENT' ? 'New' : 'Alternate'}
-                    </Badge>
-                    <span className="w-20 text-right text-xs tabular text-ink-400">{r.daysOpen}d open</span>
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-          ) : null}
+            </TileGrid>
+          </div>
+
+          {data.dash.unsourced.length > 0 ? <UnsourcedPanel data={data.dash} /> : null}
         </>
       )}
     </div>
   )
 }
 
-/** The anchor tile: the pipeline as a distribution, two cells wide and tall. */
+const AREA_ORDER: AttentionGroup['area'][] = ['Sourcing', 'Trade', 'Commission']
+const TONE_DOT: Record<AttentionGroup['tone'], string> = {
+  danger: 'bg-danger-600',
+  warn: 'bg-warn-500',
+  accent: 'bg-accent-500',
+}
+
+function AttentionPanel({ groups, mineOnly }: { groups: AttentionGroup[]; mineOnly: boolean }) {
+  const total = groups.reduce((n, g) => n + g.items.length, 0)
+  return (
+    <Panel className="min-w-0">
+      <PanelHeader
+        title="Needs attention"
+        subtitle={
+          mineOnly
+            ? 'Your engagements and requirements. Switch to Everyone for shipments, credits and commission.'
+            : 'Grouped by what has to be done, oldest first'
+        }
+        actions={<Badge tone={total ? 'warn' : 'ok'}>{total}</Badge>}
+      />
+      {groups.length === 0 ? (
+        <div className="p-4">
+          <EmptyState
+            icon={<CheckCircle2 className="h-5 w-5 text-ok-600" />}
+            title="Nothing is waiting on you"
+            description="Every sample has an answer, every approval has an order, and nothing is stuck in transit."
+            compact
+          />
+        </div>
+      ) : (
+        <div className="divide-y divide-paper-200">
+          {AREA_ORDER.map((area) => {
+            const inArea = groups.filter((g) => g.area === area)
+            if (inArea.length === 0) return null
+            return (
+              <section key={area} className="px-4 py-3">
+                <h3 className="mb-2 text-2xs font-semibold uppercase tracking-wider text-ink-400">{area}</h3>
+                <ul className="space-y-3">
+                  {inArea.map((g) => (
+                    <li key={g.key}>
+                      <div className="flex items-start gap-2">
+                        <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', TONE_DOT[g.tone])} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-ink-900">{g.title}</p>
+                          <p className="text-xs text-ink-500">{g.why}</p>
+                          <ul className="mt-1.5 space-y-0.5">
+                            {g.items.slice(0, 3).map((item) => (
+                              <li key={item.id}>
+                                <Link
+                                  to={item.href}
+                                  className="group flex items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors hover:bg-paper-100"
+                                >
+                                  <span className="min-w-0 truncate font-medium text-ink-800 group-hover:text-accent-700">
+                                    {item.label}
+                                  </span>
+                                  <span className="hidden min-w-0 flex-1 truncate text-ink-500 sm:block">{item.sublabel}</span>
+                                  {item.meta ? <span className="ml-auto shrink-0 tabular text-ink-400">{item.meta}</span> : null}
+                                  <ArrowRight className="h-3 w-3 shrink-0 text-ink-300" />
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                          {g.items.length > 3 && g.seeAll ? (
+                            <Link to={g.seeAll} className="ml-1.5 text-2xs font-medium text-accent-700 hover:underline">
+                              See all {g.items.length}
+                            </Link>
+                          ) : g.items.length > 3 ? (
+                            <p className="ml-1.5 text-2xs text-ink-400">and {g.items.length - 3} more</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          })}
+        </div>
+      )}
+    </Panel>
+  )
+}
+
+/** The pipeline as a distribution; each bar opens the board at that stage. */
 function PipelineTile({ data }: { data: DashboardData }) {
   const total = data.pipelineByStage.reduce((s, x) => s + x.count, 0)
   const commercial = data.pipelineByStage.find((s) => s.stage === 'COMMERCIAL')?.count ?? 0
@@ -246,10 +257,10 @@ function PipelineTile({ data }: { data: DashboardData }) {
   // No `to` on this tile: its bars are themselves links, and a link inside a
   // link is invalid markup.
   return (
-    <KpiTile label="Pipeline by stage" span="big" icon={<ArrowUpRight className="h-4 w-4" />}>
+    <KpiTile label="Engagements by stage" icon={<ArrowUpRight className="h-4 w-4" />} className="min-h-[15rem]">
       <div className="flex items-baseline gap-2">
-        <AnimatedNumber value={total} className="text-4xl font-semibold leading-none tracking-tight text-ink-900" />
-        <span className="text-xs font-medium text-ink-400">live engagements</span>
+        <AnimatedNumber value={total} className="text-3xl font-semibold leading-none tracking-tight text-ink-900" />
+        <span className="text-xs font-medium text-ink-400">active client × supplier deals</span>
       </div>
       <div className="mt-1 flex-1">
         <MiniBars
@@ -265,39 +276,40 @@ function PipelineTile({ data }: { data: DashboardData }) {
         <span className="font-semibold text-ok-600">{commercial}</span> in commercial supply ·{' '}
         <Link to="/engagements" className="font-medium text-accent-700 hover:underline">
           open the board
-        </Link>{' '}
-        to move one along
+        </Link>
       </p>
     </KpiTile>
   )
 }
 
 /** TCL's earnings: the one number the business runs on. */
-function CommissionTile({ data }: { data: DashboardData }) {
-  const { commission } = data
-  const collected = commission.earned > 0 ? (commission.received / commission.earned) * 100 : 0
+function CommissionTile() {
+  const db = useDb()
+  const money = commissionMoney(db)
+  const earned = money.earned.reduce((n, m) => n + m.amount, 0)
+  const received = money.received.reduce((n, m) => n + m.amount, 0)
+  const collected = earned > 0 ? (received / earned) * 100 : 0
+  const tbd = db.commissions.filter((c) => c.basis === 'TBD' && c.status !== 'WRITTEN_OFF').length
 
   return (
-    <KpiTile label="Commission (from clients)" span="tall" tone="ink" icon={<Wallet className="h-4 w-4" />} to="/commissions">
+    <KpiTile label="Commission (from clients)" tone="ink" icon={<Wallet className="h-4 w-4" />} to="/commissions">
       <div>
         <p className="text-[10px] uppercase tracking-wider text-paper-400">Outstanding</p>
-        <AnimatedNumber
-          value={commission.outstanding}
-          format={(n) => fmtMoney(n, 'USD', { compact: true, decimals: 0 })}
-          className="text-3xl font-semibold leading-none tracking-tight text-white"
-        />
+        <p className="text-2xl font-semibold leading-tight tracking-tight text-white">
+          {fmtMoneyTotals(money.outstanding, { compact: true, decimals: 0 })}
+        </p>
       </div>
       <dl className="space-y-1.5 text-xs">
-        {[
-          ['Earned', commission.earned],
-          ['Invoiced', commission.invoiced],
-          ['Received', commission.received],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="flex items-baseline justify-between gap-2">
+        {(
+          [
+            ['Earned', money.earned],
+            ['Invoiced', money.invoiced],
+            ['Received', money.received],
+          ] as const
+        ).map(([label, value]) => (
+          <div key={label} className="flex items-baseline justify-between gap-2">
             <dt className="text-paper-400">{label}</dt>
-            <dd className="font-medium tabular text-paper-100">
-              {fmtMoney(value as number, 'USD', { compact: true, decimals: 0 })}
-            </dd>
+            <dd className="font-medium tabular text-paper-100">{fmtMoneyTotals([...value], { compact: true, decimals: 0 })}</dd>
           </div>
         ))}
       </dl>
@@ -312,88 +324,80 @@ function CommissionTile({ data }: { data: DashboardData }) {
         </div>
         <p className="mt-1.5 text-[10px] leading-relaxed text-paper-400">
           {collected.toFixed(0)}% collected
-          {commission.tbdCount > 0 ? ` · ${commission.tbdCount} indents still to be priced` : ''}
+          {tbd > 0 ? ` · ${tbd} with terms still to agree` : ''}
         </p>
       </div>
     </KpiTile>
   )
 }
 
-function AttentionList({
-  title,
-  subtitle,
-  rows,
-  emptyText,
-  href,
-  showApprovedOn,
-}: {
-  title: string
-  subtitle: string
-  rows: ReturnType<typeof dashboard>['samplesAwaiting']
-  emptyText: string
-  href: string
-  showApprovedOn?: boolean
-}) {
+function UnsourcedPanel({ data }: { data: DashboardData }) {
+  const molecules = new Set(data.unsourced.map((r) => r.product.id)).size
   return (
     <Panel>
       <PanelHeader
-        title={title}
-        subtitle={subtitle}
+        title="Molecules clients asked for that TCL cannot supply"
+        subtitle={`${pluralise(molecules, 'molecule')} across ${pluralise(data.unsourced.length, 'open requirement')} with no represented source`}
+        icon={<PackageSearch className="h-4 w-4" />}
         actions={
-          rows.length > 0 ? (
-            <Link to={href} className="text-xs font-medium text-accent-700 hover:underline">
-              See all
-            </Link>
-          ) : null
+          <Link to="/requirements/unsourced" className="text-xs font-medium text-accent-700 hover:underline">
+            Open unsourced demand
+          </Link>
         }
       />
-      {rows.length === 0 ? (
-        <div className="p-4">
-          <EmptyState title={emptyText} compact />
-        </div>
-      ) : (
-        <ul className="divide-y divide-paper-200">
-          {rows.slice(0, 6).map((r) => (
-            <li key={r.engagement.id}>
-              <Link
-                to={`/engagements/${r.engagement.id}`}
-                className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-paper-100"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ink-900">{r.product.genericName}</p>
-                  <p className="truncate text-xs text-ink-500">
-                    {r.client.displayName} · {r.manufacturer.displayName}
-                  </p>
-                </div>
-                {showApprovedOn ? (
-                  <Tooltip content="Client approval date">
-                    <span className="hidden text-xs tabular text-ink-500 sm:block">{fmtDate(r.engagement.approvedOn)}</span>
-                  </Tooltip>
-                ) : (
-                  <StageBadge stage={r.stage} size="sm" />
-                )}
-                <AgeingFlag days={r.daysInStage} threshold={showApprovedOn ? 60 : 60} />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="divide-y divide-paper-200">
+        {data.unsourced.slice(0, 5).map((r) => (
+          <li key={r.requirement.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
+            <Link
+              to={`/requirements/${r.requirement.id}`}
+              className="min-w-0 flex-1 truncate text-sm font-medium text-ink-900 hover:text-accent-700"
+            >
+              {r.product.genericName}
+            </Link>
+            <span className="truncate text-xs text-ink-500">{r.client.displayName}</span>
+            <Badge tone={r.requirement.kind === 'NEW_DEVELOPMENT' ? 'info' : 'accent'}>
+              {r.requirement.kind === 'NEW_DEVELOPMENT' ? 'New' : 'Alternate'}
+            </Badge>
+            <span className="w-20 text-right text-xs tabular text-ink-400">{r.daysOpen}d open</span>
+          </li>
+        ))}
+      </ul>
     </Panel>
   )
 }
 
-/** Small loading placeholder used by other dashboards-in-panels. */
-export function PanelLoading({ lines = 4 }: { lines?: number }) {
+/**
+ * A presenter's index of the demonstration stories, one per stage of the
+ * business, shown only while rule notes are switched on.
+ */
+function DemoStories() {
+  const db = useDb()
+  const stories = demoStories(db)
+  if (stories.length === 0) return null
   return (
-    <div className="space-y-2.5 p-4">
-      {Array.from({ length: lines }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3">
-          <Skeleton className="h-3.5 flex-1" />
-          <Skeleton className="h-3.5 w-16" />
-        </div>
-      ))}
-    </div>
+    <Panel>
+      <PanelHeader
+        title="Demonstration stories"
+        subtitle="One deal at each stage of the business. Hidden when rule notes are switched off in the user menu."
+        icon={<BookOpen className="h-4 w-4" />}
+      />
+      <ol className="grid gap-px bg-paper-200 sm:grid-cols-2 xl:grid-cols-3">
+        {stories.map((s, i) => (
+          <li key={s.key} className="bg-white">
+            <Link to={s.href} className="flex h-full items-start gap-3 px-4 py-3 transition-colors hover:bg-paper-100">
+              <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-paper-200 text-[10px] font-semibold text-ink-700">
+                {i + 1}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-ink-900">{s.title}</span>
+                <span className="block truncate text-xs text-ink-500">{s.subtitle}</span>
+                <span className="mt-1 block text-2xs leading-relaxed text-ink-500">{s.point}</span>
+              </span>
+              {s.stage ? <StageBadge stage={s.stage} size="sm" /> : <Badge tone="info">Requirement</Badge>}
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </Panel>
   )
 }
-
-export { AlertTriangle }

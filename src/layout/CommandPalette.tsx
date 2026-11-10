@@ -8,6 +8,7 @@ import { Command } from 'cmdk'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   ArrowRight,
+  BarChart3,
   Boxes,
   FactoryIcon,
   FileText,
@@ -20,6 +21,7 @@ import {
   Rocket,
   Settings,
   Ship,
+  Timer,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -40,17 +42,21 @@ const KIND_ICON = {
 
 const GO_TO = [
   { label: 'Dashboard', to: '/', icon: Gauge, keys: 'g d' },
+  { label: 'Requirements', to: '/requirements', icon: PanelsTopLeft, keys: 'g r' },
+  { label: 'Unsourced demand', to: '/requirements/unsourced', icon: PanelsTopLeft },
+  { label: 'Engagements (pipeline)', to: '/engagements', icon: GitBranch, keys: 'g e' },
+  { label: 'Sample rounds', to: '/samples', icon: Timer },
+  { label: 'Client orders', to: '/client-orders', icon: Boxes, keys: 'g o' },
+  { label: 'Indents (manufacturer orders)', to: '/indents', icon: Rocket, keys: 'g i' },
+  { label: 'Shipments', to: '/shipments', icon: Ship, keys: 'g s' },
+  { label: 'Batches', to: '/batches', icon: Ship },
+  { label: 'Commission', to: '/commissions', icon: Wallet, keys: 'g k' },
   { label: 'Products', to: '/products', icon: Pill, keys: 'g p' },
   { label: 'Manufacturers', to: '/manufacturers', icon: FactoryIcon, keys: 'g m' },
   { label: 'Clients', to: '/clients', icon: Users, keys: 'g c' },
-  { label: 'Requirements', to: '/requirements', icon: PanelsTopLeft, keys: 'g r' },
-  { label: 'Engagement board', to: '/engagements', icon: GitBranch, keys: 'g e' },
-  { label: 'Client orders', to: '/client-orders', icon: Boxes, keys: 'g o' },
-  { label: 'Indents', to: '/indents', icon: Rocket, keys: 'g i' },
-  { label: 'Shipments', to: '/shipments', icon: Ship, keys: 'g s' },
-  { label: 'Commission', to: '/commissions', icon: Wallet, keys: 'g k' },
-  { label: 'Relationships', to: '/relationships', icon: Network },
-  { label: 'Documents', to: '/documents', icon: FileText },
+  { label: 'Reports', to: '/reports', icon: BarChart3, keys: 'g a' },
+  { label: 'Relationship explorer', to: '/relationships', icon: Network },
+  { label: 'Documents & certificates', to: '/documents', icon: FileText },
   { label: 'Admin', to: '/admin', icon: Settings },
 ]
 
@@ -69,6 +75,10 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
   const canWrite = useCanWrite()
 
   const hits = React.useMemo(() => (query.trim().length >= 2 ? search(db, query, 18) : []), [db, query])
+  // cmdk's own filter would hide matches made on synonyms or CAS numbers, so filtering is ours
+  const q = query.trim().toLowerCase()
+  const actions = q ? ACTIONS.filter((a) => a.label.toLowerCase().includes(q)) : ACTIONS
+  const goTo = q ? GO_TO.filter((g) => g.label.toLowerCase().includes(q)) : GO_TO
 
   const go = (to: string) => {
     onOpenChange(false)
@@ -101,6 +111,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
           >
             <Command
               loop
+              shouldFilter={false}
               className="overflow-hidden rounded-xl border border-paper-300 bg-white shadow-pop"
               onKeyDown={(e) => {
                 if (e.key === 'Escape') onOpenChange(false)
@@ -154,9 +165,9 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   </Command.Group>
                 ) : null}
 
-                {canWrite ? (
+                {canWrite && actions.length > 0 ? (
                   <Command.Group heading={<GroupHeading>Create</GroupHeading>}>
-                    {ACTIONS.map((a) => (
+                    {actions.map((a) => (
                       <Item key={a.to} value={`new ${a.label}`} onSelect={() => go(a.to)}>
                         <Plus className="h-3.5 w-3.5 shrink-0 text-accent-600" />
                         <span className="flex-1 text-sm text-ink-900">{a.label}</span>
@@ -165,8 +176,9 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                   </Command.Group>
                 ) : null}
 
+                {goTo.length > 0 ? (
                 <Command.Group heading={<GroupHeading>Go to</GroupHeading>}>
-                  {GO_TO.map((g) => {
+                  {goTo.map((g) => {
                     const Icon = g.icon
                     return (
                       <Item key={g.to} value={`go ${g.label}`} onSelect={() => go(g.to)}>
@@ -177,6 +189,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                     )
                   })}
                 </Command.Group>
+                ) : null}
               </Command.List>
 
               <div className="flex items-center justify-between border-t border-paper-200 bg-paper-50 px-3 py-1.5 text-2xs text-ink-400">

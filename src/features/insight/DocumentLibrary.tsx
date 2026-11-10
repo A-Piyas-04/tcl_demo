@@ -47,6 +47,7 @@ import {
   WriteOnly,
 } from '@/components/ui'
 import { ReportNote, StatCell, StatGrid } from './shared'
+import { SectionNav } from '@/layout/sections'
 
 // ------------------------------------------------------------------ labels
 
@@ -292,9 +293,10 @@ export function DocumentLibrary() {
 
   return (
     <div className="space-y-4">
+      <div>
       <PageHeading
-        title="Documents"
-        subtitle="Certificates, filings and letters, each against the record it belongs to."
+        title="Reports"
+        subtitle="Documents and certificates across every record. Each document also appears on the client, manufacturer, source, engagement or order it belongs to."
         meta={
           <>
             <Badge tone="neutral">{pluralise(counts.total, 'document')}</Badge>
@@ -318,6 +320,8 @@ export function DocumentLibrary() {
           </>
         }
       />
+        <SectionNav section="reports" />
+      </div>
 
       <StatGrid>
         <StatCell label="On file" value={counts.total} hint="Current and superseded versions together" />

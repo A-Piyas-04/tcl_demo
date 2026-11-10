@@ -11,12 +11,16 @@
 import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { convertQty, stageConfig } from './reference'
 import { today } from './rules'
+import { DEMO_STORIES } from './seed'
 import type {
   Batch,
+  ClientOrder,
+  ClientOrderLine,
   Commission,
   Company,
   CompanySite,
   Database,
+  Shipment,
   DocumentRecord,
   Engagement,
   EngagementStage,
@@ -310,6 +314,493 @@ export function furthestStage(stages: EngagementStage[]): EngagementStage | null
   return best
 }
 
+// ----------------------------------------------------------- sourcing gap
+
+export type SourcingGap = 'NO_SOURCE' | 'NOT_REPRESENTED' | 'PHARMACOPOEIA' | 'SOURCE_UNAVAILABLE'
+
+/**
+ * Why a molecule cannot be offered: nobody makes it, TCL does not represent
+ * whoever does, the represented source is to another standard, or every source
+ * is blocked. Null when a represented, available source matches.
+ */
+export function sourcingGap(
+  db: Database,
+  productId: ID,
+  requiredPharmacopoeia?: Pharmacopoeia | null,
+): SourcingGap | null {
+  const known = allSourcesFor(db, productId)
+  if (known.length === 0) return 'NO_SOURCE'
+  const representedAvailable = known.filter((s) => s.inPortfolio && s.sourceAvailable)
+  const matching = representedAvailable.filter(
+    (s) => !requiredPharmacopoeia || s.mp.pharmacopoeia === requiredPharmacopoeia,
+  )
+  if (matching.length > 0) return null
+  if (representedAvailable.length > 0) return 'PHARMACOPOEIA'
+  if (known.some((s) => !s.inPortfolio && s.sourceAvailable)) return 'NOT_REPRESENTED'
+  return 'SOURCE_UNAVAILABLE'
+}
+
+export const SOURCING_GAP_COPY: Record<SourcingGap, { label: string; tone: 'danger' | 'warn' | 'accent'; detail: string }> = {
+  NO_SOURCE: {
+    label: 'No source in the register',
+    tone: 'danger',
+    detail: 'Nobody in the register makes this molecule. Sourcing has to find and register a manufacturer.',
+  },
+  NOT_REPRESENTED: {
+    label: 'Source exists, not represented',
+    tone: 'warn',
+    detail:
+      'The register already holds a manufacturer for this molecule that TCL does not represent. This is an agency conversation, not a search.',
+  },
+  PHARMACOPOEIA: {
+    label: 'Wrong pharmacopoeia',
+    tone: 'accent',
+    detail:
+      'TCL represents a source for this molecule, but not to the standard the client named. Either a second grade from the same plant or another source is needed.',
+  },
+  SOURCE_UNAVAILABLE: {
+    label: 'Source blocked',
+    tone: 'warn',
+    detail:
+      'Every known source is discontinued, or its manufacturer is inactive or blacklisted, so none of them can be offered.',
+  },
+}
+
+// ------------------------------------------------------------ approvals
+
+/** What an approval should warn about, wherever it is made from. */
+export function approvalContext(db: Database, e: Engagement) {
+  const hasPassedSample = db.samples.some((s) => s.engagementId === e.id && s.outcome === 'PASS')
+  const siblingApproved = db.engagements.filter(
+    (o) =>
+      o.id !== e.id &&
+      o.clientCompanyId === e.clientCompanyId &&
+      o.productId === e.productId &&
+      (o.stage === 'APPROVED' || o.stage === 'COMMERCIAL'),
+  ).length
+  return {
+    hasPassedSample,
+    siblingApproved,
+    requireNoteBecause: hasPassedSample
+      ? null
+      : 'No sample round on this engagement has a recorded pass. Approving without an evaluation is unusual, so write down what the approval rests on.',
+  }
+}
+
+// --------------------------------------------------------- deal progress
+
+export type DealStepKey = 'ORDERED' | 'INDENTED' | 'SHIPPED' | 'DELIVERED' | 'COMMISSION'
+export type DealStepState = 'done' | 'partial' | 'todo'
+
+export interface DealProgress {
+  orderLines: ClientOrderLine[]
+  orders: ClientOrder[]
+  indents: Indent[]
+  shipments: Shipment[]
+  commissions: Commission[]
+  lineStatuses: OrderLineStatus[]
+  steps: { key: DealStepKey; label: string; state: DealStepState; detail: string }[]
+}
+
+/**
+ * The trade half of a deal: everything ordered through this client and source,
+ * read from the order, indent, shipment and commission records.
+ */
+export function dealProgress(db: Database, e: Engagement): DealProgress {
+  const orderLines = db.clientOrderLines.filter((l) => {
+    if (l.engagementId === e.id) return true
+    if (l.manufacturerProductId !== e.manufacturerProductId) return false
+    return db.clientOrders.find((o) => o.id === l.clientOrderId)?.clientCompanyId === e.clientCompanyId
+  })
+  const orderIds = new Set(orderLines.map((l) => l.clientOrderId))
+  const orders = db.clientOrders.filter((o) => orderIds.has(o.id))
+  const lineIds = new Set(orderLines.map((l) => l.id))
+  const indentLineIds = new Set(
+    db.orderIndentLinks.filter((l) => lineIds.has(l.clientOrderLineId)).map((l) => l.indentLineId),
+  )
+  const indentIds = new Set(db.indentLines.filter((l) => indentLineIds.has(l.id)).map((l) => l.indentId))
+  const indents = db.indents.filter((i) => indentIds.has(i.id))
+  const shipments = db.shipments.filter((s) => indentIds.has(s.indentId) && s.status !== 'CANCELLED')
+  const commissions = db.commissions.filter((c) => indentIds.has(c.indentId))
+  const lineStatuses = orderLineStatuses(db).filter((s) => lineIds.has(s.lineId))
+
+  const ordered = lineStatuses.reduce((n, s) => n + s.orderedQty, 0)
+  const indented = lineStatuses.reduce((n, s) => n + s.indentedQty, 0)
+  const delivered = lineStatuses.reduce((n, s) => n + s.deliveredQty, 0)
+  const moving = shipments.filter((s) => s.status !== 'PLANNED')
+  const uom = orderLines[0]?.qtyUom ?? ''
+
+  const step = (cond: boolean, partial: boolean): DealStepState => (cond ? 'done' : partial ? 'partial' : 'todo')
+  const received = commissions.filter((c) => c.status === 'RECEIVED').length
+  const invoiced = commissions.filter((c) => c.status === 'INVOICED' || c.status === 'PARTIALLY_RECEIVED').length
+
+  return {
+    orderLines,
+    orders,
+    indents,
+    shipments,
+    commissions,
+    lineStatuses,
+    steps: [
+      {
+        key: 'ORDERED',
+        label: 'Client order',
+        state: step(orders.length > 0, false),
+        detail: orders.length ? `${orders.map((o) => o.coNumber).join(', ')} · ${round(ordered)} ${uom}` : 'Not ordered yet',
+      },
+      {
+        key: 'INDENTED',
+        label: 'Indent placed',
+        state: step(orders.length > 0 && indented >= ordered - 1e-6, indented > 0),
+        detail: indents.length ? indents.map((i) => i.indentNumber).join(', ') : 'No indent yet',
+      },
+      {
+        key: 'SHIPPED',
+        label: 'Shipped',
+        state: step(moving.length > 0 && shipments.every((s) => s.status !== 'PLANNED'), moving.length > 0 || shipments.length > 0),
+        detail: shipments.length ? pluralCount(shipments.length, 'shipment') : 'Nothing shipped',
+      },
+      {
+        key: 'DELIVERED',
+        label: 'Delivered',
+        state: step(ordered > 0 && delivered >= ordered - 1e-6, delivered > 0),
+        detail: delivered > 0 ? `${round(delivered)} of ${round(ordered)} ${uom}` : 'Nothing delivered',
+      },
+      {
+        key: 'COMMISSION',
+        label: 'Commission received',
+        state: step(commissions.length > 0 && received === commissions.length, received > 0 || invoiced > 0),
+        detail: commissions.length
+          ? received === commissions.length
+            ? 'Received in full'
+            : invoiced + received > 0
+              ? 'Invoiced, awaiting payment'
+              : commissions.some((c) => c.basis === 'TBD')
+                ? 'Terms to be agreed'
+                : 'Not invoiced yet'
+          : 'Earned once an indent is placed',
+      },
+    ],
+  }
+}
+
+const pluralCount = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+
+// -------------------------------------------------------------- next step
+
+export type NextAction =
+  | { kind: 'offer' }
+  | { kind: 'sample' }
+  | { kind: 'dispatch'; roundId: ID }
+  | { kind: 'receipt'; roundId: ID }
+  | { kind: 'outcome'; roundId: ID }
+  | { kind: 'approve' }
+  | { kind: 'match' }
+  | { kind: 'link'; href: string; label: string }
+
+export interface NextStep {
+  tone: 'action' | 'waiting' | 'done' | 'closed'
+  title: string
+  detail: string
+  action?: NextAction
+  /** the button label, when there is an action */
+  actionLabel?: string
+}
+
+/**
+ * What a person should do next on this engagement, worked out from the records
+ * already there. It suggests; the rules still decide what is allowed.
+ */
+export function nextStepFor(db: Database, e: Engagement): NextStep {
+  const client = companyName(db, e.clientCompanyId)
+  const offers = db.offers.filter((o) => o.engagementId === e.id).sort((a, b) => b.versionNo - a.versionNo)
+  const rounds = db.samples.filter((s) => s.engagementId === e.id).sort((a, b) => b.roundNo - a.roundNo)
+  const latestOffer = offers[0]
+  const latestRound = rounds[0]
+  const orderHref = `/client-orders/new?client=${e.clientCompanyId}&source=${e.manufacturerProductId}&engagement=${e.id}`
+
+  switch (e.stage) {
+    case 'REJECTED':
+    case 'DISCONTINUED':
+      return {
+        tone: 'closed',
+        title: e.stage === 'REJECTED' ? 'Closed: rejected' : 'Closed: discontinued',
+        detail: 'Nothing further is expected. If the client reconsiders, reopen it from Change stage; it returns to Identified.',
+      }
+    case 'ON_HOLD':
+      return {
+        tone: 'waiting',
+        title: 'Paused',
+        detail: `Put on hold${e.stageBeforeHold ? ` at ${e.stageBeforeHold.toLowerCase().replace(/_/g, ' ')}` : ''}. Resume it from Change stage when the reason has passed.`,
+      }
+    case 'IDENTIFIED':
+      return {
+        tone: 'action',
+        title: 'Send the client an offer',
+        detail: `${client} has not been quoted for this source yet. Recording the offer moves the engagement to Offered.`,
+        action: { kind: 'offer' },
+        actionLabel: 'Create offer',
+      }
+    case 'OFFERED':
+      if (latestOffer?.status === 'DECLINED') {
+        return {
+          tone: 'action',
+          title: 'Offer declined: revise it or close',
+          detail: `${client} declined offer v${latestOffer.versionNo}. Send a revised offer, or reject the engagement from Change stage.`,
+          action: { kind: 'offer' },
+          actionLabel: 'Revise offer',
+        }
+      }
+      return {
+        tone: 'action',
+        title: latestOffer?.status === 'ACCEPTED' ? 'Offer accepted: request a sample' : 'Request a sample for evaluation',
+        detail:
+          latestOffer?.status === 'ACCEPTED'
+            ? `${client} accepted offer v${latestOffer.versionNo}. The next step is material for their QC to evaluate.`
+            : `Offer v${latestOffer?.versionNo ?? 1} is with ${client}. When they want to test material, request a sample round.`,
+        action: { kind: 'sample' },
+        actionLabel: 'Request a sample',
+      }
+    case 'SAMPLE_REQUESTED':
+      return latestRound && !latestRound.dispatchedOn
+        ? {
+            tone: 'action',
+            title: 'Record the sample dispatch',
+            detail: `Round ${latestRound.roundNo} was requested on ${latestRound.requestedOn}. Record the courier and tracking number once the manufacturer sends it.`,
+            action: { kind: 'dispatch', roundId: latestRound.id },
+            actionLabel: 'Record dispatch',
+          }
+        : { tone: 'waiting', title: 'Waiting for the sample to be sent', detail: 'The manufacturer has the request.' }
+    case 'SAMPLE_SENT':
+      return latestRound && !latestRound.receivedOn
+        ? {
+            tone: 'action',
+            title: 'Confirm the client received the sample',
+            detail: `Round ${latestRound.roundNo} left on ${latestRound.dispatchedOn ?? '—'}. Record the date ${client} received it to start their evaluation.`,
+            action: { kind: 'receipt', roundId: latestRound.id },
+            actionLabel: 'Record receipt',
+          }
+        : { tone: 'waiting', title: 'Sample on its way', detail: 'Waiting for the client to confirm receipt.' }
+    case 'UNDER_EVALUATION':
+      if (latestRound?.outcome === 'PASS') {
+        return {
+          tone: 'action',
+          title: 'Sample passed: record the approval',
+          detail: `${client}'s QC passed round ${latestRound.roundNo}. Record the approval date and reference to open ordering.`,
+          action: { kind: 'approve' },
+          actionLabel: 'Record approval',
+        }
+      }
+      if (latestRound?.outcome === 'FAIL') {
+        return {
+          tone: 'action',
+          title: 'Sample failed: try again or close',
+          detail: `Round ${latestRound.roundNo} failed. Raise another round, or reject the engagement from Change stage.`,
+          action: { kind: 'sample' },
+          actionLabel: 'Raise another round',
+        }
+      }
+      return {
+        tone: 'action',
+        title: "Record the client's evaluation result",
+        detail: `${client} is evaluating round ${latestRound?.roundNo ?? 1}. Chase their QC and record pass or fail when they answer.`,
+        ...(latestRound ? { action: { kind: 'outcome' as const, roundId: latestRound.id }, actionLabel: 'Record outcome' } : {}),
+      }
+    case 'APPROVED':
+      return {
+        tone: 'action',
+        title: 'Approved: record the first client order',
+        detail: `${client} has approved this source${e.approvedOn ? ` on ${e.approvedOn}` : ''}. Their order and the indent on the manufacturer turn this into commercial supply.`,
+        action: { kind: 'link', href: orderHref, label: 'Record client order' },
+        actionLabel: 'Record client order',
+      }
+    case 'COMMERCIAL':
+      return commercialStep(db, e, orderHref)
+  }
+}
+
+/**
+ * What a requirement needs next: a source, a choice of sources, or progress on
+ * the engagements already opened. The requirement's own status is still set
+ * by hand; this reads the records around it.
+ */
+export function requirementNextStep(db: Database, r: Requirement): NextStep {
+  const engagements = db.requirementEngagements
+    .filter((l) => l.requirementId === r.id)
+    .map((l) => db.engagements.find((e) => e.id === l.engagementId))
+    .filter((e): e is Engagement => Boolean(e))
+  const product = productName(db, r.productId)
+
+  if (r.status === 'CANCELLED' || r.status === 'CLOSED_LOST') {
+    return { tone: 'closed', title: 'Closed', detail: 'This requirement is no longer being pursued.' }
+  }
+
+  if (engagements.length === 0) {
+    const candidates = matchingSources(db, r)
+    if (candidates.length > 0) {
+      return {
+        tone: 'action',
+        title: 'Choose which sources to offer',
+        detail: `${candidates.length} represented ${candidates.length === 1 ? 'source makes' : 'sources make'} ${product}${r.requiredPharmacopoeia ? ` to ${r.requiredPharmacopoeia}` : ''}. Tick one or more below and open an engagement for each; the client may approve one, some or none.`,
+        action: { kind: 'match' },
+        actionLabel: 'Pick sources',
+      }
+    }
+    const gap = sourcingGap(db, r.productId, r.requiredPharmacopoeia) ?? 'NO_SOURCE'
+    return {
+      tone: 'action',
+      title: 'Find a source',
+      detail: `${SOURCING_GAP_COPY[gap].label}. ${SOURCING_GAP_COPY[gap].detail}`,
+      action:
+        gap === 'NO_SOURCE'
+          ? { kind: 'link', href: '/manufacturers/new', label: 'Register a manufacturer' }
+          : { kind: 'link', href: `/products/${r.productId}`, label: 'Review the known sources' },
+      actionLabel: gap === 'NO_SOURCE' ? 'Register a manufacturer' : 'Review the known sources',
+    }
+  }
+
+  const live = engagements.filter((e) => !['REJECTED', 'DISCONTINUED'].includes(e.stage))
+  const best = furthestStage(engagements.map((e) => e.stage))
+  if (live.length === 0) {
+    return {
+      tone: 'action',
+      title: 'Every source so far has been closed',
+      detail: 'Open another candidate below, reopen one of the engagements, or close the requirement as lost.',
+      action: { kind: 'match' },
+      actionLabel: 'Pick another source',
+    }
+  }
+  if (best === 'COMMERCIAL') {
+    return {
+      tone: 'done',
+      title: 'Answered: supplying commercially',
+      detail: `${companyName(db, r.clientCompanyId)} is buying ${product} through TCL. Follow the trade on the engagement.`,
+    }
+  }
+  if (best === 'APPROVED') {
+    return {
+      tone: 'action',
+      title: 'Approved: waiting for the first order',
+      detail: 'The client has approved a source. Their first order turns this into commercial supply.',
+    }
+  }
+  return {
+    tone: 'waiting',
+    title: `${live.length} ${live.length === 1 ? 'engagement' : 'engagements'} in progress`,
+    detail: 'Each engagement below shows its own next step. Open one to record offers, samples and approval.',
+  }
+}
+
+function commercialStep(db: Database, e: Engagement, orderHref: string): NextStep {
+  const deal = dealProgress(db, e)
+  if (deal.orders.length === 0) {
+    return {
+      tone: 'done',
+      title: 'Supplying commercially',
+      detail: 'No client order for this source is recorded in the system yet. Record one when the client reorders.',
+      action: { kind: 'link', href: orderHref, label: 'Record client order' },
+      actionLabel: 'Record client order',
+    }
+  }
+  const unindented = deal.lineStatuses.find((s) => s.unindentedQty > 1e-6)
+  if (unindented) {
+    return {
+      tone: 'action',
+      title: 'Place the indent on the manufacturer',
+      detail: `${unindented.coNumber} still has ${round(unindented.unindentedQty)} ${unindented.uom} with no indent behind it.`,
+      action: { kind: 'link', href: `/client-orders/${unindented.orderId}?raise=1`, label: 'Raise indent' },
+      actionLabel: 'Raise indent',
+    }
+  }
+  const noLc = deal.indents.find((i) => !i.lcNumber && i.status !== 'COMPLETED')
+  if (noLc) {
+    return {
+      tone: 'action',
+      title: "Record the client's letter of credit",
+      detail: `${noLc.indentNumber} has no LC on record. The client opens it in the manufacturer's favour before shipment.`,
+      action: { kind: 'link', href: `/indents/${noLc.id}`, label: 'Open indent' },
+      actionLabel: 'Open indent',
+    }
+  }
+  const unshipped = deal.indents.find((i) => !deal.shipments.some((s) => s.indentId === i.id))
+  if (unshipped) {
+    return {
+      tone: 'action',
+      title: 'Record the shipment',
+      detail: `${unshipped.indentNumber} has no shipment yet. Add it once the manufacturer confirms dispatch.`,
+      action: { kind: 'link', href: `/indents/${unshipped.id}`, label: 'Open indent' },
+      actionLabel: 'Open indent',
+    }
+  }
+  const held = deal.shipments.find((s) => s.status === 'HELD_AT_CUSTOMS')
+  if (held) {
+    return {
+      tone: 'action',
+      title: 'Shipment held at customs',
+      detail: `${held.shipmentRef}: ${held.holdRemark ?? 'held'}. Follow up with the C&F agent and record clearance.`,
+      action: { kind: 'link', href: `/shipments/${held.id}`, label: 'Open shipment' },
+      actionLabel: 'Open shipment',
+    }
+  }
+  const moving = deal.shipments.find((s) => ['PLANNED', 'IN_TRANSIT', 'ARRIVED'].includes(s.status))
+  if (moving) {
+    return {
+      tone: 'waiting',
+      title: 'Goods on the way',
+      detail: `${moving.shipmentRef} is ${moving.status.toLowerCase().replace(/_/g, ' ')}${moving.eta ? `, ETA ${moving.eta}` : ''}. Record arrival and clearance as they happen.`,
+      action: { kind: 'link', href: `/shipments/${moving.id}`, label: 'Track shipment' },
+      actionLabel: 'Track shipment',
+    }
+  }
+  const undelivered = deal.shipments.find((s) => s.status === 'CLEARED')
+  if (undelivered) {
+    return {
+      tone: 'action',
+      title: 'Record the delivery',
+      detail: `${undelivered.shipmentRef} is cleared. Record what reached the client, with their GRN.`,
+      action: { kind: 'link', href: `/shipments/${undelivered.id}`, label: 'Open shipment' },
+      actionLabel: 'Open shipment',
+    }
+  }
+  const tbd = deal.commissions.find((c) => c.basis === 'TBD')
+  if (tbd) {
+    return {
+      tone: 'action',
+      title: 'Agree the commission',
+      detail: 'The goods are delivered but the commission terms are still to be decided.',
+      action: { kind: 'link', href: `/indents/${tbd.indentId}`, label: 'Open indent' },
+      actionLabel: 'Open indent',
+    }
+  }
+  const uninvoiced = deal.commissions.find((c) => c.status === 'PENDING')
+  if (uninvoiced) {
+    return {
+      tone: 'action',
+      title: 'Invoice the commission',
+      detail: 'Delivery is complete. Invoice the client for TCL\u2019s commission.',
+      action: { kind: 'link', href: `/commissions?client=${e.clientCompanyId}`, label: 'Open commission' },
+      actionLabel: 'Open commission',
+    }
+  }
+  const awaiting = deal.commissions.find((c) => c.status === 'INVOICED' || c.status === 'PARTIALLY_RECEIVED')
+  if (awaiting) {
+    return {
+      tone: 'waiting',
+      title: 'Waiting for the commission payment',
+      detail: `Invoiced${awaiting.invoicedOn ? ` on ${awaiting.invoicedOn}` : ''}. Record the receipt when the client pays.`,
+      action: { kind: 'link', href: `/commissions?client=${e.clientCompanyId}`, label: 'Open commission' },
+      actionLabel: 'Open commission',
+    }
+  }
+  return {
+    tone: 'done',
+    title: 'Complete: delivered and paid',
+    detail: 'Everything on record is delivered and the commission is received. Record a new order when the client reorders.',
+    action: { kind: 'link', href: orderHref, label: 'Record client order' },
+    actionLabel: 'Record client order',
+  }
+}
+
 // ------------------------------------------- v_client_order_line_status
 
 export interface OrderLineStatus {
@@ -481,6 +972,27 @@ export function commissionTotals(db: Database): CommissionTotals {
     pendingCount,
     tbdCount,
   }
+}
+
+type Money = { amount: number; currency: string }
+
+/** The same four figures as `commissionTotals`, kept per currency so unlike amounts are never added. */
+export function commissionMoney(db: Database): { earned: Money[]; invoiced: Money[]; received: Money[]; outstanding: Money[] } {
+  const live = db.commissions.filter((c) => c.status !== 'WRITTEN_OFF')
+  return {
+    earned: live.map((c) => ({ amount: c.amount ?? 0, currency: c.currency })),
+    invoiced: live.filter((c) => c.invoicedOn).map((c) => ({ amount: c.amount ?? 0, currency: c.currency })),
+    received: live.map((c) => ({ amount: c.receivedAmount, currency: c.currency })),
+    outstanding: live.map((c) => ({ amount: (c.amount ?? 0) - c.receivedAmount, currency: c.currency })),
+  }
+}
+
+/**
+ * The month a commission counts as earned: when it was invoiced, or the month
+ * of the indent while it is still pending. One rule for every screen.
+ */
+export function commissionEarnedOn(c: Commission, indent: Pick<Indent, 'orderDate'> | undefined): string | null {
+  return c.invoicedOn ?? indent?.orderDate ?? null
 }
 
 // ------------------------------------------- fn_development_register
@@ -753,16 +1265,14 @@ export function dashboard(db: Database, ownerId?: ID): DashboardData {
     pipelineByStage,
     overdueFollowUps: rows
       .filter((r) => r.isAgeing && ['OFFERED', 'SAMPLE_SENT', 'UNDER_EVALUATION'].includes(r.stage))
-      .sort((a, b) => b.daysInStage - a.daysInStage)
-      .slice(0, 8),
+      .sort((a, b) => b.daysInStage - a.daysInStage),
     samplesAwaiting: rows
       .filter((r) => r.stage === 'UNDER_EVALUATION' || r.stage === 'SAMPLE_SENT')
-      .sort((a, b) => b.daysInStage - a.daysInStage)
-      .slice(0, 8),
+      .sort((a, b) => b.daysInStage - a.daysInStage),
     approvedNotOrdered: rows
       .filter((r) => r.stage === 'APPROVED' && !orderedEngagementIds.has(r.engagement.id))
       .sort((a, b) => b.daysInStage - a.daysInStage),
-    unsourced: requirementRows(db, { unsourcedOnly: true, openOnly: true, ...(ownerId ? {} : {}) })
+    unsourced: requirementRows(db, { unsourcedOnly: true, openOnly: true })
       .filter((r) => (ownerId ? r.requirement.ownerUserId === ownerId : true))
       .sort((a, b) => b.daysOpen - a.daysOpen),
     shipmentsInTransit: db.shipments.filter((s) => s.status === 'IN_TRANSIT' || s.status === 'PLANNED').length,
@@ -774,6 +1284,272 @@ export function dashboard(db: Database, ownerId?: ID): DashboardData {
     commission: commissionTotals(db),
     deliveriesDue: db.shipments.filter((s) => s.status === 'CLEARED').length,
   }
+}
+
+// ------------------------------------------------------- needs attention
+
+export interface AttentionItem {
+  id: ID
+  label: string
+  sublabel: string
+  href: string
+  meta?: string
+}
+
+export interface AttentionGroup {
+  key: 'feedback' | 'approve' | 'order' | 'match' | 'customs' | 'eta' | 'deliver' | 'lc' | 'commission'
+  area: 'Sourcing' | 'Trade' | 'Commission'
+  title: string
+  why: string
+  tone: 'danger' | 'warn' | 'accent'
+  seeAll?: string
+  items: AttentionItem[]
+}
+
+/**
+ * Everything someone should act on today, grouped by what the action is.
+ * Each item opens the record where the action is taken. Empty groups are
+ * left out, so the list is only as long as the work.
+ */
+export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
+  const mine = (e: Engagement) => !ownerId || e.ownerUserId === ownerId
+  const eng = (id: ID) => db.engagements.find((e) => e.id === id)
+  const dealLabel = (e: Engagement) => `${companyName(db, e.clientCompanyId)} · ${productName(db, e.productId)}`
+  const fromLabel = (e: Engagement) => `from ${companyName(db, e.manufacturerCompanyId)}`
+  const groups: AttentionGroup[] = []
+  const evalThreshold = stageConfig('UNDER_EVALUATION').ageingThresholdDays
+
+  // samples with no client feedback past the evaluation threshold
+  const quiet = db.samples
+    .filter((s) => s.outcome === 'PENDING' && s.dispatchedOn && daysSince(s.dispatchedOn) > evalThreshold)
+    .map((s) => ({ s, e: eng(s.engagementId) }))
+    .filter((x): x is { s: typeof x.s; e: Engagement } => Boolean(x.e) && mine(x.e!) && !['REJECTED', 'DISCONTINUED'].includes(x.e!.stage))
+    .sort((a, b) => (a.s.dispatchedOn! < b.s.dispatchedOn! ? -1 : 1))
+  if (quiet.length) {
+    groups.push({
+      key: 'feedback',
+      area: 'Sourcing',
+      title: `${quiet.length} ${quiet.length === 1 ? 'sample has' : 'samples have'} had no client feedback for over ${evalThreshold} days`,
+      why: "Chase the client's QC for a result.",
+      tone: 'warn',
+      seeAll: '/samples?overdue=1',
+      items: quiet.map(({ s, e }) => ({
+        id: s.id,
+        label: dealLabel(e),
+        sublabel: `round ${s.roundNo} ${fromLabel(e)}`,
+        href: `/engagements/${e.id}?tab=work`,
+        meta: `${daysSince(s.dispatchedOn!)}d`,
+      })),
+    })
+  }
+
+  // a passed sample, approval not yet recorded
+  const passed = db.engagements.filter(
+    (e) =>
+      mine(e) &&
+      e.stage === 'UNDER_EVALUATION' &&
+      db.samples.filter((s) => s.engagementId === e.id).sort((a, b) => b.roundNo - a.roundNo)[0]?.outcome === 'PASS',
+  )
+  if (passed.length) {
+    groups.push({
+      key: 'approve',
+      area: 'Sourcing',
+      title: `${passed.length} passed ${passed.length === 1 ? 'sample is' : 'samples are'} waiting for the approval to be recorded`,
+      why: "Record the client's approval to open ordering.",
+      tone: 'accent',
+      items: passed.map((e) => ({ id: e.id, label: dealLabel(e), sublabel: fromLabel(e), href: `/engagements/${e.id}` })),
+    })
+  }
+
+  // approved but never ordered
+  const ordered = new Set(db.clientOrderLines.map((l) => l.engagementId).filter(Boolean) as ID[])
+  const idle = db.engagements
+    .filter((e) => mine(e) && e.stage === 'APPROVED' && !ordered.has(e.id))
+    .sort((a, b) => ((a.approvedOn ?? '') < (b.approvedOn ?? '') ? -1 : 1))
+  if (idle.length) {
+    groups.push({
+      key: 'order',
+      area: 'Sourcing',
+      title: `${idle.length} approved ${idle.length === 1 ? 'source has' : 'sources have'} no order yet`,
+      why: 'Approval won, revenue not yet. Follow up for the first order.',
+      tone: 'accent',
+      seeAll: '/engagements?stage=APPROVED',
+      items: idle.map((e) => ({
+        id: e.id,
+        label: dealLabel(e),
+        sublabel: fromLabel(e),
+        href: `/engagements/${e.id}`,
+        meta: e.approvedOn ? `${daysSince(e.approvedOn)}d` : undefined,
+      })),
+    })
+  }
+
+  // requirements with candidate sources but nothing opened
+  const unmatched = db.requirements
+    .filter((r) => (!ownerId || r.ownerUserId === ownerId) && ['OPEN', 'SOURCING'].includes(r.status))
+    .filter((r) => !db.requirementEngagements.some((l) => l.requirementId === r.id))
+    .filter((r) => matchingSources(db, r).length > 0)
+    .sort((a, b) => (a.enquiryDate < b.enquiryDate ? -1 : 1))
+  if (unmatched.length) {
+    groups.push({
+      key: 'match',
+      area: 'Sourcing',
+      title: `${unmatched.length} ${unmatched.length === 1 ? 'requirement has' : 'requirements have'} a source available but nothing offered`,
+      why: 'Pick the sources to offer and open engagements.',
+      tone: 'accent',
+      seeAll: '/requirements?status=OPEN',
+      items: unmatched.map((r) => ({
+        id: r.id,
+        label: `${companyName(db, r.clientCompanyId)} · ${productName(db, r.productId)}`,
+        sublabel: `asked ${r.enquiryDate}`,
+        href: `/requirements/${r.id}`,
+        meta: `${daysSince(r.enquiryDate)}d`,
+      })),
+    })
+  }
+
+  if (!ownerId) {
+    const shipLabel = (s: Shipment) => {
+      const indent = db.indents.find((i) => i.id === s.indentId)
+      return indent ? `${companyName(db, indent.clientCompanyId)} · from ${companyName(db, indent.manufacturerCompanyId)}` : ''
+    }
+    const held = db.shipments.filter((s) => s.status === 'HELD_AT_CUSTOMS')
+    if (held.length) {
+      groups.push({
+        key: 'customs',
+        area: 'Trade',
+        title: `${held.length} ${held.length === 1 ? 'shipment is' : 'shipments are'} held at customs`,
+        why: 'Follow up with the C&F agent and record the clearance.',
+        tone: 'danger',
+        seeAll: '/shipments?status=HELD_AT_CUSTOMS',
+        items: held.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: s.holdRemark ?? shipLabel(s), href: `/shipments/${s.id}` })),
+      })
+    }
+    const now = today()
+    const late = db.shipments.filter(
+      (s) => s.eta && s.eta < now && !s.actualArrivalDate && (s.status === 'PLANNED' || s.status === 'IN_TRANSIT'),
+    )
+    if (late.length) {
+      groups.push({
+        key: 'eta',
+        area: 'Trade',
+        title: `${late.length} ${late.length === 1 ? 'shipment is' : 'shipments are'} past ETA with no arrival recorded`,
+        why: 'Confirm with the forwarder and update the shipment.',
+        tone: 'warn',
+        seeAll: '/shipments',
+        items: late.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: shipLabel(s), href: `/shipments/${s.id}`, meta: `ETA ${s.eta}` })),
+      })
+    }
+    const cleared = db.shipments.filter((s) => s.status === 'CLEARED')
+    if (cleared.length) {
+      groups.push({
+        key: 'deliver',
+        area: 'Trade',
+        title: `${cleared.length} cleared ${cleared.length === 1 ? 'shipment is' : 'shipments are'} awaiting delivery`,
+        why: "Record what reached the client's factory, with their GRN.",
+        tone: 'accent',
+        seeAll: '/shipments?status=CLEARED',
+        items: cleared.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: shipLabel(s), href: `/shipments/${s.id}` })),
+      })
+    }
+    const lcs = db.indents.filter((i) => {
+      if (!i.lcExpiryDate || i.status === 'COMPLETED' || i.status === 'CANCELLED') return false
+      return differenceInCalendarDays(parseISO(i.lcExpiryDate), new Date()) <= 45
+    })
+    if (lcs.length) {
+      groups.push({
+        key: 'lc',
+        area: 'Trade',
+        title: `${lcs.length} ${lcs.length === 1 ? 'letter of credit expires' : 'letters of credit expire'} within 45 days or already has`,
+        why: 'Ask the client to extend the LC before the manufacturer ships.',
+        tone: 'warn',
+        seeAll: '/indents?lc=expiring',
+        items: lcs.map((i) => ({
+          id: i.id,
+          label: i.indentNumber,
+          sublabel: `${companyName(db, i.clientCompanyId)} · on ${companyName(db, i.manufacturerCompanyId)}`,
+          href: `/indents/${i.id}`,
+          meta: i.lcExpiryDate ?? undefined,
+        })),
+      })
+    }
+    const toAgree = db.commissions.filter((c) => c.basis === 'TBD' && c.status === 'PENDING')
+    const toInvoice = db.commissions.filter((c) => c.basis !== 'TBD' && c.status === 'PENDING' && c.amount != null)
+    if (toAgree.length + toInvoice.length) {
+      const items = [...toInvoice, ...toAgree].map((c) => {
+        const indent = db.indents.find((i) => i.id === c.indentId)
+        return {
+          id: c.id,
+          label: indent?.indentNumber ?? 'Indent',
+          sublabel: `${indent ? companyName(db, indent.clientCompanyId) : ''} · ${c.basis === 'TBD' ? 'terms to agree' : 'ready to invoice'}`,
+          href: `/indents/${c.indentId}`,
+          meta: c.amount != null ? `${c.currency} ${Math.round(c.amount).toLocaleString('en-US')}` : undefined,
+        }
+      })
+      groups.push({
+        key: 'commission',
+        area: 'Commission',
+        title: `${toInvoice.length} ${toInvoice.length === 1 ? 'commission is' : 'commissions are'} ready to invoice, ${toAgree.length} still need terms`,
+        why: "TCL's only revenue. Agree the terms, then invoice the client.",
+        tone: 'accent',
+        seeAll: '/commissions?status=PENDING',
+        items,
+      })
+    }
+  }
+
+  return groups
+}
+
+// --------------------------------------------------------- demo stories
+
+export interface ResolvedStory {
+  key: string
+  title: string
+  subtitle: string
+  point: string
+  href: string
+  stage: EngagementStage | null
+}
+
+/** The presentation route, resolved against whatever the data holds now. */
+export function demoStories(db: Database): ResolvedStory[] {
+  const byName = (name: string) => db.companies.find((c) => c.displayName === name)
+  const out: ResolvedStory[] = []
+  for (const s of DEMO_STORIES) {
+    const client = byName(s.client)
+    const product = db.products.find((p) => p.genericName === s.product)
+    if (!client || !product) continue
+    if (!s.manufacturer) {
+      const req = db.requirements
+        .filter((r) => r.clientCompanyId === client.id && r.productId === product.id)
+        .sort((a, b) => (a.enquiryDate < b.enquiryDate ? 1 : -1))[0]
+      if (!req) continue
+      out.push({
+        key: s.key,
+        title: s.title,
+        subtitle: `${client.displayName} · ${product.genericName}`,
+        point: s.point,
+        href: `/requirements/${req.id}`,
+        stage: null,
+      })
+      continue
+    }
+    const mfr = byName(s.manufacturer)
+    const e = db.engagements.find(
+      (x) => x.clientCompanyId === client.id && x.productId === product.id && x.manufacturerCompanyId === mfr?.id,
+    )
+    if (!e) continue
+    out.push({
+      key: s.key,
+      title: s.title,
+      subtitle: `${client.displayName} · ${product.genericName} from ${s.manufacturer}`,
+      point: s.point,
+      href: `/engagements/${e.id}`,
+      stage: e.stage,
+    })
+  }
+  return out
 }
 
 // ---------------------------------------------------------------- search

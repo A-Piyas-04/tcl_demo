@@ -11,19 +11,20 @@
  * it, and is never a party to it.
  */
 
-import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileStack, Plus, SlidersHorizontal } from 'lucide-react'
+import { FileStack, SlidersHorizontal } from 'lucide-react'
 import { useDb } from '@/data/store'
 import {
   clients as clientList,
   indentValue,
   manufacturers as mfrList,
+  ordersForIndent,
 } from '@/data/selectors'
 import { ORDER_STATUS_LABEL } from '@/data/reference'
 import { logExport } from '@/data/api'
-import { useAsyncData, useDebounced, useUrlFilters } from '@/lib/hooks'
-import { fmtDate, fmtMoney, pluralise } from '@/lib/utils'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
+import { fmtDate, fmtMoney, fmtMoneyTotals, pluralise } from '@/lib/utils'
+import { SectionNav } from '@/layout/sections'
 import type { Commission, Indent, OrderStatus } from '@/data/types'
 import {
   Badge,
@@ -31,17 +32,16 @@ import {
   DataTable,
   DateInput,
   EmptyState,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
   PageHeading,
-  SearchInput,
   Select,
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
 import {
-  ClearFiltersButton,
   CommissionStatusBadge,
   OrderStatusBadge,
   lcState,
@@ -72,13 +72,7 @@ export function IndentList() {
   const db = useDb()
   const navigate = useNavigate()
   const { values, setValue, clear, activeCount, queryString } = useUrlFilters(DEFAULTS)
-  const [search, setSearch] = React.useState(values.q)
-  const debounced = useDebounced(search, 180)
-
-  React.useEffect(() => {
-    setValue('q', debounced)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced])
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
 
   const { data: rows, loading } = useAsyncData<Row[]>(() => {
     return db.indents
@@ -144,7 +138,20 @@ export function IndentList() {
       header: 'Raised for',
       sortable: true,
       value: (r) => r.clientName,
-      cell: (r) => <NameCell title={r.clientName} subtitle="the client who pays the manufacturer" />,
+      cell: (r) => <NameCell title={r.clientName} />,
+    },
+    {
+      key: 'order',
+      header: 'Client order',
+      width: '9rem',
+      value: (r) => ordersForIndent(db, r.indent.id).map((id) => db.clientOrders.find((o) => o.id === id)?.coNumber).join(', '),
+      cell: (r) => (
+        <span className="font-mono text-2xs text-ink-600">
+          {ordersForIndent(db, r.indent.id)
+            .map((id) => db.clientOrders.find((o) => o.id === id)?.coNumber ?? '—')
+            .join(', ') || '—'}
+        </span>
+      ),
     },
     {
       key: 'value',
@@ -252,84 +259,88 @@ export function IndentList() {
 
   return (
     <div className="space-y-4">
-      <PageHeading
-        title="Indents"
-        subtitle="Each indent is placed on one manufacturer for one named client. TCL records it, chases it and earns commission on it."
-        meta={
-          <>
-            <Badge tone="neutral">{pluralise(db.indents.length, 'indent')}</Badge>
-            {expiringCount > 0 ? <Badge tone="warn">{expiringCount} with an LC expiring or expired</Badge> : null}
-          </>
-        }
-        actions={
-          <WriteOnly>
-            <LinkButton to="/client-orders/new" variant="secondary" size="md" icon={<Plus className="h-3.5 w-3.5" />}>
-              Record a client order
-            </LinkButton>
-          </WriteOnly>
-        }
-      />
+      <div>
+        <PageHeading
+          title="Orders"
+          subtitle="Indents are the orders TCL places on a manufacturer on a client's behalf, one per manufacturer per client order. The client pays the manufacturer, usually by letter of credit; TCL earns commission."
+          meta={
+            <>
+              <Badge tone="neutral">{pluralise(db.indents.length, 'indent')}</Badge>
+              {expiringCount > 0 ? <Badge tone="warn">{expiringCount} with an LC expiring or expired</Badge> : null}
+            </>
+          }
+        />
+        <SectionNav section="orders" />
+      </div>
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Indent number, party, LC or proforma…"
-            className="sm:col-span-2 lg:col-span-1"
-          />
-          <Select
-            value={values.manufacturer}
-            onChange={(v) => setValue('manufacturer', v)}
-            allowEmpty
-            emptyLabel="Any manufacturer"
-            placeholder="Any manufacturer"
-            options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
-          />
-          <Select
-            value={values.client}
-            onChange={(v) => setValue('client', v)}
-            allowEmpty
-            emptyLabel="Any client"
-            placeholder="Any client"
-            options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
-          />
-          <Select
-            value={values.status}
-            onChange={(v) => setValue('status', v)}
-            allowEmpty
-            emptyLabel="Any status"
-            placeholder="Any status"
-            options={(Object.keys(ORDER_STATUS_LABEL) as OrderStatus[]).map((s) => ({
-              value: s,
-              label: ORDER_STATUS_LABEL[s],
-            }))}
-          />
-          <Select
-            value={values.lc}
-            onChange={(v) => setValue('lc', v)}
-            allowEmpty
-            emptyLabel="Any LC state"
-            placeholder="Any LC state"
-            options={[
-              { value: 'expiring', label: 'Expiring within 45 days, or expired' },
-              { value: 'none', label: 'No LC opened yet' },
-            ]}
-          />
-          <div className="flex items-center gap-1.5 sm:col-span-2">
-            <DateInput
-              value={values.from}
-              onChange={(e) => setValue('from', e.target.value)}
-              aria-label="Raised on or after"
-            />
-            <span className="text-xs text-ink-400">to</span>
-            <DateInput
-              value={values.to}
-              onChange={(e) => setValue('to', e.target.value)}
-              aria-label="Raised on or before"
-            />
-          </div>
-        </div>
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Indent number, party, LC or proforma…"
+          activeCount={activeCount}
+          onClear={clear}
+          moreActive={['status', 'from', 'to'].filter((k) => values[k as keyof typeof values]).length}
+          primary={
+            <>
+              <Select
+                value={values.client}
+                onChange={(v) => setValue('client', v)}
+                allowEmpty
+                emptyLabel="Any client"
+                placeholder="Any client"
+                options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+              />
+              <Select
+                value={values.manufacturer}
+                onChange={(v) => setValue('manufacturer', v)}
+                allowEmpty
+                emptyLabel="Any manufacturer"
+                placeholder="Any manufacturer"
+                options={mfrList(db).map((m) => ({ value: m.id, label: m.displayName }))}
+              />
+              <Select
+                value={values.lc}
+                onChange={(v) => setValue('lc', v)}
+                allowEmpty
+                emptyLabel="Any LC state"
+                placeholder="Any LC state"
+                options={[
+                  { value: 'expiring', label: 'Expiring within 45 days, or expired' },
+                  { value: 'none', label: 'No LC opened yet' },
+                ]}
+              />
+            </>
+          }
+          more={
+            <>
+              <Select
+                value={values.status}
+                onChange={(v) => setValue('status', v)}
+                allowEmpty
+                emptyLabel="Any status"
+                placeholder="Any status"
+                options={(Object.keys(ORDER_STATUS_LABEL) as OrderStatus[]).map((s) => ({
+                  value: s,
+                  label: ORDER_STATUS_LABEL[s],
+                }))}
+              />
+              <div className="flex items-center gap-1.5 sm:col-span-2">
+                <DateInput
+                  value={values.from}
+                  onChange={(e) => setValue('from', e.target.value)}
+                  aria-label="Raised on or after"
+                />
+                <span className="text-xs text-ink-400">to</span>
+                <DateInput
+                  value={values.to}
+                  onChange={(e) => setValue('to', e.target.value)}
+                  aria-label="Raised on or before"
+                />
+              </div>
+            </>
+          }
+        />
 
         <DataTable
           rows={rows ?? []}
@@ -349,16 +360,9 @@ export function IndentList() {
               {rows ? pluralise(rows.length, 'indent') : '…'}
               {rows ? (
                 <span className="tabular">
-                  worth {fmtMoney(rows.reduce((s, r) => s + r.value, 0), 'USD', { compact: true })}
+                  worth {fmtMoneyTotals(rows.map((r) => ({ amount: r.value, currency: r.indent.currency })), { compact: true })}
                 </span>
               ) : null}
-              <ClearFiltersButton
-                count={activeCount}
-                onClear={() => {
-                  clear()
-                  setSearch('')
-                }}
-              />
             </span>
           }
           empty={

@@ -119,7 +119,15 @@ export function ShipmentDetail() {
               'an indent that no longer exists'
             )}
             {manufacturer ? `, despatched by ${manufacturer.displayName}` : ''}
-            {client ? ` for ${client.displayName}` : ''}.
+            {client ? (
+              <>
+                {' for '}
+                <Link to={`/clients/${client.id}`} className="font-medium text-ink-700 hover:text-accent-700">
+                  {client.displayName}
+                </Link>
+              </>
+            ) : null}
+            .
           </>
         }
         meta={
@@ -150,7 +158,7 @@ export function ShipmentDetail() {
                 Record clearance
               </WriteButton>
             ) : null}
-            {shipment.status !== 'HELD_AT_CUSTOMS' && shipment.status !== 'DELIVERED' ? (
+            {shipment.status === 'IN_TRANSIT' || shipment.status === 'ARRIVED' ? (
               <WriteButton variant="secondary" size="md" icon={<ShieldAlert className="h-3.5 w-3.5" />} onClick={() => setAction('hold')}>
                 Mark held at customs
               </WriteButton>
@@ -373,7 +381,15 @@ export function ShipmentDetail() {
                   <span className="font-mono text-2xs text-ink-600">{batch?.batchNumber ?? ''}</span>
                   <span className="min-w-0 flex-1 truncate text-xs text-ink-600">
                     to {siteName(db, d.deliverySiteId)}
-                    {order && orderLine ? ` · against ${order.coNumber} line ${orderLine.lineNo}` : ''}
+                    {order && orderLine ? (
+                      <>
+                        {' · against '}
+                        <Link to={`/client-orders/${order.id}`} className="font-mono text-accent-700 hover:underline">
+                          {order.coNumber}
+                        </Link>{' '}
+                        line {orderLine.lineNo}
+                      </>
+                    ) : null}
                   </span>
                   {d.grnReference ? (
                     <Badge tone="outline">

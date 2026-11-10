@@ -8,12 +8,12 @@
 
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, SlidersHorizontal, Users, X } from 'lucide-react'
+import { Plus, SlidersHorizontal, Users } from 'lucide-react'
 import { useDb } from '@/data/store'
 import { clients as clientList, engagementRows, manufacturers as mfrList } from '@/data/selectors'
 import { CLIENT_STATUS_LABEL, paymentTermLabel } from '@/data/reference'
 import { logExport } from '@/data/api'
-import { useAsyncData, useDebounced, useUrlFilters } from '@/lib/hooks'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
 import { fmtDate, pluralise } from '@/lib/utils'
 import type { ClientStatus, Company } from '@/data/types'
 import {
@@ -24,11 +24,11 @@ import {
   Column,
   DataTable,
   EmptyState,
+  FilterBar,
   LinkButton,
   NameCell,
   Panel,
   PageHeading,
-  SearchInput,
   Select,
   Tooltip,
   WriteOnly,
@@ -56,13 +56,7 @@ export function ClientList() {
   const db = useDb()
   const navigate = useNavigate()
   const { values, setValue, clear, activeCount, queryString } = useUrlFilters(DEFAULTS)
-  const [search, setSearch] = React.useState(values.q)
-  const debounced = useDebounced(search, 180)
-
-  React.useEffect(() => {
-    setValue('q', debounced)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced])
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
 
   const { data: rows, loading } = useAsyncData<Row[]>(() => {
     const engs = engagementRows(db)
@@ -251,69 +245,71 @@ export function ClientList() {
       />
 
       <Panel>
-        <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Client name or therapeutic focus…"
-            className="sm:col-span-2 lg:col-span-1"
-          />
-          <Select
-            value={values.product}
-            onChange={(v) => setValue('product', v)}
-            allowEmpty
-            emptyLabel="Any product"
-            placeholder="Any product"
-            options={db.products
-              .filter((p) => p.isActive)
-              .map((p) => ({ value: p.id, label: p.genericName }))
-              .sort((a, b) => a.label.localeCompare(b.label))}
-          />
-          <Select
-            value={values.manufacturer}
-            onChange={(v) => setValue('manufacturer', v)}
-            allowEmpty
-            emptyLabel="Any manufacturer"
-            placeholder="Any manufacturer"
-            options={mfrList(db)
-              .filter((m) => m.isActive)
-              .map((m) => ({ value: m.id, label: m.displayName }))}
-          />
-          <Select
-            value={values.status}
-            onChange={(v) => setValue('status', v)}
-            allowEmpty
-            emptyLabel="Any status"
-            placeholder="Any status"
-            options={(Object.keys(CLIENT_STATUS_LABEL) as ClientStatus[]).map((s) => ({
-              value: s,
-              label: CLIENT_STATUS_LABEL[s],
-            }))}
-          />
-          <Select
-            value={values.owner}
-            onChange={(v) => setValue('owner', v)}
-            allowEmpty
-            emptyLabel="Any owner"
-            placeholder="Any owner"
-            options={owners}
-          />
-          {filtersOn ? (
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={<X className="h-3.5 w-3.5" />}
-                onClick={() => {
-                  clear()
-                  setSearch('')
-                }}
-              >
-                Clear
-              </Button>
-            </div>
-          ) : null}
-        </div>
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Client name or therapeutic focus…"
+          activeCount={activeCount}
+          onClear={clear}
+          moreActive={['status', 'owner', 'inactive'].filter((k) => values[k as keyof typeof values]).length}
+          primary={
+            <>
+              <Select
+                value={values.product}
+                onChange={(v) => setValue('product', v)}
+                allowEmpty
+                emptyLabel="Any product"
+                placeholder="Any product"
+                options={db.products
+                  .filter((p) => p.isActive)
+                  .map((p) => ({ value: p.id, label: p.genericName }))
+                  .sort((a, b) => a.label.localeCompare(b.label))}
+              />
+              <Select
+                value={values.manufacturer}
+                onChange={(v) => setValue('manufacturer', v)}
+                allowEmpty
+                emptyLabel="Any manufacturer"
+                placeholder="Any manufacturer"
+                options={mfrList(db)
+                  .filter((m) => m.isActive)
+                  .map((m) => ({ value: m.id, label: m.displayName }))}
+              />
+            </>
+          }
+          more={
+            <>
+              <Select
+                value={values.status}
+                onChange={(v) => setValue('status', v)}
+                allowEmpty
+                emptyLabel="Any status"
+                placeholder="Any status"
+                options={(Object.keys(CLIENT_STATUS_LABEL) as ClientStatus[]).map((s) => ({
+                  value: s,
+                  label: CLIENT_STATUS_LABEL[s],
+                }))}
+              />
+              <Select
+                value={values.owner}
+                onChange={(v) => setValue('owner', v)}
+                allowEmpty
+                emptyLabel="Any owner"
+                placeholder="Any owner"
+                options={owners}
+              />
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-600">
+                <input
+                  type="checkbox"
+                  checked={values.inactive === '1'}
+                  onChange={(e) => setValue('inactive', e.target.checked ? '1' : '')}
+                  className="h-3.5 w-3.5 rounded border-paper-400 text-accent-600"
+                />
+                Include inactive clients
+              </label>
+            </>
+          }
+        />
 
         <DataTable
           rows={rows ?? []}
@@ -329,15 +325,6 @@ export function ClientList() {
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'client') : '…'}
               {filtersOn ? <Badge tone="accent">{activeCount} filters</Badge> : null}
-              <label className="ml-1 flex cursor-pointer items-center gap-1.5 text-xs text-ink-500">
-                <input
-                  type="checkbox"
-                  checked={values.inactive === '1'}
-                  onChange={(e) => setValue('inactive', e.target.checked ? '1' : '')}
-                  className="h-3.5 w-3.5 rounded border-paper-400 text-accent-600"
-                />
-                Include inactive
-              </label>
             </span>
           }
           empty={
@@ -368,14 +355,7 @@ export function ClientList() {
               }
               secondary={
                 filtersOn ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      clear()
-                      setSearch('')
-                    }}
-                  >
+                  <Button variant="ghost" size="sm" onClick={clear}>
                     Clear filters
                   </Button>
                 ) : null

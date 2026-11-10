@@ -30,10 +30,10 @@ import {
   SHIPMENT_MODE_LABEL,
   paymentTermLabel,
 } from '@/data/reference'
-import { createShipment, updateCommission, updateIndent } from '@/data/api'
+import { createShipment, updateIndent } from '@/data/api'
 import { runAction, useAsyncData } from '@/lib/hooks'
 import { fmtDate, fmtMoney, fmtQty, pluralise, todayIso } from '@/lib/utils'
-import type { Commission, CommissionBasis, Indent, ShipmentMode } from '@/data/types'
+import type { Commission, Indent, ShipmentMode } from '@/data/types'
 import {
   Badge,
   DateInput,
@@ -47,11 +47,9 @@ import {
   InlineError,
   InlineWarning,
   Input,
-  NumberInput,
   Panel,
   PanelHeader,
   PageHeading,
-  RadioCards,
   RuleHint,
   Select,
   SkeletonTable,
@@ -60,6 +58,7 @@ import {
   WriteButton,
 } from '@/components/ui'
 import { NotFound } from '@/features/misc/Fallbacks'
+import { CommissionActionButtons } from './CommissionActions'
 import {
   ActivityPanel,
   CommissionStatusBadge,
@@ -77,7 +76,6 @@ export function IndentDetail() {
   const db = useDb()
   const presenter = usePresenter()
   const [lcOpen, setLcOpen] = React.useState(false)
-  const [commissionOpen, setCommissionOpen] = React.useState(false)
   const [shipmentOpen, setShipmentOpen] = React.useState(false)
 
   const indent = db.indents.find((i) => i.id === id)
@@ -117,8 +115,21 @@ export function IndentDetail() {
             <Link to={`/clients/${indent.clientCompanyId}`} className="font-medium text-ink-700 hover:text-accent-700">
               {client?.displayName ?? 'the client'}
             </Link>
-            , on {fmtDate(indent.orderDate)} by {userName(db, indent.createdByUserId)}. TCL places the indent; the
-            client pays the manufacturer.
+            , on {fmtDate(indent.orderDate)} by {userName(db, indent.createdByUserId)}
+            {(data?.orderIds.length ?? 0) > 0 ? (
+              <>
+                , against client order{' '}
+                {data!.orderIds.map((oid, i) => (
+                  <span key={oid}>
+                    {i > 0 ? ', ' : ''}
+                    <Link to={`/client-orders/${oid}`} className="font-mono font-medium text-ink-700 hover:text-accent-700">
+                      {db.clientOrders.find((o) => o.id === oid)?.coNumber ?? 'order'}
+                    </Link>
+                  </span>
+                ))}
+              </>
+            ) : null}
+            . An indent is the order TCL places on the manufacturer for the client; the client pays the manufacturer.
           </>
         }
         meta={
@@ -340,7 +351,6 @@ export function IndentDetail() {
           commission={commission}
           value={value}
           clientName={client?.displayName ?? 'the client'}
-          onEdit={() => setCommissionOpen(true)}
         />
       </div>
 
@@ -415,15 +425,6 @@ export function IndentDetail() {
       </div>
 
       <LcDialog open={lcOpen} onOpenChange={setLcOpen} indent={indent} />
-      {commission ? (
-        <CommissionDialog
-          open={commissionOpen}
-          onOpenChange={setCommissionOpen}
-          commission={commission}
-          indentValueNow={value}
-          clientName={client?.displayName ?? 'the client'}
-        />
-      ) : null}
       <AddShipmentDialog open={shipmentOpen} onOpenChange={setShipmentOpen} indent={indent} />
     </div>
   )
@@ -436,13 +437,11 @@ function CommissionPanel({
   commission,
   value,
   clientName,
-  onEdit,
 }: {
   indent: Indent
   commission: Commission | undefined
   value: number
   clientName: string
-  onEdit: () => void
 }) {
   if (!commission) {
     return (
@@ -468,13 +467,9 @@ function CommissionPanel({
         title="Commission"
         subtitle={`TCL's earnings, payable by ${clientName}`}
         icon={<Coins className="h-4 w-4" />}
-        actions={
-          <WriteButton size="sm" variant="secondary" icon={<Pencil className="h-3.5 w-3.5" />} onClick={onEdit}>
-            Edit
-          </WriteButton>
-        }
       />
       <div className="space-y-3 p-4">
+        <CommissionActionButtons commission={commission} />
         <FieldGrid cols={2}>
           <Field label="Payable by">
             {commission.payableBy === 'CLIENT' ? clientName : 'the manufacturer'}
@@ -527,209 +522,6 @@ function CommissionPanel({
         </p>
       </div>
     </Panel>
-  )
-}
-
-function CommissionDialog({
-  open,
-  onOpenChange,
-  commission,
-  indentValueNow,
-  clientName,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  commission: Commission
-  indentValueNow: number
-  clientName: string
-}) {
-  const [basis, setBasis] = React.useState<CommissionBasis>(commission.basis)
-  const [ratePct, setRatePct] = React.useState<number | null>(commission.ratePct)
-  const [amount, setAmount] = React.useState<number | null>(commission.amount)
-  const [status, setStatus] = React.useState<Commission['status']>(commission.status)
-  const [invoiceReference, setInvoiceReference] = React.useState(commission.invoiceReference ?? '')
-  const [invoicedOn, setInvoicedOn] = React.useState(commission.invoicedOn ?? '')
-  const [receivedAmount, setReceivedAmount] = React.useState<number | null>(commission.receivedAmount)
-  const [receivedOn, setReceivedOn] = React.useState(commission.receivedOn ?? '')
-  const [remarks, setRemarks] = React.useState(commission.remarks ?? '')
-  const [busy, setBusy] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    if (!open) return
-    setBasis(commission.basis)
-    setRatePct(commission.ratePct)
-    setAmount(commission.amount)
-    setStatus(commission.status)
-    setInvoiceReference(commission.invoiceReference ?? '')
-    setInvoicedOn(commission.invoicedOn ?? '')
-    setReceivedAmount(commission.receivedAmount)
-    setReceivedOn(commission.receivedOn ?? '')
-    setRemarks(commission.remarks ?? '')
-    setError(null)
-  }, [open, commission])
-
-  // On a percentage basis the figure follows the indent value, so it is shown
-  // rather than typed. The rate is the negotiated number.
-  const computed = basis === 'PERCENT_OF_VALUE' && ratePct ? Math.round(indentValueNow * (ratePct / 100) * 100) / 100 : null
-  const effectiveAmount = basis === 'TBD' ? null : basis === 'PERCENT_OF_VALUE' ? computed : amount
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setBusy(true)
-    const ok = await runAction(
-      () =>
-        updateCommission(commission.id, {
-          basis,
-          ratePct: basis === 'PERCENT_OF_VALUE' ? ratePct : null,
-          baseAmount: basis === 'PERCENT_OF_VALUE' ? Math.round(indentValueNow * 100) / 100 : null,
-          amount: effectiveAmount,
-          status: basis === 'TBD' ? 'PENDING' : status,
-          invoiceReference: invoiceReference.trim() || null,
-          invoicedOn: invoicedOn || null,
-          receivedAmount: receivedAmount ?? 0,
-          receivedOn: receivedOn || null,
-          remarks: remarks.trim() || null,
-        }),
-      { success: 'Commission updated.', onError: setError },
-    )
-    setBusy(false)
-    if (ok !== null) onOpenChange(false)
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      width="lg"
-      icon={<Coins className="h-5 w-5 text-accent-600" />}
-      title="Commission on this indent"
-      description={`TCL's earnings, payable by ${clientName}. One record per indent.`}
-    >
-      <form onSubmit={submit} className="space-y-3.5">
-        <FormRow label="Basis" required>
-          <RadioCards
-            value={basis}
-            onChange={(v) => {
-              setBasis(v)
-              if (v === 'TBD') setStatus('PENDING')
-            }}
-            columns={1}
-            options={[
-              {
-                value: 'PERCENT_OF_VALUE' as CommissionBasis,
-                label: COMMISSION_BASIS_LABEL.PERCENT_OF_VALUE,
-                description: `A rate applied to the indent value of ${fmtMoney(indentValueNow, commission.currency, { decimals: 0 })}.`,
-              },
-              {
-                value: 'FIXED_AMOUNT' as CommissionBasis,
-                label: COMMISSION_BASIS_LABEL.FIXED_AMOUNT,
-                description: 'An agreed lump sum, whatever the indent is worth.',
-              },
-              {
-                value: 'TBD' as CommissionBasis,
-                label: COMMISSION_BASIS_LABEL.TBD,
-                description: 'Still being negotiated. The indent proceeds and nothing can be invoiced until a figure is agreed.',
-              },
-            ]}
-          />
-        </FormRow>
-
-        <FormGrid cols={3}>
-          <FormRow
-            label="Rate"
-            required={basis === 'PERCENT_OF_VALUE'}
-            hint={basis === 'PERCENT_OF_VALUE' ? 'A percentage basis needs a rate.' : 'Only used on a percentage basis.'}
-          >
-            <NumberInput
-              value={ratePct}
-              onChange={setRatePct}
-              suffix="%"
-              min={0}
-              step="any"
-              disabled={basis !== 'PERCENT_OF_VALUE'}
-              invalid={basis === 'PERCENT_OF_VALUE' && !ratePct}
-            />
-          </FormRow>
-          <FormRow label="Base, the indent value">
-            <Input value={fmtMoney(indentValueNow, commission.currency, { decimals: 0 })} readOnly mono />
-          </FormRow>
-          <FormRow
-            label={`Amount (${commission.currency})`}
-            hint={basis === 'PERCENT_OF_VALUE' ? 'Calculated from the rate.' : basis === 'TBD' ? 'No figure while the basis is undecided.' : undefined}
-          >
-            <NumberInput
-              value={basis === 'PERCENT_OF_VALUE' ? computed : basis === 'TBD' ? null : amount}
-              onChange={setAmount}
-              min={0}
-              step="any"
-              disabled={basis !== 'FIXED_AMOUNT'}
-            />
-          </FormRow>
-        </FormGrid>
-
-        <FormGrid cols={3}>
-          <FormRow label="Status" hint={basis === 'TBD' ? 'An undecided commission stays pending.' : undefined}>
-            <Select
-              value={status}
-              onChange={(v) => setStatus(v as Commission['status'])}
-              disabled={basis === 'TBD'}
-              options={[
-                { value: 'PENDING', label: 'Pending' },
-                { value: 'INVOICED', label: 'Invoiced' },
-                { value: 'PARTIALLY_RECEIVED', label: 'Partly received' },
-                { value: 'RECEIVED', label: 'Received' },
-                { value: 'WRITTEN_OFF', label: 'Written off' },
-              ]}
-            />
-          </FormRow>
-          <FormRow label="Invoice reference" required={status !== 'PENDING'}>
-            <Input
-              value={invoiceReference}
-              onChange={(e) => setInvoiceReference(e.target.value)}
-              mono
-              placeholder="TCL/COM/2026/004"
-              disabled={basis === 'TBD'}
-            />
-          </FormRow>
-          <FormRow label="Invoiced on" required={status !== 'PENDING'}>
-            <DateInput
-              value={invoicedOn}
-              onChange={(e) => setInvoicedOn(e.target.value)}
-              disabled={basis === 'TBD'}
-              invalid={status !== 'PENDING' && !invoicedOn}
-            />
-          </FormRow>
-        </FormGrid>
-
-        <FormGrid>
-          <FormRow label={`Received so far (${commission.currency})`} hint="A receipt larger than the amount due is refused.">
-            <NumberInput
-              value={receivedAmount}
-              onChange={setReceivedAmount}
-              min={0}
-              step="any"
-              disabled={basis === 'TBD'}
-              invalid={effectiveAmount != null && (receivedAmount ?? 0) > effectiveAmount}
-            />
-          </FormRow>
-          <FormRow label="Received on">
-            <DateInput value={receivedOn} onChange={(e) => setReceivedOn(e.target.value)} disabled={basis === 'TBD'} />
-          </FormRow>
-        </FormGrid>
-
-        <FormRow label="Remarks" hint="Why the rate is what it is, or what is still being negotiated.">
-          <Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={2} />
-        </FormRow>
-
-        {error ? <InlineError>{error}</InlineError> : null}
-
-        <div className="flex items-center justify-end gap-2 pt-1">
-          <DialogFooterActions onCancel={() => onOpenChange(false)} confirmLabel="Save the commission" loading={busy} />
-        </div>
-      </form>
-    </Dialog>
   )
 }
 
