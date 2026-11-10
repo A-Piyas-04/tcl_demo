@@ -31,10 +31,12 @@ Other scripts:
 |---|---|
 | `npm run typecheck` | TypeScript, strict, no emit |
 | `npm run build` | Type-checks then produces `dist/` |
-| `node scripts/screenshot.mjs` | Visits every route at 1280px and 390px, captures screenshots, reports console errors and horizontal overflow |
+| `node scripts/screenshot.mjs` | Visits every route at 1280, 820 and 390px, captures screenshots, reports console errors and horizontal overflow |
 | `node scripts/walkthrough.mjs` | Drives the CRUD story and asserts the rules refuse what they should |
 
-Both scripts need the dev server or preview server running first.
+Both scripts need the dev server or preview server running first. The screenshot
+script covers 1280, 820 and 390 px. Without Playwright's own browser, point them
+at an installed Chrome with `PLAYWRIGHT_CHROMIUM_PATH`.
 
 ---
 
@@ -57,45 +59,72 @@ In the user menu, top right:
 - **Simulated latency** — off, realistic (default) or slow. Realistic makes the
   skeleton loading states visible; off makes the demonstration snappy.
 - **Show rule notes** — the short "Rule" notes that explain what the database
-  enforces. Turn them off for a cleaner screen.
+  enforces, and the *Demonstration stories* panel on the dashboard. Turn them off
+  for a cleaner screen.
 - **Reset demonstration data** — restores the seed exactly. Everything created
   during a demonstration is discarded.
 
 Keyboard: `⌘K` or `Ctrl-K` or `/` opens the command palette (search covers product
-synonyms and CAS numbers). `g` then `p`, `m`, `c`, `r`, `e`, `o`, `i`, `s`, `k`
-jumps to a section.
+synonyms and CAS numbers). `g` then `d`, `r`, `e`, `o`, `i`, `s`, `k`, `p`, `m`,
+`c`, `a` jumps to Dashboard, Requirements, Engagements, Client orders, Indents,
+Shipments, Commission, Products, Manufacturers, Clients or Reports.
+
+## How it is organised
+
+The sidebar follows the work, with related lists as tabs under one entry:
+
+| Group | Entries (tabs) |
+|---|---|
+| Home | Dashboard — what needs attention today |
+| Sourcing | Requirements (All, Unsourced demand) · Engagements (Pipeline, Sample rounds) |
+| Trade | Orders (Client orders, Indents) · Shipments (Shipments, Batches) · Commission (Tracker, Analysis) |
+| Directory | Products · Manufacturers · Clients |
+| Insight | Reports (Reports, Relationship explorer, Documents & certificates) |
+
+An **engagement** is one client considering one manufacturer's product — a
+client × supplier deal. Its page shows the sourcing stages, the trade steps that
+follow approval, and a **Next step** card whose button does the next thing. An
+**indent** is the order TCL places on a manufacturer on a client's behalf.
+
+Design notes, the audit and open questions for TCL are in [`docs/`](docs):
+[current-state audit](docs/CURRENT_STATE_AUDIT.md),
+[proposed structure](docs/PROPOSED_PRODUCT_STRUCTURE.md),
+[client questions](docs/CLIENT_CLARIFICATION_QUESTIONS.md),
+[refactoring summary](docs/REFACTORING_SUMMARY.md).
 
 ---
 
 ## What to show, in order
 
-A fifteen-minute route through the six questions document 10 says the business
-cannot answer today:
+A fifteen-minute route that follows one deal from enquiry to commission. The
+dashboard's *Demonstration stories* panel links to each record used here.
 
-1. **Dashboard** — the pipeline by stage, approved-but-not-ordered, unsourced
-   demand, and the commission tile (TCL's only revenue).
-2. **Products → Budesonide** — every manufacturer who makes it, split into what
-   TCL represents and what it merely knows about, then the clients engaged on it
-   and whether any is dual sourced.
-3. **Clients → Square → Products taken** — the same triangle from the other
-   direction, then "Other clients taking this API", which logs every view.
-4. **Requirements → new** — record an alternate-source requirement; the current
-   source and reason become mandatory. Then match it to sources and open
-   engagements.
-5. **Engagement board** — drag a card. Try an invalid jump (it springs back and
-   says why), then a move that needs a reason, then a sample before an offer,
-   which needs an override with a note.
-6. **Client orders → new** — order one molecule from two manufacturers on one
-   order (split sourcing), with the approved-source gate refusing an unapproved
-   source until a reason is recorded. Then raise the indents, one per manufacturer.
-7. **Indent detail** — the client's letter of credit in the manufacturer's favour,
-   and the commission TCL earns from the client.
-8. **Shipment detail** — add batches against an indent line; try to over-ship, try
-   a short shelf life, try to deliver before customs clearance.
-9. **Batch detail** — one manufacturer batch serving two clients' orders.
-10. **Relationships → connection tree** — the whole triangle as a picture.
-11. **Reports → development register** — the monthly register, with the stage each
-    engagement was at at period end.
+1. **Dashboard** — *Needs attention*: what to chase, grouped by sourcing, trade
+   and commission, each item one click from its record. Beside it, the pipeline
+   and the commission book (TCL's only revenue).
+2. **Story 1, a new enquiry (Beximco needs Budesonide)** — the next step says
+   two represented sources can supply it. Tick both and open the engagements.
+3. **The new engagement** — the Next step card says *Create offer*. Record it and
+   watch the stage move to Offered; the next step becomes *Request a sample*.
+4. **Engagements → Pipeline** — drag a card to Offered: it is refused because an
+   offer has to be recorded, with a button to open the engagement. Drag one to
+   On hold: it asks for a reason.
+5. **Story 3, a sample under evaluation (Ibn Sina)** — record the outcome; after a
+   pass, *Record approval*.
+6. **Story 4, approved but not ordered (Healthcare, Capecitabine)** — *Record client
+   order* opens the order form already filled with the client and source. Save it
+   and raise the indent.
+7. **Story 5, goods on the way (Aristopharma)** — the Orders & shipments tab: the
+   order, the indent with its letter of credit, the shipment in transit.
+8. **Story 6, delivered and paid (Square, Budesonide)** — one order split 300 kg from
+   Biocon and 200 kg from Wockhardt. Open the order: the Fulfilment panel shows
+   both indents, their shipments and the commission (received on one, invoiced on
+   the other).
+9. **Commission** — invoice or record a receipt; then the Analysis tab by client,
+   manufacturer and month.
+10. **Products → Budesonide** and **Clients → Square** — the same triangle from the
+    register side, and "Other clients taking this molecule", which logs every view.
+11. **Reports** — the development register, then the Relationship explorer.
 12. **Switch to View Only**, then **Admin → audit log** — every action from the
     demonstration, with who did it.
 

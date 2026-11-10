@@ -132,7 +132,8 @@ export function StageRail({
     <div className="space-y-2">
       <div className="flex items-stretch gap-1">
         {PIPELINE_STAGES.map((s: EngagementStage, i: number) => {
-          const reached = reachedSet.size ? reachedSet.has(s) : i <= anchorIndex
+          // a migrated record has a single history entry, so everything before it counts as passed
+          const reached = reachedSet.size > 1 ? reachedSet.has(s) : i <= anchorIndex
           const isCurrent = !isExit && s === stage
           const style = STAGE_STYLE[s]
           return (
