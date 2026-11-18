@@ -10,10 +10,9 @@
  */
 
 import * as React from 'react'
-import { Link } from 'react-router-dom'
 import { Check, FileSignature, Plus, X } from 'lucide-react'
 import { useDb } from '@/data/store'
-import { bestPrice, currentPriceTiers, latestPrice } from '@/data/selectors'
+import { bestPrice } from '@/data/selectors'
 import { CURRENCIES, INCOTERMS, OFFER_STATUS_LABEL, UOMS } from '@/data/reference'
 import { createOffer, setOfferStatus } from '@/data/api'
 import { runAction } from '@/lib/hooks'
@@ -29,7 +28,6 @@ import {
   FormRow,
   InlineError,
   InlineWarning,
-  LinkButton,
   NumberInput,
   Panel,
   PanelHeader,
@@ -62,10 +60,6 @@ export function OfferPanel({ engagement }: { engagement: Engagement }) {
     .filter((o) => o.engagementId === engagement.id)
     .sort((a, b) => b.versionNo - a.versionNo)
 
-  const tiers = currentPriceTiers(db, engagement.manufacturerProductId)
-  const blocked = tiers.length === 0
-  const last = latestPrice(db, engagement.manufacturerProductId)
-
   return (
     <Panel>
       <PanelHeader
@@ -79,56 +73,24 @@ export function OfferPanel({ engagement }: { engagement: Engagement }) {
               size="sm"
               icon={<Plus className="h-3.5 w-3.5" />}
               onClick={() => setOpen(true)}
-              disabled={blocked}
             >
-              {offers.length ? 'Revise offer' : 'Create offer'}
+              {offers.length ? 'Record a revised offer' : 'Record an offer'}
             </WriteButton>
           </>
         }
       />
 
-      {blocked ? (
-        <div className="p-3">
-          <InlineError>
-            <span>
-              No offer can be made: this source has no currently valid price.{' '}
-              {last ? (
-                <>
-                  The last one expired on <strong>{fmtDate(last.validTo)}</strong>.{' '}
-                </>
-              ) : (
-                <>No price has ever been recorded against it. </>
-              )}
-              <Link to={`/sources/${engagement.manufacturerProductId}`} className="font-medium underline">
-                Renew the price on the source
-              </Link>
-              , then come back here.
-            </span>
-          </InlineError>
-        </div>
-      ) : null}
-
       {offers.length === 0 ? (
         <div className="p-4">
           <EmptyState
             icon={<FileSignature className="h-5 w-5" />}
-            title="No offer has been issued"
-            description={
-              blocked
-                ? 'The price has to be valid before an offer can be put in front of the client.'
-                : 'The first offer moves this engagement from Identified to Offered, with the price pre-filled from the current source price.'
-            }
+            title="No offer is recorded"
+            description="Recording the first offer moves the engagement to Offered. The price is pre-filled from the source price on record, where there is one."
             compact
             action={
-              blocked ? (
-                <LinkButton to={`/sources/${engagement.manufacturerProductId}`} variant="primary" size="sm">
-                  Open the source price screen
-                </LinkButton>
-              ) : (
-                <WriteButton variant="primary" size="sm" onClick={() => setOpen(true)}>
-                  Create offer
-                </WriteButton>
-              )
+              <WriteButton variant="primary" size="sm" onClick={() => setOpen(true)}>
+                Record an offer
+              </WriteButton>
             }
           />
         </div>
@@ -294,11 +256,11 @@ export function OfferDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="lg"
-      title={revision ? 'Revise the offer' : 'Create an offer'}
+      title={revision ? 'Record a revised offer' : 'Record an offer'}
       description={
         source
           ? `Pre-filled from the current source price of ${fmtMoney(source.price, source.currency)}/${source.perUom} ${source.incoterm}, valid to ${fmtDate(source.validTo)}.`
-          : 'No source price is available to pre-fill.'
+          : 'No current source price is on record; type what the client was quoted.'
       }
       footer={
         <>

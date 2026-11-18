@@ -128,7 +128,7 @@ export function SamplePanel({
                 icon={<Plus className="h-3.5 w-3.5" />}
                 onClick={() => setStep({ kind: 'request' })}
               >
-                Request a sample
+                Record a sample request
               </WriteButton>
             ) : null}
           </>
@@ -139,8 +139,8 @@ export function SamplePanel({
         <div className="p-3">
           <InlineWarning>
             <span>
-              This engagement is closed, so no outcome can be recorded against it. Reopen it from the stage control
-              first, which is an audited action.
+              This engagement is recorded as {engagement.stage === 'REJECTED' ? 'rejected' : 'discontinued'}. A sample
+              result that arrived afterwards can still be recorded against the round it belongs to.
             </span>
           </InlineWarning>
         </div>
@@ -160,7 +160,7 @@ export function SamplePanel({
             action={
               canRequest ? (
                 <WriteButton variant="primary" size="sm" onClick={() => setStep({ kind: 'request' })}>
-                  Request a sample
+                  Record a sample request
                 </WriteButton>
               ) : undefined
             }
@@ -169,7 +169,7 @@ export function SamplePanel({
       ) : (
         <ul className="divide-y divide-paper-200">
           {rounds.map((round) => (
-            <RoundRow key={round.id} round={round} onStep={(kind) => setStep({ kind, round })} disabled={closed} />
+            <RoundRow key={round.id} round={round} onStep={(kind) => setStep({ kind, round })} />
           ))}
         </ul>
       )}
@@ -201,10 +201,10 @@ export function SamplePanel({
             </p>
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" size="sm" onClick={() => setStep({ kind: 'request' })}>
-                Raise another round
+                Record another sample round
               </Button>
               <Button variant="danger" size="sm" onClick={() => onRequestStage('REJECTED')}>
-                Reject the engagement
+                Record it as rejected
               </Button>
             </div>
             <NoteTip label="Another round vs. on hold">
@@ -234,11 +234,9 @@ export function SamplePanel({
 function RoundRow({
   round,
   onStep,
-  disabled,
 }: {
   round: SampleRound
   onStep: (step: Step) => void
-  disabled: boolean
 }) {
   const threshold = stageConfig('UNDER_EVALUATION').ageingThresholdDays
   const waiting = round.dispatchedOn && round.outcome === 'PENDING' ? daysSince(round.dispatchedOn) : null
@@ -304,19 +302,18 @@ function RoundRow({
               variant="secondary"
               size="sm"
               icon={<Truck className="h-3.5 w-3.5" />}
-              disabled={disabled}
               onClick={() => onStep('dispatch')}
             >
               Record dispatch
             </Button>
           ) : null}
           {round.dispatchedOn && !round.receivedOn ? (
-            <Button variant="secondary" size="sm" disabled={disabled} onClick={() => onStep('receipt')}>
+            <Button variant="secondary" size="sm" onClick={() => onStep('receipt')}>
               Record client receipt
             </Button>
           ) : null}
           {round.outcome === 'PENDING' && round.receivedOn ? (
-            <Button variant="secondary" size="sm" disabled={disabled} onClick={() => onStep('outcome')}>
+            <Button variant="secondary" size="sm" onClick={() => onStep('outcome')}>
               Record outcome
             </Button>
           ) : null}
@@ -393,7 +390,7 @@ function RequestDialog({
         if (!v) onClose()
       }}
       width="lg"
-      title={nextRound > 1 ? `Raise sample round ${nextRound}` : 'Request a sample'}
+      title={nextRound > 1 ? `Record sample round ${nextRound}` : 'Record a sample request'}
       description="What the client asked for, and who asked. The stage moves to Sample requested once it is saved."
       footer={
         <>
@@ -401,7 +398,7 @@ function RequestDialog({
             Cancel
           </Button>
           <Button variant="primary" size="sm" loading={saving} onClick={() => void submit()}>
-            {nextRound > 1 ? `Raise round ${nextRound}` : 'Request sample'}
+            {nextRound > 1 ? `Record round ${nextRound}` : 'Record a sample request'}
           </Button>
         </>
       }

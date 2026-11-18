@@ -337,7 +337,7 @@ export function DocumentLibrary() {
           label="Already expired"
           value={counts.expired}
           tone={counts.expired > 0 ? 'danger' : 'default'}
-          hint="Chase the manufacturer for a renewal"
+          hint="No renewal is recorded"
         />
         <StatCell
           label="Superseded"

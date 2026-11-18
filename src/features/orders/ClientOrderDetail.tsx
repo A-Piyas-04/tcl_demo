@@ -169,7 +169,7 @@ export function ClientOrderDetail() {
               icon={<Zap className="h-3.5 w-3.5" />}
               onClick={() => setRaiseOpen(true)}
             >
-              Raise indent
+              Record the indent
             </WriteButton>
           ) : null
         }
@@ -321,7 +321,7 @@ export function ClientOrderDetail() {
               description="Until an indent exists the manufacturer has not been booked, so nothing can ship. Raising one groups the lines by manufacturer."
               action={
                 <WriteButton variant="primary" size="sm" onClick={() => setRaiseOpen(true)}>
-                  Raise indent
+                  Record the indent
                 </WriteButton>
               }
             />
@@ -503,7 +503,7 @@ function RaiseIndentDialog({
       onOpenChange={onOpenChange}
       width="lg"
       icon={<Receipt className="h-5 w-5 text-accent-600" />}
-      title="Raise the indents"
+      title="Record the indents placed"
       description={`One indent per manufacturer, each placed on that manufacturer for ${clientName || 'this client'}.`}
     >
       <form onSubmit={submit} className="space-y-4">

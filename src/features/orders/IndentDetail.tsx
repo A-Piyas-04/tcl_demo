@@ -341,7 +341,7 @@ export function IndentDetail() {
             )}
             <IndentingNote>
               The credit is between the client's bank and the manufacturer. TCL is not a party to it: it records the
-              terms and chases the dates, which is why the record sits on the indent and not on the client order.
+              terms, which is why the record sits on the indent and not on the client order.
             </IndentingNote>
           </div>
         </Panel>
@@ -585,7 +585,7 @@ function LcDialog({
       onOpenChange={onOpenChange}
       icon={<Banknote className="h-5 w-5 text-accent-600" />}
       title="Letter of credit and terms"
-      description="The credit is opened by the client in the manufacturer's favour. TCL records it and chases the dates."
+      description="The credit is opened by the client in the manufacturer's favour. TCL records it and tracks the dates."
     >
       <form onSubmit={submit} className="space-y-3.5">
         <FormGrid>

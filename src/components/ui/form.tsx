@@ -119,6 +119,48 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
   },
 )
 
+/**
+ * The record-only escape hatch.
+ *
+ * An `InlineError` or a disabled submit is permitted ONLY when the input
+ * cannot be stored — a missing required field, a malformed date, a dangling
+ * reference. Anything that is a *judgement about the business* — the client
+ * ordered a source we have not approved, the goods shipped after the LC
+ * expired, a sample came back on a closed engagement — is not an error. The
+ * event happened; the system records it. This component states the unusual
+ * fact, takes a required note, and leaves the host's submit button enabled.
+ */
+export function RecordAnyway({
+  warning,
+  label = 'Note',
+  value,
+  onChange,
+  hint,
+  invalid,
+}: {
+  warning: React.ReactNode
+  label?: string
+  value: string
+  onChange: (v: string) => void
+  hint?: React.ReactNode
+  invalid?: boolean
+}) {
+  return (
+    <div className="space-y-2 rounded border-l-2 border-warn-500 bg-warn-50 px-3 py-2.5">
+      <p className="flex items-start gap-2 text-base leading-relaxed text-warn-700">{warning}</p>
+      <FormRow label={label} hint={hint}>
+        <Textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={2}
+          invalid={invalid}
+          placeholder="What happened, in a line — kept with the record."
+        />
+      </FormRow>
+    </div>
+  )
+}
+
 export function NumberInput({
   value,
   onChange,

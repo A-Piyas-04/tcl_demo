@@ -472,7 +472,7 @@ export function RequirementForm() {
                   }))}
                 />
               </FormRow>
-              <FormRow label="Owner" required hint="Who chases this requirement.">
+              <FormRow label="Owner" required hint="Who owns this requirement at TCL.">
                 <Select
                   value={ownerUserId}
                   onChange={setOwnerUserId}

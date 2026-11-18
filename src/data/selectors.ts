@@ -1296,7 +1296,7 @@ export interface AttentionGroup {
   key: 'feedback' | 'approve' | 'order' | 'match' | 'customs' | 'eta' | 'deliver' | 'lc' | 'commission'
   area: 'Sourcing' | 'Trade' | 'Commission'
   title: string
-  why: string
+  note: string
   tone: 'danger' | 'warn' | 'accent'
   seeAll?: string
   items: AttentionItem[]
@@ -1326,7 +1326,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
       key: 'feedback',
       area: 'Sourcing',
       title: `${quiet.length} ${quiet.length === 1 ? 'sample has' : 'samples have'} had no client feedback for over ${evalThreshold} days`,
-      why: "Chase the client's QC for a result.",
+      note: 'No result has been recorded since the sample was dispatched.',
       tone: 'warn',
       seeAll: '/samples?overdue=1',
       items: quiet.map(({ s, e }) => ({
@@ -1351,7 +1351,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
       key: 'approve',
       area: 'Sourcing',
       title: `${passed.length} passed ${passed.length === 1 ? 'sample is' : 'samples are'} waiting for the approval to be recorded`,
-      why: "Record the client's approval to open ordering.",
+      note: 'The latest round is recorded as passed. No approval is recorded.',
       tone: 'accent',
       items: passed.map((e) => ({ id: e.id, label: dealLabel(e), sublabel: fromLabel(e), href: `/engagements/${e.id}` })),
     })
@@ -1367,7 +1367,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
       key: 'order',
       area: 'Sourcing',
       title: `${idle.length} approved ${idle.length === 1 ? 'source has' : 'sources have'} no order yet`,
-      why: 'Approval won, revenue not yet. Follow up for the first order.',
+      note: 'Approved on the record. No client order is recorded against the source.',
       tone: 'accent',
       seeAll: '/engagements?stage=APPROVED',
       items: idle.map((e) => ({
@@ -1390,8 +1390,8 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
     groups.push({
       key: 'match',
       area: 'Sourcing',
-      title: `${unmatched.length} ${unmatched.length === 1 ? 'requirement has' : 'requirements have'} a source available but nothing offered`,
-      why: 'Pick the sources to offer and open engagements.',
+      title: `${unmatched.length} ${unmatched.length === 1 ? 'requirement has' : 'requirements have'} a represented source in the register and no offer recorded`,
+      note: 'The register holds a represented source for the molecule. No offer is recorded.',
       tone: 'accent',
       seeAll: '/requirements?status=OPEN',
       items: unmatched.map((r) => ({
@@ -1415,7 +1415,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         key: 'customs',
         area: 'Trade',
         title: `${held.length} ${held.length === 1 ? 'shipment is' : 'shipments are'} held at customs`,
-        why: 'Follow up with the C&F agent and record the clearance.',
+        note: 'Recorded as held at customs. No clearance is recorded.',
         tone: 'danger',
         seeAll: '/shipments?status=HELD_AT_CUSTOMS',
         items: held.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: s.holdRemark ?? shipLabel(s), href: `/shipments/${s.id}` })),
@@ -1430,7 +1430,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         key: 'eta',
         area: 'Trade',
         title: `${late.length} ${late.length === 1 ? 'shipment is' : 'shipments are'} past ETA with no arrival recorded`,
-        why: 'Confirm with the forwarder and update the shipment.',
+        note: 'The ETA on record has passed. No arrival is recorded.',
         tone: 'warn',
         seeAll: '/shipments',
         items: late.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: shipLabel(s), href: `/shipments/${s.id}`, meta: `ETA ${fmtDate(s.eta)}` })),
@@ -1442,7 +1442,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         key: 'deliver',
         area: 'Trade',
         title: `${cleared.length} cleared ${cleared.length === 1 ? 'shipment is' : 'shipments are'} awaiting delivery`,
-        why: "Record what reached the client's factory, with their GRN.",
+        note: 'Recorded as cleared. No delivery is recorded.',
         tone: 'accent',
         seeAll: '/shipments?status=CLEARED',
         items: cleared.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: shipLabel(s), href: `/shipments/${s.id}` })),
@@ -1457,7 +1457,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         key: 'lc',
         area: 'Trade',
         title: `${lcs.length} ${lcs.length === 1 ? 'letter of credit expires' : 'letters of credit expire'} within 45 days, or ${lcs.length === 1 ? 'has' : 'have'} already expired`,
-        why: 'Ask the client to extend the LC before the manufacturer ships.',
+        note: 'The LC expiry on record falls within 45 days, or has passed.',
         tone: 'warn',
         seeAll: '/indents?lc=expiring',
         items: lcs.map((i) => ({
@@ -1486,7 +1486,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         key: 'commission',
         area: 'Commission',
         title: `${toInvoice.length} ${toInvoice.length === 1 ? 'commission is' : 'commissions are'} ready to invoice, ${toAgree.length} still need terms`,
-        why: "TCL's only revenue. Agree the terms, then invoice the client.",
+        note: 'No invoice is recorded; some have no agreed basis on record.',
         tone: 'accent',
         seeAll: '/commissions?status=PENDING',
         items,

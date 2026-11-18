@@ -557,17 +557,17 @@ export function ShippedDialog({ open, onOpenChange, bundle }: { open: boolean; o
     setDate(todayIso())
     setBl(bundle.shipment?.blAwbNumber ?? '')
   }, [open, bundle.shipment, setError])
+  // Only a date that cannot be stored (missing, malformed, in the future) is an
+  // error. Shipping before the LC opened, after its latest shipment date, or
+  // after it expired are facts about what happened — recorded, warned, never
+  // refused. A shipment after expiry is exactly when a demurrage claim arises.
   const errors = {
-    date:
-      dateErr(date) ??
-      (lc && date < lc.openedOn
-        ? `Cannot be before the LC opened (${fmtDate(lc.openedOn)}).`
-        : lc && date > lc.expiryDate
-          ? `After LC expiry (${fmtDate(lc.expiryDate)}). Amend the LC first.`
-          : null),
+    date: dateErr(date),
     bl: !bl.trim() ? 'Enter the B/L or AWB number.' : null,
   }
-  const late = lc && date && date > lc.latestShipmentDate && date <= lc.expiryDate
+  const beforeLc = Boolean(lc && date && date < lc.openedOn)
+  const expired = Boolean(lc && date && date > lc.expiryDate)
+  const late = Boolean(lc && date && date > lc.latestShipmentDate && date <= lc.expiryDate)
   return (
     <FormDialog
       open={open}
@@ -594,7 +594,18 @@ export function ShippedDialog({ open, onOpenChange, bundle }: { open: boolean; o
       <FormRow label="B/L or AWB number" required error={show ? errors.bl : null}>
         <Input mono value={bl} onChange={(e) => setBl(e.target.value)} invalid={show && !!errors.bl} />
       </FormRow>
-      {late ? <InlineWarning>This is after the LC’s latest shipment date ({fmtDate(lc!.latestShipmentDate)}).</InlineWarning> : null}
+      {beforeLc ? (
+        <InlineWarning>This is before the LC opened ({fmtDate(lc!.openedOn)}).</InlineWarning>
+      ) : null}
+      {expired ? (
+        <InlineWarning>
+          This is after the LC expired ({fmtDate(lc!.expiryDate)}). A demurrage charge may follow — record it on the
+          shipment.
+        </InlineWarning>
+      ) : null}
+      {late ? (
+        <InlineWarning>This is after the LC’s latest shipment date ({fmtDate(lc!.latestShipmentDate)}).</InlineWarning>
+      ) : null}
     </FormDialog>
   )
 }

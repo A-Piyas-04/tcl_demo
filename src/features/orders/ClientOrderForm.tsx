@@ -29,7 +29,7 @@ import type { SelectOption } from '@/components/ui'
 import {
   Badge,
   Button,
-  Checkbox,
+  RecordAnyway,
   Combobox,
   DateInput,
   Dialog,
@@ -167,7 +167,6 @@ export function ClientOrderForm() {
     const eng = mp && clientId ? engagementFor(db, clientId, mp.id) : undefined
     const gate = mp ? checkSourceApproved(eng) : null
     const needsOverride = Boolean(gate && !gate.allowed)
-    const overrideGiven = line.overrideReason.trim().length > 0
 
     // MOQ warning (UC-09 3c): a warning, not a refusal, confirmed explicitly.
     let belowMoq: string | null = null
@@ -189,8 +188,6 @@ export function ClientOrderForm() {
     const stale = mp && !price ? latestPrice(db, mp.id) : null
 
     const complete = Boolean(mp) && line.qty != null && line.qty > 0
-    const blocked = needsOverride && !overrideGiven
-    const moqBlocked = Boolean(belowMoq) && !line.moqAccepted
 
     return {
       line,
@@ -200,9 +197,7 @@ export function ClientOrderForm() {
       eng,
       gate,
       needsOverride,
-      blocked,
       belowMoq,
-      moqBlocked,
       price,
       stale,
       complete,
@@ -218,10 +213,10 @@ export function ClientOrderForm() {
   const splitProducts = [...productCounts.entries()].filter(([, n]) => n > 1).map(([id]) => id)
 
   const anyOverride = evaluated.some((r) => r.needsOverride && r.line.overrideReason.trim())
-  const canSave =
-    Boolean(clientId) &&
-    evaluated.length > 0 &&
-    evaluated.every((r) => r.complete && !r.blocked && !r.moqBlocked)
+  // A line only blocks saving when it is INCOMPLETE. An unapproved source or a
+  // below-MOQ quantity is a fact about the real order, recorded with a note —
+  // never a refusal to record what the client did.
+  const canSave = Boolean(clientId) && evaluated.length > 0 && evaluated.every((r) => r.complete)
 
   const patch = (key: string, change: Partial<DraftLine>) =>
     setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...change } : l)))
@@ -465,35 +460,24 @@ export function ClientOrderForm() {
                           options={sourceOptions}
                           placeholder="Search by molecule or manufacturer…"
                           emptyMessage="No represented source matches that. TCL can only order from a source it represents."
-                          invalid={row.blocked}
+                          
                         />
                       </FormRow>
 
                       {row.gate && !row.gate.allowed ? (
-                        <div className="space-y-2">
-                          <InlineError>
+                        <RecordAnyway
+                          label="Note (optional)"
+                          hint="Kept on the line and flagged on the order."
+                          value={line.overrideReason}
+                          onChange={(v) => patch(line.key, { overrideReason: v })}
+                          warning={
                             <span>
-                              <span className="font-semibold">Line blocked.</span>{' '}
                               {row.eng
-                                ? `${row.product?.genericName ?? 'This source'} from ${row.manufacturer?.displayName ?? 'this manufacturer'} is at ${STAGE_LABEL[row.eng.stage]} for ${client?.displayName ?? 'this client'}, not Approved or Commercial.`
-                                : `There is no engagement between ${client?.displayName ?? 'this client'} and this source.`}{' '}
-                              Record a reason to order it anyway, or choose an approved source.
+                                ? `${row.product?.genericName ?? 'This source'} from ${row.manufacturer?.displayName ?? 'this manufacturer'} is recorded at ${STAGE_LABEL[row.eng.stage]} for ${client?.displayName ?? 'this client'}, not Approved or Commercial.`
+                                : `No engagement between ${client?.displayName ?? 'this client'} and this source is recorded.`}
                             </span>
-                          </InlineError>
-                          <FormRow
-                            label="Override reason"
-                            required
-                            hint="Written to the audit log with your user id, kept on the line, and flagged on the order."
-                          >
-                            <Textarea
-                              value={line.overrideReason}
-                              onChange={(e) => patch(line.key, { overrideReason: e.target.value })}
-                              rows={2}
-                              invalid={row.blocked}
-                              placeholder="Client QA has accepted this source in writing ahead of the formal approval letter."
-                            />
-                          </FormRow>
-                        </div>
+                          }
+                        />
                       ) : null}
 
                       <FormGrid cols={3}>
@@ -562,19 +546,12 @@ export function ClientOrderForm() {
                       </FormGrid>
 
                       {row.belowMoq ? (
-                        <div className="space-y-2">
-                          <InlineWarning>
-                            <span className="flex items-start gap-1.5">
-                              <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" />
-                              {row.belowMoq}
-                            </span>
-                          </InlineWarning>
-                          <Checkbox
-                            checked={line.moqAccepted}
-                            onChange={(v) => patch(line.key, { moqAccepted: v })}
-                            label="The client has confirmed this quantity, proceed below the minimum"
-                          />
-                        </div>
+                        <InlineWarning>
+                          <span className="flex items-start gap-1.5">
+                            <TriangleAlert className="mt-px h-3.5 w-3.5 shrink-0" />
+                            {row.belowMoq}
+                          </span>
+                        </InlineWarning>
                       ) : null}
                     </div>
                   )
@@ -648,7 +625,7 @@ export function ClientOrderForm() {
               Not yet
             </Button>
             <Button variant="primary" size="sm" onClick={() => leave(true)}>
-              Raise the indents
+              Record the indents
             </Button>
           </div>
         </div>

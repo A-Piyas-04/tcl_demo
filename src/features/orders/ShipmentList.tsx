@@ -173,7 +173,7 @@ export function ShipmentList() {
       value: (r) => r.shipment.eta,
       cell: (r) =>
         r.overdue ? (
-          <Tooltip content="The ETA has passed and no arrival has been recorded. Chase the forwarder.">
+          <Tooltip content="The ETA on record has passed and no arrival is recorded.">
             <span className="text-sm font-medium tabular text-warn-600">{fmtDate(r.shipment.eta)}</span>
           </Tooltip>
         ) : (

@@ -54,7 +54,7 @@ export function ExpiringDocuments() {
       {
         key: '30',
         title: 'Within 30 days',
-        subtitle: 'Chase the manufacturer now',
+        subtitle: 'No renewal is recorded',
         tone: 'warn',
         rows: rows.filter((r) => (r.daysRemaining ?? 0) >= 0 && (r.daysRemaining ?? 0) <= 30),
       },

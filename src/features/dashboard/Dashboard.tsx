@@ -199,8 +199,9 @@ function AttentionPanel({ groups, mineOnly }: { groups: AttentionGroup[]; mineOn
                       <div className="flex items-start gap-2">
                         <span className={cn('mt-1.5 h-2 w-2 shrink-0 rounded-full', TONE_DOT[g.tone])} />
                         <div className="min-w-0 flex-1">
-                          {/* one line, no ⓘ: the group title already says what has to be done */}
+                          {/* title states the count; note is an observation, never an instruction */}
                           <p className="text-base font-semibold text-ink-900">{g.title}</p>
+                          {g.note ? <p className="mt-0.5 text-sm text-ink-500">{g.note}</p> : null}
                           <ul className="mt-1.5 space-y-0.5">
                             {g.items.slice(0, 3).map((item) => (
                               <li key={item.id}>
