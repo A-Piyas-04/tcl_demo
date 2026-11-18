@@ -1144,7 +1144,10 @@ export async function raiseIndents(
   for (const engId of touched) {
     const eng = store.db().engagements.find((e) => e.id === engId)
     if (eng?.stage === 'APPROVED') {
-      await changeStage(engId, 'COMMERCIAL', { note: 'Automatic: first indent placed' })
+      await changeStage(engId, 'COMMERCIAL', {
+        note: 'First indent recorded',
+        occurredOn: opts.orderDate ?? today(),
+      })
     }
   }
   return indents

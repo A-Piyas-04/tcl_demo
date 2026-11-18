@@ -103,15 +103,24 @@ and its local `deliberate` stays with it; the seed still stamps initial statuses
 than a renamed `stampSeedStatuses`; the disagreement appears as a dashboard group only, no inline chip
 on each detail page yet.)*
 
-### Step 9 — Decascade
-- `api.ts:1075-1090` invented `Commission` → remove; **needs new code**: there is only
-  `updateCommission` and no create path, so add `createCommission(indentId, {agreedOn, payableBy,
-  basis, rate, amount})` + a dialog.
-- Stage auto-advance (`:752,:815,:846,:865,:1105`) → a confirmable prompt with an editable date.
-- `createOffer` supersede-all (`:742-749`) → prompt with live offers pre-ticked.
-- `openEngagements` forces `ENGAGED` (`:602-604`) → remove (contradicts `RequirementDetail.tsx:190`).
-- Clearance fabricates arrival (`ShipmentDetail.tsx:627-631`) → remove; blank arrival field.
-- `CommissionActions.tsx:147,178,191` computed amount/status → editable suggestion.
+### Step 9 — Decascade — PARTIAL ⚠️
+Done:
+- **Clearance no longer fabricates an arrival date** (`ShipmentDetail.tsx`). The warning that said "the
+  arrival will be set to this date as well" is replaced by an optional, blank "Arrival date" field;
+  leaving it blank keeps the arrival unrecorded rather than inventing it from the clearance date.
+- **`openEngagements` forced-`ENGAGED` removed** — the whole function was deleted in Step 5/6.
+- The first-indent COMMERCIAL move now records the **indent order date** (not today) and is noted
+  "First indent recorded" rather than "Automatic".
+
+Still to do (each needs new UI, deferred as not "quick"):
+- `raiseIndents` invented `Commission` (`api.ts` ~1112) → remove; **needs new code**: add
+  `createCommission(indentId, {agreedOn, payableBy, basis, rate, amount})` + a dialog. Note the only
+  invented fact today is `payableBy:'CLIENT'`; basis/amount/status are already honest "to be agreed"
+  stubs, so the tracker still works meanwhile.
+- Stage auto-advance on offer/sample records → optional confirmable prompt (currently they advance with
+  the real event date, which is defensible: the record implies the stage).
+- `createOffer` supersede-all → prompt with live offers pre-ticked.
+- `CommissionActions.tsx` computed amount/status → editable suggestion.
 
 ### Step 10 — Port product2's model + demurrage
 New `types.ts` entities: `LcRecord` (with `expiryDate` **and `latestShipmentDate`**), `ProformaInvoice`

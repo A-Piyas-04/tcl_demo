@@ -599,6 +599,7 @@ function ShipmentActionDialog({
 }) {
   const [date, setDate] = React.useState(todayIso())
   const [agent, setAgent] = React.useState(shipment.cnfAgentName ?? '')
+  const [arrivalDate, setArrivalDate] = React.useState('')
   const [remark, setRemark] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -607,6 +608,7 @@ function ShipmentActionDialog({
     if (!kind) return
     setDate(todayIso())
     setAgent(shipment.cnfAgentName ?? '')
+    setArrivalDate('')
     setRemark('')
     setError(null)
   }, [kind, shipment.cnfAgentName])
@@ -627,7 +629,9 @@ function ShipmentActionDialog({
     if (kind === 'clear') {
       patch.customsClearedOn = date
       patch.cnfAgentName = agent || null
-      if (!shipment.actualArrivalDate) patch.actualArrivalDate = date
+      // The arrival is only recorded if the person knows it; clearing never
+      // fabricates an arrival date from the clearance date.
+      if (!shipment.actualArrivalDate && arrivalDate) patch.actualArrivalDate = arrivalDate
     }
     if (kind === 'hold') patch.holdRemark = remark.trim()
     if (remark.trim() && kind !== 'hold') patch.remarks = remark.trim()
@@ -699,9 +703,12 @@ function ShipmentActionDialog({
         </FormRow>
 
         {kind === 'clear' && !shipment.actualArrivalDate ? (
-          <InlineWarning>
-            <span>No arrival date is recorded. The arrival will be set to this date as well.</span>
-          </InlineWarning>
+          <FormRow
+            label="Arrival date"
+            hint="No arrival is on record. Record it if you know it; otherwise leave it blank — it is not inferred from the clearance date."
+          >
+            <DateInput value={arrivalDate} max={date} onChange={(e) => setArrivalDate(e.target.value)} />
+          </FormRow>
         ) : null}
 
         {error ? <InlineError>{error}</InlineError> : null}
