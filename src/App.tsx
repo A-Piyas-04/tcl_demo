@@ -18,6 +18,7 @@ import { pipelineRoutes } from '@/features/pipeline/routes'
 import { ordersRoutes } from '@/features/orders/routes'
 import { insightRoutes } from '@/features/insight/routes'
 import { adminRoutes } from '@/features/admin/routes'
+import { product2Routes } from '@/features/product2/routes'
 
 /** The splash is a first-impression, not something to sit through on every refresh. */
 const SPLASH_KEY = 'tcl.splashSeen'
@@ -77,6 +78,7 @@ export function App() {
             {ordersRoutes}
             {insightRoutes}
             {adminRoutes}
+            {product2Routes}
             <Route path="/not-permitted" element={<NotPermitted />} />
             <Route path="*" element={<NotFound />} />
           </Route>

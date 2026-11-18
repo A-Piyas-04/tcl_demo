@@ -8,6 +8,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { useDb } from '@/data/store'
 import { companyName, productName } from '@/data/selectors'
+import { useP2Store } from '@/features/product2/store'
 
 const SECTION_LABEL: Record<string, string> = {
   products: 'Products',
@@ -56,7 +57,11 @@ const SECTION_LABEL: Record<string, string> = {
   incoterms: 'Incoterms',
   'payment-terms': 'Payment terms',
   analysis: 'Analysis',
+  'product-2': 'Product 2.0',
 }
+
+/** Product 2.0 reuses some words the main sections also use, with its own meaning. */
+const P2_LABEL: Record<string, string> = { orders: 'Trade orders', commission: 'Commission' }
 
 /** Path prefixes whose own list lives elsewhere. */
 const SECTION_HOME: Record<string, string> = {
@@ -66,6 +71,7 @@ const SECTION_HOME: Record<string, string> = {
 export function Breadcrumbs() {
   const location = useLocation()
   const db = useDb()
+  const p2 = useP2Store((s) => s.data)
   const parts = location.pathname.split('/').filter(Boolean)
 
   if (parts.length === 0) {
@@ -80,7 +86,11 @@ export function Breadcrumbs() {
     const isId = /_/.test(part)
     let label = SECTION_LABEL[part] ?? part
 
-    if (isId) {
+    if (section === 'product-2' && i > 0) {
+      label = isId
+        ? (p2.apiProducts.find((a) => a.id === part)?.name ?? p2.tradeOrders.find((o) => o.id === part)?.orderRef ?? 'Record')
+        : (P2_LABEL[part] ?? label)
+    } else if (isId) {
       label = resolveLabel(db, section, part)
     } else if (!SECTION_LABEL[part]) {
       label = part.charAt(0).toUpperCase() + part.slice(1).replace(/-/g, ' ')

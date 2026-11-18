@@ -15,6 +15,7 @@ import {
   ChevronsRight,
   Eye,
   FactoryIcon,
+  FlaskConical,
   Gauge,
   GitBranch,
   LogOut,
@@ -120,6 +121,17 @@ const NAV: NavGroup[] = [
       { to: '/products', label: 'Products', icon: Pill, hint: 'Molecules and who makes them', match: ['/sources'] },
       { to: '/manufacturers', label: 'Manufacturers', icon: FactoryIcon, hint: 'Suppliers TCL represents or knows' },
       { to: '/clients', label: 'Clients', icon: Users, hint: 'Pharma companies TCL sells for' },
+    ],
+  },
+  {
+    title: 'Product 2.0',
+    items: [
+      {
+        to: '/product-2',
+        label: 'Product 2.0',
+        icon: FlaskConical,
+        hint: 'API sourcing & trade: samples, orders, LC, shipment, commission',
+      },
     ],
   },
   {
