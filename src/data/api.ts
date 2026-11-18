@@ -528,89 +528,6 @@ export async function updateRequirement(id: ID, patch: Partial<Requirement>): Pr
 // ------------------------------------------------------------- engagements
 
 /** UC-05: open engagements from a requirement, reusing any that already exist. */
-export async function openEngagements(
-  requirementId: ID,
-  manufacturerProductIds: ID[],
-): Promise<{ created: Engagement[]; reused: Engagement[] }> {
-  requireWrite('opening an engagement')
-  await delay('write')
-  const db = store.db()
-  const req = db.requirements.find((r) => r.id === requirementId)
-  if (!req) throw new RuleError('That requirement no longer exists.')
-
-  const created: Engagement[] = []
-  const reused: Engagement[] = []
-
-  for (const mpId of manufacturerProductIds) {
-    const mp = db.manufacturerProducts.find((m) => m.id === mpId)
-    if (!mp) continue
-    const existing = db.engagements.find(
-      (e) => e.clientCompanyId === req.clientCompanyId && e.manufacturerProductId === mpId,
-    )
-    if (existing) {
-      reused.push(existing)
-      continue
-    }
-    created.push({
-      id: newId('eng'),
-      clientCompanyId: req.clientCompanyId,
-      manufacturerProductId: mpId,
-      productId: mp.productId,
-      manufacturerCompanyId: mp.manufacturerCompanyId,
-      stage: 'IDENTIFIED',
-      stageChangedAt: nowIso(),
-      stageReasonCode: null,
-      stageNote: null,
-      stageBeforeHold: null,
-      origin: 'PIPELINE',
-      ownerUserId: req.ownerUserId,
-      approvedOn: null,
-      approvalReference: null,
-      approvalConditions: null,
-      firstCommercialOn: null,
-      isOverrideCreated: false,
-      remarks: null,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    })
-  }
-
-  write((db2) => {
-    db2.engagements = [...created, ...db2.engagements]
-    db2.stageHistory = [
-      ...created.map((e) => ({
-        id: newId('hst'),
-        engagementId: e.id,
-        fromStage: null,
-        toStage: 'IDENTIFIED' as EngagementStage,
-        changedAt: nowIso(),
-        changedByUserId: store.currentUserId(),
-        reasonCode: null,
-        remark: 'Engagement created',
-        isOverride: false,
-        daysInPreviousStage: null,
-      })),
-      ...db2.stageHistory,
-    ]
-    db2.requirementEngagements = [
-      ...db2.requirementEngagements,
-      ...[...created, ...reused]
-        .filter((e) => !db2.requirementEngagements.some((l) => l.requirementId === requirementId && l.engagementId === e.id))
-        .map((e) => ({ requirementId, engagementId: e.id, linkedAt: nowIso() })),
-    ]
-    db2.requirements = db2.requirements.map((r) =>
-      r.id === requirementId ? { ...r, status: 'ENGAGED' as const, updatedAt: nowIso() } : r,
-    )
-  })
-
-  for (const e of created) {
-    const product = db.products.find((p) => p.id === e.productId)
-    const mfr = db.companies.find((c) => c.id === e.manufacturerCompanyId)
-    audit('INSERT', 'engagement', e.id, `${product?.genericName ?? '?'} (${mfr?.displayName ?? '?'})`)
-  }
-  return { created, reused }
-}
-
 export interface StageChangeInput {
   reasonCode?: string | null
   note?: string | null
@@ -759,6 +676,127 @@ export async function createOffer(
     })
   }
   return offer
+}
+
+export interface RecordOfferInput {
+  clientCompanyId: ID
+  manufacturerProductId: ID
+  /** when the offer answers a logged requirement, the engagement is linked to it */
+  requirementId?: ID | null
+  offerDate: string
+  offeredPrice: number
+  currency: string
+  perUom: string
+  incoterm: string
+  moqQty: number | null
+  moqUom: string | null
+  validUntil: string
+  sourcePriceId: ID | null
+  remarks: string | null
+}
+
+/**
+ * Record an offer the way it really happens: TCL quoted a client a price for a
+ * source, and an employee writes it down. The engagement is found or created as
+ * a side effect — it is the record that an offer was made, not a thing the user
+ * "opens" first. This is the only engagement-creation path meant for the UI.
+ */
+export async function recordOffer(
+  input: RecordOfferInput,
+): Promise<{ offer: Offer; engagement: Engagement; engagementCreated: boolean }> {
+  requireWrite('recording an offer')
+  const db = store.db()
+  const mp = db.manufacturerProducts.find((m) => m.id === input.manufacturerProductId)
+  if (!mp) throw new RuleError('That source no longer exists.')
+
+  let engagement = db.engagements.find(
+    (e) => e.clientCompanyId === input.clientCompanyId && e.manufacturerProductId === input.manufacturerProductId,
+  )
+  let engagementCreated = false
+
+  if (!engagement) {
+    const req = input.requirementId ? db.requirements.find((r) => r.id === input.requirementId) : null
+    const created: Engagement = {
+      id: newId('eng'),
+      clientCompanyId: input.clientCompanyId,
+      manufacturerProductId: input.manufacturerProductId,
+      productId: mp.productId,
+      manufacturerCompanyId: mp.manufacturerCompanyId,
+      stage: 'IDENTIFIED',
+      stageChangedAt: input.offerDate,
+      stageReasonCode: null,
+      stageNote: null,
+      stageBeforeHold: null,
+      origin: 'PIPELINE',
+      ownerUserId: req?.ownerUserId ?? store.currentUserId() ?? '',
+      approvedOn: null,
+      approvalReference: null,
+      approvalConditions: null,
+      firstCommercialOn: null,
+      isOverrideCreated: false,
+      remarks: null,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    }
+    write((db2) => {
+      db2.engagements = [created, ...db2.engagements]
+      db2.stageHistory = [
+        {
+          id: newId('hst'),
+          engagementId: created.id,
+          fromStage: null,
+          toStage: 'IDENTIFIED' as EngagementStage,
+          changedAt: input.offerDate,
+          changedByUserId: store.currentUserId(),
+          reasonCode: null,
+          remark: 'Engagement created from a recorded offer',
+          isOverride: false,
+          daysInPreviousStage: null,
+        },
+        ...db2.stageHistory,
+      ]
+      if (input.requirementId) {
+        const rid = input.requirementId
+        db2.requirementEngagements = [
+          ...db2.requirementEngagements,
+          { requirementId: rid, engagementId: created.id, linkedAt: nowIso() },
+        ]
+      }
+    })
+    engagement = created
+    engagementCreated = true
+    const product = db.products.find((p) => p.id === created.productId)
+    const mfr = db.companies.find((c) => c.id === created.manufacturerCompanyId)
+    audit('INSERT', 'engagement', created.id, `${product?.genericName ?? '?'} (${mfr?.displayName ?? '?'})`)
+  } else if (input.requirementId) {
+    const rid = input.requirementId
+    const eid = engagement.id
+    if (!db.requirementEngagements.some((l) => l.requirementId === rid && l.engagementId === eid)) {
+      write((db2) => {
+        db2.requirementEngagements = [
+          ...db2.requirementEngagements,
+          { requirementId: rid, engagementId: eid, linkedAt: nowIso() },
+        ]
+      })
+    }
+  }
+
+  const offer = await createOffer({
+    engagementId: engagement.id,
+    offerDate: input.offerDate,
+    offeredPrice: input.offeredPrice,
+    currency: input.currency,
+    perUom: input.perUom,
+    incoterm: input.incoterm,
+    moqQty: input.moqQty,
+    moqUom: input.moqUom,
+    validUntil: input.validUntil,
+    sourcePriceId: input.sourcePriceId,
+    remarks: input.remarks,
+  })
+
+  const fresh = store.db().engagements.find((e) => e.id === engagement!.id) ?? engagement
+  return { offer, engagement: fresh, engagementCreated }
 }
 
 /**

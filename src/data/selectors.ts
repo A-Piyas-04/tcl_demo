@@ -345,25 +345,22 @@ export const SOURCING_GAP_COPY: Record<SourcingGap, { label: string; tone: 'dang
   NO_SOURCE: {
     label: 'No source in the register',
     tone: 'danger',
-    detail: 'Nobody in the register makes this molecule. Sourcing has to find and register a manufacturer.',
+    detail: 'No manufacturer in the register makes this molecule.',
   },
   NOT_REPRESENTED: {
     label: 'Source exists, not represented',
     tone: 'warn',
-    detail:
-      'The register already holds a manufacturer for this molecule that TCL does not represent. This is an agency conversation, not a search.',
+    detail: 'The register holds a manufacturer for this molecule that TCL does not represent.',
   },
   PHARMACOPOEIA: {
     label: 'Wrong pharmacopoeia',
     tone: 'accent',
-    detail:
-      'TCL represents a source for this molecule, but not to the standard the client named. Either a second grade from the same plant or another source is needed.',
+    detail: 'TCL represents a source for this molecule, but not to the standard the client named.',
   },
   SOURCE_UNAVAILABLE: {
     label: 'Source blocked',
     tone: 'warn',
-    detail:
-      'Every known source is discontinued, or its manufacturer is inactive or blacklisted, so none of them can be offered.',
+    detail: 'Every known source is discontinued, or its manufacturer is inactive or blacklisted.',
   },
 }
 
