@@ -11,7 +11,7 @@
 import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { fmtDate } from '@/lib/utils'
 import { convertQty, stageConfig } from './reference'
-import { today } from './rules'
+import { deriveTradeStatuses, today } from './rules'
 import { DEMO_STORIES } from './seed'
 import type {
   Batch,
@@ -34,6 +34,72 @@ import type {
   Requirement,
   RequirementKind,
 } from './types'
+
+// --------------------------------------------- trade status (derive only)
+
+/**
+ * The status each order, indent and shipment WOULD have, given what has shipped
+ * and been delivered. Returned as Maps of id → status so the result can never be
+ * `Object.assign`ed back onto the Database — which is exactly how the old bug
+ * (a derived status silently overwriting a person's) happened. The stored status
+ * stays authoritative and typed; this is a read-only second opinion, for display
+ * and for `statusDisagreements`.
+ */
+export function tradeStatusView(db: Database): {
+  shipments: Map<ID, string>
+  clientOrders: Map<ID, string>
+  clientOrderLines: Map<ID, string>
+  indents: Map<ID, string>
+  indentLines: Map<ID, string>
+} {
+  const d = deriveTradeStatuses(db)
+  const toMap = <T extends { id: ID; status: string }>(rows: T[]) => {
+    const m = new Map<ID, string>()
+    for (const r of rows) m.set(r.id, r.status)
+    return m
+  }
+  return {
+    shipments: toMap(d.shipments),
+    clientOrders: toMap(d.clientOrders),
+    clientOrderLines: toMap(d.clientOrderLines),
+    indents: toMap(d.indents),
+    indentLines: toMap(d.indentLines),
+  }
+}
+
+export interface StatusDisagreement {
+  kind: 'Client order' | 'Indent' | 'Shipment'
+  id: ID
+  label: string
+  stored: string
+  derived: string
+  href: string
+}
+
+/** Every row whose recorded status differs from what the quantities imply. */
+export function statusDisagreements(db: Database): StatusDisagreement[] {
+  const view = tradeStatusView(db)
+  const out: StatusDisagreement[] = []
+  for (const o of db.clientOrders) {
+    const derived = view.clientOrders.get(o.id)
+    if (derived && derived !== o.status) {
+      out.push({ kind: 'Client order', id: o.id, label: o.coNumber, stored: o.status, derived, href: `/client-orders/${o.id}` })
+    }
+  }
+  for (const i of db.indents) {
+    const derived = view.indents.get(i.id)
+    if (derived && derived !== i.status) {
+      out.push({ kind: 'Indent', id: i.id, label: i.indentNumber, stored: i.status, derived, href: `/indents/${i.id}` })
+    }
+  }
+  for (const s of db.shipments) {
+    const derived = view.shipments.get(s.id)
+    if (derived && derived !== s.status) {
+      out.push({ kind: 'Shipment', id: s.id, label: s.shipmentRef, stored: s.status, derived, href: `/shipments/${s.id}` })
+    }
+  }
+  return out
+}
 
 // ------------------------------------------------------------- lookup maps
 
@@ -1305,7 +1371,7 @@ export interface AttentionItem {
 }
 
 export interface AttentionGroup {
-  key: 'feedback' | 'approve' | 'order' | 'match' | 'customs' | 'eta' | 'deliver' | 'lc' | 'commission'
+  key: 'feedback' | 'approve' | 'order' | 'match' | 'customs' | 'eta' | 'deliver' | 'lc' | 'commission' | 'status'
   area: 'Sourcing' | 'Trade' | 'Commission'
   title: string
   note: string
@@ -1504,6 +1570,25 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         items,
       })
     }
+  }
+
+  // rows whose recorded status no longer matches what the quantities imply —
+  // surfaced, not silently overwritten, so a person decides
+  const disagree = statusDisagreements(db)
+  if (disagree.length) {
+    groups.push({
+      key: 'status',
+      area: 'Trade',
+      title: `${disagree.length} ${disagree.length === 1 ? 'record has' : 'records have'} a status that no longer matches the quantities`,
+      note: 'The recorded status differs from what has shipped and been delivered. Update it if it is out of date.',
+      tone: 'accent',
+      items: disagree.map((d) => ({
+        id: d.id,
+        label: `${d.kind} ${d.label}`,
+        sublabel: `recorded ${d.stored.toLowerCase().replace(/_/g, ' ')}, quantities imply ${d.derived.toLowerCase().replace(/_/g, ' ')}`,
+        href: d.href,
+      })),
+    })
   }
 
   return groups

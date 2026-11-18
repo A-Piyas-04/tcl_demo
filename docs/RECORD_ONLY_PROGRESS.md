@@ -47,74 +47,61 @@ stored). Five of six refusal sites converted to non-blocking warnings:
 - `StageDialogs.tsx` future-date refusal was **kept** on purpose: a future event has not happened, so
   that date genuinely cannot be recorded.
 
-### Step 4 — Real event dates — CORE DONE ✅ `commit: record-only: real event dates…`, REMAINDER OPEN
+### Step 4 — Real event dates — COMPLETE ✅
 This is the fix for the headline bug (the development register filed events under the keystroke month).
-Done:
-- `changeStage` takes `occurredOn` for **all ten stages** (was `effectiveOn`, approval-only).
-  `stageChangedAt` and `StageHistoryEntry.changedAt` now hold the event date; days-in-stage counts from
-  it; future dates refused.
-- `approvedOn` no longer nulled on a later REJECTED/IDENTIFIED move (a rejection doesn't unmake an
-  approval); `firstCommercialOn` and `approvedOn` record the event date.
-- `firstOfferedOn` / `firstSampleOn` **deleted as stored fields** (`types.ts`) and derived from the
-  earliest offer/sample via new selectors `firstOfferedOn(db, engId)` / `firstSampleOn(db, engId)`.
-  `EngagementDetail.tsx` and `seed.ts` updated; the four auto-advance calls in `api.ts` now pass the
-  real record date.
-- `StageDialogs.tsx` shows a "Date this happened" field for every stage change.
+- `changeStage` takes `occurredOn` for **all ten stages**; `stageChangedAt` and `StageHistoryEntry`
+  hold the event date; days-in-stage counts from it; future dates refused.
+- `approvedOn` no longer nulled on a later REJECTED/IDENTIFIED move. `firstOfferedOn`/`firstSampleOn`
+  deleted as stored fields and derived from the earliest offer/sample.
+- The three secondary stamps fixed: `setManufacturerStatus` (blacklist date), `setPortfolio`
+  (start/end), `raiseIndents` (indent date) take a typed `occurredOn`/`orderDate`. `StatusChangeDialog`
+  and the raise-indent dialog gained a "Date this happened" field; portfolio toggles pass `today()`
+  from the caller, keeping `today()` out of api.ts's event fields.
+
+### Step 5 — `recordOffer` — COMPLETE ✅
+`recordOffer({clientCompanyId, manufacturerProductId, requirementId?, offerDate, …})` finds-or-creates
+the engagement (stage history "Engagement created from a recorded offer") then runs `createOffer` with
+`occurredOn = offerDate`. `RecordOfferDialog` lists **every** source for the molecule (represented or
+not). The old `openEngagements` (and its forced `requirement.status='ENGAGED'`) is **deleted**.
+
+### Step 6 — Picker deleted — COMPLETE ✅
+`RequirementDetail.tsx` rewritten record-and-report: gone are the "Pick sources" button, candidate
+checkboxes, the "sources that cannot answer this" exclusion panel, `CandidateRow`, `exclusionReason`,
+and the prescriptive `NextStepCard` banner. In their place a neutral **"Sources in the register"** list
+(facts only) with a single **"Record an offer"** action (opens `RecordOfferDialog`). `SOURCING_GAP_COPY`
+reworded as observations. *(Not done, low value: renaming `candidateCount`→`representedSourceCount`;
+turning `/requirements/unsourced` into an explicit coverage report; a board-header "Record an offer"
+entry point for requirement-less phone enquiries.)*
+
+### Step 7 — Typed stages — COMPLETE ✅
+`STAGES_SET_BY_RECORDS`, `stageNeedsRecord` and the `fromRecord` flag deleted; `manualNextStages`
+returns every allowed transition; `changeStage` no longer refuses a hand-set stage. The board drag now
+always opens the stage dialog (so the event date is recorded) instead of shaking back or silently
+stamping today. *(Pragmatic deviation from the plan: `STAGE_TRANSITIONS` is **kept as a guard** rather
+than demoted to pure warnings — out-of-graph jumps like IDENTIFIED→APPROVED are still refused. If TCL
+needs to record such a jump, revisit `checkStageChange`→`reviewStageChange`.)*
 
 ---
 
-## Where it stopped (mid-file)
+## Where it stopped
 
-**`StatusChangeDialog.tsx` was open and about to gain a date field.** No uncommitted changes remain
-(the Step-4 checkpoint is committed), so resume cleanly from the list below. `tsc --noEmit` is green at
-this commit.
+Steps 1–7 are committed and `tsc --noEmit` is green. Resume at **Step 8** below.
 
 ---
 
 ## Left to do
 
-### Finish Step 4 — the three secondary `today()` stamps
-These still stamp the keystroke date instead of the event date. Lower-value than the engagement
-lifecycle, but needed for the acceptance grep ("no `today()` in `api.ts` except a value passed from a
-dialog"):
-- `api.ts:252` `setManufacturerStatus` → `blacklistedOn: today()`. Add an `occurredOn` param + a date
-  field in `StatusChangeDialog.tsx` (was the next edit).
-- `api.ts:432` / `:440` `setPortfolio` → `startedOn` / `endedOn: today()`. Add a date param; dialogs
-  `ManufacturerProductForm.tsx` / `SourceDetail.tsx`.
-- `api.ts:1036` `raiseIndents` → `orderDate: today()`. Pass the indent date from the raise-indent flow.
-
-### Step 5 — `recordOffer` (ship before deleting the picker)
-`openEngagements` (`api.ts:530`) is the **only** engagement-creation path in the running app — replace
-it with `recordOffer({requirementId?, clientCompanyId, manufacturerProductId, offerDate, price, …})`
-that finds-or-creates the engagement then runs `createOffer` with `occurredOn = offerDate`. Add
-`RecordOfferDialog` beside `OfferDialog` (share an extracted `OfferFields`), source picker lists **all**
-sources. Both paths coexist during this step. **Hard constraint: Step 5 must land before Step 6.**
-
-### Step 6 — `KnownSourcesPanel`; delete the picker
-New `features/pipeline/KnownSources.tsx` over `allSourcesFor(db, productId)` — every source, flat list,
-facts only, no checkboxes, no "candidate/available/cannot answer" verdicts, a thin `FilterBar` for the
-flagship lookup. Delete from `RequirementDetail.tsx`: `NextStepCard`, the "Pick sources" `<h2>`-button,
-`CandidateRow`, `exclusionReason`, the "Sources that cannot answer this" panel, the "Above the client's
-target" badge. Keep `sourcingGap` (rewrite `SOURCING_GAP_COPY` as observations) and `matchingSources`
-(rename → `representedSourcesFor`); rename `candidateCount` → `representedSourceCount`.
-`/requirements/unsourced` becomes a register-coverage report. Add a "Record an offer" action to the
-engagement board header.
-
-### Step 7 — Typed stages (and the deferred board drag guard)
-Delete `STAGES_SET_BY_RECORDS`, `stageNeedsRecord`, the `fromRecord` check; `manualNextStages` returns
-all ten. Keep `STAGE_TRANSITIONS` (FR-M6-06) but demote `checkStageChange` → `reviewStageChange`
-returning warnings, never `ok:false` except same-stage. Convert `EngagementBoard.tsx:149-184` drag
-guards here (drop the shake + both early returns; open the stage dialog carrying the warning). FR-M7-05
-says the system shall "automatically **propose**" — a confirmable dialog, never perform.
-*Note:* the four auto-advance `changeStage(..., {fromRecord:true})` calls still carry `fromRecord`;
-once `stageNeedsRecord` is gone, `fromRecord` is dead and should be removed from `StageChangeInput`.
-
-### Step 8 — The record/derive seam
-`deriveTradeStatuses` (`rules.ts:157-232`) → `tradeStatusView(db)` in `selectors.ts` **returning Maps**
-(cannot be assigned back). Delete `writeTrade` (`api.ts:113-117`) and `deliberate` (`rules.ts:185`).
-Stored `status` stays authoritative/typed (UI call sites untouched). Add `statusDisagreements(db)` as an
-inline chip + attention group ("Recorded as Open. Shipments add up to 500 of 500 kg — mark it
-shipped?"). Seed keeps a private `stampSeedStatuses`.
+### Step 8 — The record/derive seam — COMPLETE ✅
+`tradeStatusView(db)` added to `selectors.ts` **returning Maps** (wrapping the existing
+`deriveTradeStatuses`, so the result cannot be assigned back). `writeTrade` **deleted**; its three
+callers now use plain `write`, so a trade write never silently overwrites a person's status.
+`statusDisagreements(db)` lists every row where the recorded status differs from what the quantities
+imply, surfaced as a dashboard attention group (`key: 'status'`). Stored `status` stays authoritative
+and typed — the ~20 UI call sites are untouched.
+*(Pragmatic deviations: `deriveTradeStatuses` kept in `rules.ts` as the shared computation — not moved —
+and its local `deliberate` stays with it; the seed still stamps initial statuses via it directly rather
+than a renamed `stampSeedStatuses`; the disagreement appears as a dashboard group only, no inline chip
+on each detail page yet.)*
 
 ### Step 9 — Decascade
 - `api.ts:1075-1090` invented `Commission` → remove; **needs new code**: there is only
