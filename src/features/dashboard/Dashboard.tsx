@@ -71,7 +71,7 @@ export function Dashboard() {
   }, [])
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeading
         title={`${greeting}, ${user?.fullName.split(' ')[0]}`}
         subtitle="What needs attention today"

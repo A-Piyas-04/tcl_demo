@@ -68,7 +68,7 @@ export function AdminHome() {
   const permissionCount = READ_ONLY_PERMISSIONS.length + WRITE_PERMISSIONS.length
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <PageHeading
         title="Administration"
         subtitle="Users, roles, reference data and logs"

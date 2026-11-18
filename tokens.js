@@ -40,11 +40,11 @@ const fontWeight = {
 // (text, the navigation rail). Same hue, one unbroken progression.
 
 const paper = {
-  50: '#ffffff', // card surface
-  100: '#f6f7f9', // workspace background
-  200: '#eef0f3', // fills, zebra, hairlines inside a panel
-  300: '#dfe3e8', // decorative rules only — table separators, panel dividers
-  400: '#c4cbd4', // decorative emphasis, scrollbar thumb
+  50: '#ffffff', // card surface — panels stay pure white so they lift off the desk
+  100: '#edeef4', // workspace background — a cool violet-ash "desk" the white panels sit on
+  200: '#e6e8ef', // fills, zebra, hairlines inside a panel
+  300: '#dadce6', // decorative rules only — table separators, panel dividers
+  400: '#c0c4d1', // decorative emphasis, scrollbar thumb
   // Interactive boundaries (input, checkbox, radio, outlined button) use
   // ink-400, which clears 3:1. paper-300/400 never bound a control.
 }
@@ -122,11 +122,13 @@ export default {
    */
   boxShadow: {
     none: 'none',
-    recessed: 'inset 0 1px 2px rgb(14 20 25 / 0.08), inset 0 0 0 1px rgb(14 20 25 / 0.04)',
+    recessed: 'inset 0 1px 2px rgb(30 27 56 / 0.08), inset 0 0 0 1px rgb(30 27 56 / 0.04)',
+    // A panel is a solid plate resting on the desk: a crisp near-edge shadow
+    // plus a soft wider one, tinted faintly violet so it belongs to the surface.
     raised:
-      'inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 1px rgb(14 20 25 / 0.05), 0 2px 4px -1px rgb(14 20 25 / 0.07)',
+      'inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(30 27 56 / 0.06), 0 6px 16px -5px rgb(30 27 56 / 0.17)',
     lifted:
-      'inset 0 1px 0 rgb(255 255 255 / 0.95), 0 2px 4px -1px rgb(14 20 25 / 0.07), 0 10px 20px -8px rgb(14 20 25 / 0.16)',
+      'inset 0 1px 0 rgb(255 255 255 / 0.9), 0 2px 6px -1px rgb(30 27 56 / 0.10), 0 16px 32px -10px rgb(30 27 56 / 0.24)',
     pop: 'inset 0 1px 0 rgb(255 255 255 / 0.6), 0 14px 36px -10px rgb(14 20 25 / 0.3), 0 3px 10px -3px rgb(14 20 25 / 0.14)',
     // the primary action is a physical key: lit top edge, hard bottom edge
     key: 'inset 0 1px 0 rgb(255 255 255 / 0.26), inset 0 -1px 0 rgb(14 20 25 / 0.3), 0 1px 2px rgb(14 20 25 / 0.3), 0 3px 6px -2px rgb(14 20 25 / 0.28)',

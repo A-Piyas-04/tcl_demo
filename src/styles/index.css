@@ -48,8 +48,8 @@
     /* The workspace is a surface, not a void: a fine machined grain that only
        registers at the edges of the panels sitting on it. */
     background-image:
-      linear-gradient(rgb(14 20 25 / 0.022) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(14 20 25 / 0.022) 1px, transparent 1px);
+      linear-gradient(rgb(60 50 95 / 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(60 50 95 / 0.028) 1px, transparent 1px);
     background-size: 32px 32px;
     background-attachment: fixed;
   }
@@ -109,11 +109,14 @@
    */
   .slab,
   .panel {
-    --edge: theme('colors.ink.400');
+    /* The default corner marks are quiet now — the desk tint and the raised
+       shadow do the work of separating a panel from the surface, so the
+       brackets no longer need to be dark. Status still speaks through them. */
+    --edge: theme('colors.paper.400');
     --bracket: 2px;
     --reach: 14px;
     @apply relative border border-paper-300 shadow-raised;
-    background-image: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
+    background-image: linear-gradient(180deg, #ffffff 0%, #fcfcfe 100%);
     border-bottom-color: theme('colors.paper.400');
   }
 
@@ -170,10 +173,12 @@
     --reach: 10px;
   }
 
-  /* The head is milled into the plate, so the title sits in a shallow channel. */
+  /* The head is milled into the plate: a faint violet wash (mostly white)
+     distinguishes it from the body below without a bar or a hard line. It also
+     carries more vertical room, so the title is not crowded against the rule. */
   .panel-head {
-    @apply flex items-center justify-between gap-4 border-b border-paper-300 px-4 py-3;
-    background-image: linear-gradient(180deg, #f8fafb 0%, #f1f4f7 100%);
+    @apply flex items-center justify-between gap-4 border-b border-paper-300 px-5 py-4;
+    background-image: linear-gradient(180deg, #f5f3fb 0%, #ece9f5 100%);
   }
 
   .hairline {
@@ -188,7 +193,7 @@
   /* Table header: recessed, 13px sentence case at 7.4:1. No caps, no letterspacing. */
   .th {
     @apply h-10 select-none px-4 text-left align-middle text-sm font-semibold text-ink-600;
-    background-image: linear-gradient(180deg, #eef1f5 0%, #e6eaef 100%);
+    background-image: linear-gradient(180deg, #eeecf4 0%, #e5e2ee 100%);
     box-shadow: inset 0 -1px 0 theme('colors.paper.400');
   }
 

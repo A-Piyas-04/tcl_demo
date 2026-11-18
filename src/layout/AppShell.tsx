@@ -205,7 +205,7 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
         <TopBar onOpenPalette={() => setPaletteOpen(true)} />
         <main className="min-w-0 flex-1">
-          <div className="mx-auto w-full max-w-[94rem] px-4 py-5 sm:px-6">
+          <div className="mx-auto w-full max-w-[94rem] px-4 py-7 sm:px-6 lg:px-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}

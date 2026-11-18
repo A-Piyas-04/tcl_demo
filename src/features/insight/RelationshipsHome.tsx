@@ -61,7 +61,7 @@ export function RelationshipsHome() {
   ]
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
         <PageHeading
           title="Reports"

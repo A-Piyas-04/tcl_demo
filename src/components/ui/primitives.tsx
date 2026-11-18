@@ -499,7 +499,7 @@ export function FieldGrid({ children, cols = 3 }: { children: React.ReactNode; c
   return (
     <dl
       className={cn(
-        'grid gap-x-5 gap-y-3.5',
+        'grid gap-x-6 gap-y-5',
         cols === 2 && 'grid-cols-1 sm:grid-cols-2',
         cols === 3 && 'grid-cols-2 lg:grid-cols-3',
         cols === 4 && 'grid-cols-2 lg:grid-cols-4',
