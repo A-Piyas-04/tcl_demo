@@ -37,9 +37,9 @@ import {
   type EngagementRow,
 } from '@/data/selectors'
 import { PIPELINE_STAGES, STAGE_LABEL, stageConfig } from '@/data/reference'
-import { changeStage, logExport } from '@/data/api'
-import { checkStageChange, stageNeedsRecord } from '@/data/rules'
-import { runAction, useAsyncData, useLocalPreference, useUrlFilters, useUrlSearch } from '@/lib/hooks'
+import { logExport } from '@/data/api'
+import { checkStageChange } from '@/data/rules'
+import { useAsyncData, useLocalPreference, useUrlFilters, useUrlSearch } from '@/lib/hooks'
 import { SectionNav } from '@/layout/sections'
 import { cn, fmtDate, pluralise } from '@/lib/utils'
 import type { Engagement, EngagementStage } from '@/data/types'
@@ -161,26 +161,9 @@ export function EngagementBoard() {
       return
     }
 
-    // Offers and samples are records, not just stages: send the user to record them.
-    const needsRecord = stageNeedsRecord(row.engagement, to)
-    if (needsRecord) {
-      setShaking(id)
-      window.setTimeout(() => setShaking(null), 500)
-      toast(needsRecord, {
-        duration: 8000,
-        action: { label: 'Open engagement', onClick: () => navigate(`/engagements/${id}?tab=work`) },
-      })
-      return
-    }
-
-    // Anything that needs collecting opens the dialog; a clean move just happens.
-    if (check.requiresReason || check.requiresOverride || check.requiresReopen || to === 'APPROVED') {
-      setPending({ engagement: row.engagement, to, name: nameOf(row) })
-      return
-    }
-    await runAction(() => changeStage(id, to, {}), {
-      success: `${nameOf(row)} moved to ${STAGE_LABEL[to]}.`,
-    })
+    // Every move opens the stage dialog, so the date it happened is recorded by
+    // a person rather than silently stamped as today.
+    setPending({ engagement: row.engagement, to, name: nameOf(row) })
   }
 
   const columns: Column<Card>[] = [

@@ -11,7 +11,7 @@
  */
 
 import { store, newId, useStore } from './store'
-import { checkLastFullAccess, checkStageChange, deriveTradeStatuses, stageNeedsRecord, today } from './rules'
+import { checkLastFullAccess, checkStageChange, deriveTradeStatuses, today } from './rules'
 import { stageConfig } from './reference'
 void stageConfig
 import type {
@@ -537,8 +537,6 @@ export interface StageChangeInput {
   override?: boolean
   approvalReference?: string | null
   approvalConditions?: string | null
-  /** set by the offer and sample calls, which create the record the stage stands for */
-  fromRecord?: boolean
 }
 
 /** Mirrors change_engagement_stage(): the only way a stage ever changes. */
@@ -555,8 +553,6 @@ export async function changeStage(
 
   const check = checkStageChange(eng, to)
   if (!check.ok) throw new RuleError(check.error!)
-  const needsRecord = stageNeedsRecord(eng, to)
-  if (needsRecord && !input.fromRecord) throw new RuleError(needsRecord)
   if (check.requiresReason && !input.reasonCode) {
     throw new RuleError(`Moving to ${stageLabel(to)} needs a reason from the configured list.`)
   }
@@ -671,8 +667,7 @@ export async function createOffer(
   if (eng.stage === 'IDENTIFIED') {
     await changeStage(input.engagementId, 'OFFERED', {
       note: `Offer v${versionNo} recorded`,
-      occurredOn: input.offerDate,
-      fromRecord: true,
+      occurredOn: input.offerDate,
     })
   }
   return offer
@@ -856,8 +851,7 @@ export async function createSampleRound(
 
   // Moving the stage first means a refusal leaves nothing behind.
   if (eng.stage !== 'SAMPLE_REQUESTED') {
-    await changeStage(input.engagementId, 'SAMPLE_REQUESTED', {
-      fromRecord: true,
+    await changeStage(input.engagementId, 'SAMPLE_REQUESTED', {
       occurredOn: round.requestedOn,
       override: opts.override,
       note: opts.override ? opts.overrideNote : `Sample round ${round.roundNo} requested`,
@@ -891,8 +885,7 @@ export async function recordSampleDispatch(
   if (eng?.stage === 'SAMPLE_REQUESTED') {
     await changeStage(eng.id, 'SAMPLE_SENT', {
       note: `Dispatched by ${patch.courierName ?? 'courier'}`,
-      occurredOn: patch.dispatchedOn ?? undefined,
-      fromRecord: true,
+      occurredOn: patch.dispatchedOn ?? undefined,
     })
   }
 }
@@ -914,8 +907,7 @@ export async function recordSampleReceipt(id: ID, receivedOn: string): Promise<v
   if (eng?.stage === 'SAMPLE_SENT') {
     await changeStage(eng.id, 'UNDER_EVALUATION', {
       note: 'Client confirmed receipt',
-      occurredOn: receivedOn,
-      fromRecord: true,
+      occurredOn: receivedOn,
     })
   }
 }

@@ -124,27 +124,14 @@ export function allowedNextStages(from: EngagementStage): EngagementStage[] {
 }
 
 /**
- * Stages that mean a record exists: an offer was sent, a sample was asked for,
- * dispatched or received. Moving into one of them by hand would leave the stage
- * claiming paperwork that is not there, so they are reached by recording the
- * offer or the sample round. Resuming from hold is the exception: the record
- * already exists.
+ * Every stage a person can set by hand from here. All ten stages are typeable:
+ * Offered, Sample requested, Sample sent and Under evaluation are no longer
+ * gated behind "record the offer/sample first" — a stage records what a person
+ * observed, with the date it happened, and recording the offer or sample is one
+ * convenient way to reach it, not the only one.
  */
-export const STAGES_SET_BY_RECORDS: Partial<Record<EngagementStage, string>> = {
-  OFFERED: 'An engagement becomes Offered when an offer is recorded. Open the engagement and record the offer.',
-  SAMPLE_REQUESTED: 'A sample stage starts when a sample round is requested. Open the engagement and request the sample.',
-  SAMPLE_SENT: 'Sample sent follows from recording the dispatch on the sample round. Open the engagement to record it.',
-  UNDER_EVALUATION: "Under evaluation follows from recording the client's receipt of the sample. Open the engagement to record it.",
-}
-
-export function stageNeedsRecord(engagement: Engagement, to: EngagementStage): string | null {
-  if (engagement.stage === 'ON_HOLD') return null
-  return STAGES_SET_BY_RECORDS[to] ?? null
-}
-
-/** The manual moves: closing, pausing, resuming, reopening, approving and going commercial. */
 export function manualNextStages(engagement: Engagement): EngagementStage[] {
-  return allowedNextStages(engagement.stage).filter((s) => !stageNeedsRecord(engagement, s))
+  return allowedNextStages(engagement.stage)
 }
 
 // ------------------------------------------------------- derived trade status
