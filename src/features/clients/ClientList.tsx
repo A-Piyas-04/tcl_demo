@@ -33,6 +33,7 @@ import {
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
+import { SectionNav } from '@/layout/sections'
 
 interface Row {
   client: Company
@@ -221,6 +222,7 @@ export function ClientList() {
 
   return (
     <div className="space-y-4">
+      <div>
       <PageHeading
         title="Clients"
         subtitle="Every company that buys through TCL, what it takes and who looks after it."
@@ -243,6 +245,8 @@ export function ClientList() {
           </WriteOnly>
         }
       />
+      <SectionNav section="clients" />
+      </div>
 
       <Panel>
         <FilterBar

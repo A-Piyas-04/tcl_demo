@@ -9,7 +9,8 @@ import { motion } from 'framer-motion'
 import { Check, FlaskConical, Ship, X } from 'lucide-react'
 import { cn, fmtDate } from '@/lib/utils'
 import { delay } from '@/data/api'
-import { Badge, Input, SectionTabs } from '@/components/ui'
+import { Badge, Input } from '@/components/ui'
+import { SectionNav } from '@/layout/sections'
 import type { ID, P2Data, SampleStatus, SourcingStatus } from './types'
 import { SOURCING_STATUS_LABEL, type Step, type TradeBundle, currentTradeStage, tradeStatusLabel } from './workflow'
 
@@ -54,11 +55,15 @@ export const THERAPEUTIC_AREAS = [
 
 // ------------------------------------------------------------- module tabs
 
+/**
+ * Product 2.0 is the Molecules register inside the Directory, so its tabs are
+ * the Directory's tabs with the module's own views beneath them.
+ */
 export function P2Tabs({ counts }: { counts?: { orders?: number; commission?: number } }) {
   return (
-    <SectionTabs
-      className="mt-3"
-      tabs={[
+    <SectionNav
+      section="molecules"
+      subTabs={[
         { to: '/product-2', label: 'API products' },
         { to: '/product-2/orders', label: 'Trade orders', count: counts?.orders },
         { to: '/product-2/commission', label: 'Commission', count: counts?.commission },

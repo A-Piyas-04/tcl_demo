@@ -40,8 +40,13 @@ const KIND_ICON = {
   batch: Ship,
 } as const
 
+/**
+ * Every destination, including the ones that are no longer in the sidebar.
+ * Taking something out of the rail must never make it harder to reach — the
+ * palette is where the long tail lives.
+ */
 const GO_TO = [
-  { label: 'Dashboard', to: '/', icon: Gauge, keys: 'g d' },
+  { label: 'Today', to: '/', icon: Gauge, keys: 'g d' },
   { label: 'Requirements', to: '/requirements', icon: PanelsTopLeft, keys: 'g r' },
   { label: 'Unsourced demand', to: '/requirements/unsourced', icon: PanelsTopLeft },
   { label: 'Engagements (pipeline)', to: '/engagements', icon: GitBranch, keys: 'g e' },
@@ -51,7 +56,9 @@ const GO_TO = [
   { label: 'Shipments', to: '/shipments', icon: Ship, keys: 'g s' },
   { label: 'Batches', to: '/batches', icon: Ship },
   { label: 'Commission', to: '/commissions', icon: Wallet, keys: 'g k' },
-  { label: 'Products', to: '/products', icon: Pill, keys: 'g p' },
+  { label: 'Molecules (API products)', to: '/product-2', icon: Pill, keys: 'g p' },
+  { label: 'Trade orders', to: '/product-2/orders', icon: Boxes },
+  { label: 'Molecule catalogue (earlier register)', to: '/products/all', icon: Pill },
   { label: 'Manufacturers', to: '/manufacturers', icon: FactoryIcon, keys: 'g m' },
   { label: 'Clients', to: '/clients', icon: Users, keys: 'g c' },
   { label: 'Reports', to: '/reports', icon: BarChart3, keys: 'g a' },

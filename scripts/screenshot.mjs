@@ -14,7 +14,11 @@ const OUT = process.argv[3] ?? '/tmp/tcl-shots'
 
 const ROUTES = [
   ['dashboard', '/'],
-  ['products', '/products'],
+  ['molecules', '/product-2'],
+  ['molecules-trade-orders', '/product-2/orders'],
+  ['molecules-commission', '/product-2/commission'],
+  ['products-redirect', '/products'],
+  ['products-catalogue', '/products/all'],
   ['product-new', '/products/new'],
   ['manufacturers', '/manufacturers'],
   ['manufacturer-new', '/manufacturers/new'],

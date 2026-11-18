@@ -14,24 +14,14 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Eye,
-  FactoryIcon,
-  FlaskConical,
   Gauge,
   GitBranch,
   LogOut,
-  Menu as MenuIcon,
   type LucideIcon,
-  PanelsTopLeft,
-  Pill,
   RefreshCw,
   Search,
   Settings,
-  Ship,
-  Users,
-  Wallet,
-  X,
 } from 'lucide-react'
-import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { cn, fmtAgo } from '@/lib/utils'
 import {
   useCanWrite,
@@ -74,77 +64,37 @@ interface NavItem {
   match?: string[]
 }
 
-interface NavGroup {
-  title: string
-  items: NavItem[]
-}
-
 /**
- * Four groups that follow the work: find a source, trade on it, look things
- * up, and look back. Related lists share one item and switch with tabs.
+ * Four doors, and only four. Everything the application can do is behind one
+ * of them: today's work, the deals themselves, the people and molecules they
+ * are about, and what it all adds up to.
+ *
+ * A destination that is a filtered view of another destination is NOT here —
+ * it is a tab or a filter on the page that owns it. The rule is simple: the
+ * sidebar is for places you start work, not for questions you ask.
  */
-const NAV: NavGroup[] = [
+const NAV: NavItem[] = [
+  { to: '/', label: 'Today', icon: Gauge, end: true, hint: 'What needs attention today' },
   {
-    title: 'Home',
-    items: [{ to: '/', label: 'Dashboard', icon: Gauge, end: true, hint: 'What needs attention today' }],
+    to: '/requirements',
+    label: 'Deals',
+    icon: GitBranch,
+    hint: 'Every live piece of business — enquiry, samples, approval, order, shipment, commission',
+    match: ['/engagements', '/samples', '/client-orders', '/indents', '/shipments', '/batches', '/commissions'],
   },
   {
-    title: 'Sourcing',
-    items: [
-      { to: '/requirements', label: 'Requirements', icon: PanelsTopLeft, hint: 'What clients have asked for' },
-      {
-        to: '/engagements',
-        label: 'Engagements',
-        icon: GitBranch,
-        hint: 'Client × supplier deals: offers, samples, approval',
-        match: ['/samples'],
-      },
-    ],
+    to: '/product-2',
+    label: 'Directory',
+    icon: Boxes,
+    hint: 'Molecules, manufacturers and clients — look anything up',
+    match: ['/products', '/sources', '/manufacturers', '/clients'],
   },
   {
-    title: 'Trade',
-    items: [
-      {
-        to: '/client-orders',
-        label: 'Orders',
-        icon: Boxes,
-        hint: 'Client orders and the indents placed on manufacturers',
-        match: ['/indents'],
-      },
-      { to: '/shipments', label: 'Shipments', icon: Ship, hint: 'Goods on the way, batches and deliveries', match: ['/batches'] },
-      { to: '/commissions', label: 'Commission', icon: Wallet, hint: "TCL's earnings from clients" },
-    ],
-  },
-  {
-    title: 'Directory',
-    items: [
-      { to: '/products', label: 'Products', icon: Pill, hint: 'Molecules and who makes them', match: ['/sources'] },
-      { to: '/manufacturers', label: 'Manufacturers', icon: FactoryIcon, hint: 'Suppliers TCL represents or knows' },
-      { to: '/clients', label: 'Clients', icon: Users, hint: 'Pharma companies TCL sells for' },
-    ],
-  },
-  {
-    title: 'Product 2.0',
-    items: [
-      {
-        to: '/product-2',
-        label: 'Product 2.0',
-        icon: FlaskConical,
-        hint: 'API sourcing & trade: samples, orders, LC, shipment, commission',
-      },
-    ],
-  },
-  {
-    title: 'Insight',
-    items: [
-      {
-        to: '/reports',
-        label: 'Reports',
-        icon: BarChart3,
-        hint: 'Registers, relationships and documents',
-        match: ['/relationships', '/documents'],
-      },
-    ],
+    to: '/reports',
+    label: 'Reports',
+    icon: BarChart3,
+    hint: 'Registers, relationships and documents',
+    match: ['/relationships', '/documents'],
   },
 ]
 
@@ -188,7 +138,7 @@ export function AppShell() {
       if (Date.now() - lastG < 900) {
         const jump: Record<string, string> = {
           d: '/',
-          p: '/products',
+          p: '/product-2',
           m: '/manufacturers',
           c: '/clients',
           r: '/requirements',
@@ -232,24 +182,13 @@ export function AppShell() {
         </div>
 
         <nav className="scroll-slim flex-1 space-y-4 overflow-y-auto px-2 py-3">
-          {NAV.map((group) => (
-            <div key={group.title}>
-              {!collapsed ? (
-                <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-600">
-                  {group.title}
-                </p>
-              ) : (
-                <div className="mx-2 mb-2 h-px bg-ink-800" />
-              )}
-              <ul className="space-y-0.5">
-                {group.items.map((item) => (
-                  <li key={item.to}>
-                    <RailLink item={item} collapsed={collapsed} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <ul className="space-y-0.5">
+            {NAV.map((item) => (
+              <li key={item.to}>
+                <RailLink item={item} collapsed={collapsed} />
+              </li>
+            ))}
+          </ul>
         </nav>
 
         <div className="space-y-0.5 border-t border-ink-800 p-2">
@@ -493,117 +432,37 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   )
 }
 
-/** Frequent destinations stay in the bottom bar; every section is in More. */
+/** Four entries fit the bottom bar, so there is no "More" sheet to open. */
 function MobileNav() {
-  const [open, setOpen] = React.useState(false)
   const location = useLocation()
-  const items: NavItem[] = [
-    { to: '/', label: 'Home', icon: Gauge, end: true },
-    { to: '/requirements', label: 'Requests', icon: PanelsTopLeft },
-    { to: '/engagements', label: 'Deals', icon: GitBranch, match: ['/samples'] },
-    { to: '/client-orders', label: 'Orders', icon: Boxes, match: ['/indents'] },
-  ]
-  const sheetGroups: NavGroup[] = [...NAV, { title: 'Administration', items: [ADMIN_ITEM] }]
-  const moreActive = sheetGroups.some((group) => group.items.some((item) =>
-    !items.some((quick) => quick.to === item.to) && itemIsActive(item, location.pathname),
-  ))
-
-  React.useEffect(() => {
-    setOpen(false)
-  }, [location.pathname])
-
-  React.useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 768px)')
-    const closeOnDesktop = () => { if (desktop.matches) setOpen(false) }
-    desktop.addEventListener('change', closeOnDesktop)
-    return () => desktop.removeEventListener('change', closeOnDesktop)
-  }, [])
+  const items: NavItem[] = [...NAV, ADMIN_ITEM]
 
   return (
-    <>
-      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-800 bg-ink-900 pb-[env(safe-area-inset-bottom,0px)] md:hidden">
-        <ul className="flex min-h-14">
-          {items.map((item) => {
-            const Icon = item.icon
-            return (
-              <li key={item.to} className="min-w-0 flex-1">
-                <NavLink
-                  to={item.to}
-                  end={item.end}
-                  className={cn(
-                    'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
-                    itemIsActive(item, location.pathname) ? 'text-accent-300' : 'text-ink-400',
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="truncate">{item.label}</span>
-                </NavLink>
-              </li>
-            )
-          })}
-          <li className="min-w-0 flex-1">
-            <button
-              type="button"
-              aria-label="More navigation"
-              aria-haspopup="dialog"
-              aria-expanded={open}
-              onClick={() => setOpen(true)}
-              className={cn(
-                'flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
-                moreActive || open ? 'text-accent-300' : 'text-ink-400',
-              )}
-            >
-              <MenuIcon className="h-5 w-5" />
-              <span>More</span>
-            </button>
-          </li>
-        </ul>
-      </nav>
-
-      <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
-        <DialogPrimitive.Portal>
-          <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-ink-950/50 md:hidden" />
-          <DialogPrimitive.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-xl bg-ink-900 text-paper-100 shadow-pop md:hidden">
-            <div className="flex shrink-0 items-center justify-between border-b border-ink-800 px-5 py-3">
-              <DialogPrimitive.Title className="text-base font-semibold">Navigation</DialogPrimitive.Title>
-              <DialogPrimitive.Close asChild>
-                <button type="button" aria-label="Close navigation" className="grid h-11 w-11 place-items-center rounded-md text-ink-400 active:bg-ink-800">
-                  <X className="h-5 w-5" />
-                </button>
-              </DialogPrimitive.Close>
-            </div>
-            <nav aria-label="All sections" className="scroll-slim min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
-              {sheetGroups.map((group) => (
-                <div key={group.title} className="mb-4">
-                  <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-400">{group.title}</p>
-                  <ul className="grid grid-cols-2 gap-1">
-                    {group.items.map((item) => {
-                      const Icon = item.icon
-                      return (
-                        <li key={item.to}>
-                          <NavLink
-                            to={item.to}
-                            end={item.end}
-                            onClick={() => setOpen(false)}
-                            className={cn(
-                              'flex min-h-12 items-center gap-2 rounded-md px-3 text-sm active:bg-ink-700',
-                              itemIsActive(item, location.pathname) ? 'bg-ink-800 font-medium text-accent-300' : 'text-paper-200',
-                            )}
-                          >
-                            <Icon className="h-4 w-4 shrink-0" />
-                            <span className="min-w-0 truncate">{item.label}</span>
-                          </NavLink>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </nav>
-          </DialogPrimitive.Content>
-        </DialogPrimitive.Portal>
-      </DialogPrimitive.Root>
-    </>
+    <nav
+      aria-label="Mobile navigation"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-800 bg-ink-900 pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+    >
+      <ul className="flex min-h-14">
+        {items.map((item) => {
+          const Icon = item.icon
+          return (
+            <li key={item.to} className="min-w-0 flex-1">
+              <NavLink
+                to={item.to}
+                end={item.end}
+                className={cn(
+                  'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
+                  itemIsActive(item, location.pathname) ? 'text-accent-300' : 'text-ink-400',
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="truncate">{item.label}</span>
+              </NavLink>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
   )
 }
 

@@ -30,6 +30,7 @@ import {
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
+import { SectionNav } from '@/layout/sections'
 
 interface Row {
   product: Product
@@ -218,9 +219,10 @@ export function ProductList() {
 
   return (
     <div className="space-y-4">
+      <div>
       <PageHeading
-        title="Products"
-        subtitle="Every molecule TCL knows — what it is, who makes it, and who takes it."
+        title="Molecule catalogue"
+        subtitle="The earlier register. Product 2.0 is the live one — this stays because orders, shipments and requirements still link to its records."
         meta={
           <>
             <Badge tone="neutral">{pluralise(db.products.filter((p) => p.isActive).length, 'active product')}</Badge>
@@ -237,6 +239,8 @@ export function ProductList() {
           </WriteOnly>
         }
       />
+      <SectionNav section="molecules" />
+      </div>
 
       <Panel>
         <FilterBar

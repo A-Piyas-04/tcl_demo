@@ -32,6 +32,7 @@ import {
   Tooltip,
   WriteOnly,
 } from '@/components/ui'
+import { SectionNav } from '@/layout/sections'
 
 interface Row {
   company: Company
@@ -226,6 +227,7 @@ export function ManufacturerList() {
 
   return (
     <div className="space-y-4">
+      <div>
       <PageHeading
         title="Manufacturers"
         subtitle="Every supplier TCL knows, what it makes, and which clients take it."
@@ -250,6 +252,8 @@ export function ManufacturerList() {
           </WriteOnly>
         }
       />
+      <SectionNav section="manufacturers" />
+      </div>
 
       <Panel>
         <FilterBar

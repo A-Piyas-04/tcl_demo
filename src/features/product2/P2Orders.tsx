@@ -61,7 +61,7 @@ export function P2Orders() {
   return (
     <div className="space-y-4">
       <div>
-        <PageHeading title="Product 2.0" subtitle="Client bulk orders across every API, and where each one stands." />
+        <PageHeading title="Trade orders" subtitle="Client bulk orders across every API, and where each one stands." />
         <P2Tabs />
       </div>
       <Panel>

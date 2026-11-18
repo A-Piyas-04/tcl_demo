@@ -238,9 +238,9 @@ export function P2List() {
     <div className="space-y-4">
       <div>
         <PageHeading
-          title="Product 2.0"
-          subtitle="Pharmaceutical API sourcing and trade — from identifying a manufacturer to receiving commission."
-          meta={<Badge tone="accent">Preview module</Badge>}
+          title="Molecules"
+          subtitle="Every API TCL sources — who makes it, which samples passed, and what has been traded."
+          meta={<Badge tone="accent">{pluralise(data.apiProducts.filter((a) => a.isActive).length, 'active API')}</Badge>}
           actions={
             <WriteOnly>
               <Button variant="primary" icon={<Plus className="h-3.5 w-3.5" />} onClick={() => setAdding(true)}>

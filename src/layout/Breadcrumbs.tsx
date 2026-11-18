@@ -11,7 +11,8 @@ import { companyName, productName } from '@/data/selectors'
 import { useP2Store } from '@/features/product2/store'
 
 const SECTION_LABEL: Record<string, string> = {
-  products: 'Products',
+  products: 'Molecules',
+  all: 'Earlier catalogue',
   manufacturers: 'Manufacturers',
   clients: 'Clients',
   sources: 'Sources',
@@ -57,15 +58,45 @@ const SECTION_LABEL: Record<string, string> = {
   incoterms: 'Incoterms',
   'payment-terms': 'Payment terms',
   analysis: 'Analysis',
-  'product-2': 'Product 2.0',
+  'product-2': 'Molecules',
 }
 
 /** Product 2.0 reuses some words the main sections also use, with its own meaning. */
 const P2_LABEL: Record<string, string> = { orders: 'Trade orders', commission: 'Commission' }
 
+/**
+ * Which sidebar door a path sits behind. The trail names it, so the hierarchy
+ * is legible from any page reached by search, a link or a bookmark:
+ * "Home › Deals › Client orders" rather than "Home › Client orders".
+ */
+const DEALS = { label: 'Deals', to: '/requirements' }
+const DIRECTORY = { label: 'Directory', to: '/product-2' }
+const INSIGHT = { label: 'Reports', to: '/reports' }
+
+const GROUP_CRUMB: Record<string, { label: string; to: string }> = {
+  requirements: DEALS,
+  engagements: DEALS,
+  samples: DEALS,
+  'client-orders': DEALS,
+  indents: DEALS,
+  shipments: DEALS,
+  batches: DEALS,
+  commissions: DEALS,
+  'product-2': DIRECTORY,
+  products: DIRECTORY,
+  sources: DIRECTORY,
+  manufacturers: DIRECTORY,
+  clients: DIRECTORY,
+  reports: INSIGHT,
+  relationships: INSIGHT,
+  documents: INSIGHT,
+}
+
 /** Path prefixes whose own list lives elsewhere. */
 const SECTION_HOME: Record<string, string> = {
-  '/sources': '/products',
+  '/sources': '/product-2',
+  // the molecule record still lives under /products; its register is Product 2.0
+  '/products': '/product-2',
 }
 
 export function Breadcrumbs() {
@@ -97,8 +128,14 @@ export function Breadcrumbs() {
     }
     // a source has no list of its own; sources are browsed from Products
     const to = i === parts.length - 1 ? location.pathname + location.search : SECTION_HOME[path] ?? path
-    crumbs.push({ label: i === 0 && part === 'sources' ? 'Products' : label, to })
+    crumbs.push({ label: i === 0 && part === 'sources' ? 'Molecules' : label, to })
   })
+
+  // name the door this page sits behind, unless this *is* that door's own list
+  const group = GROUP_CRUMB[parts[0]!]
+  if (group && group.to !== `/${parts[0]}`) {
+    crumbs.unshift(group)
+  }
 
   return (
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-sm">

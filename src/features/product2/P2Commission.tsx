@@ -155,7 +155,7 @@ export function P2Commission() {
   return (
     <div className="space-y-4">
       <div>
-        <PageHeading title="Product 2.0" subtitle="Commission expected from each order, and what has actually been received." />
+        <PageHeading title="Commission" subtitle="Commission expected from each order, and what has actually been received." />
         <P2Tabs />
       </div>
 
