@@ -715,8 +715,6 @@ export function buildDatabase(seed = SEED): Database {
       stageBeforeHold: null,
       origin,
       ownerUserId: ownerId,
-      firstOfferedOn: null,
-      firstSampleOn: null,
       approvedOn: null,
       approvalReference: null,
       approvalConditions: null,
@@ -732,8 +730,6 @@ export function buildDatabase(seed = SEED): Database {
       eng.approvedOn = iso(daysAgo(createdDaysAgo + 120))
       eng.approvalReference = `QA/APP/${2023 + int(0, 2)}/${int(100, 399)}`
       eng.firstCommercialOn = iso(daysAgo(createdDaysAgo + 60))
-      eng.firstOfferedOn = iso(daysAgo(createdDaysAgo + 240))
-      eng.firstSampleOn = iso(daysAgo(createdDaysAgo + 200))
       eng.stageChangedAt = isoT(daysAgo(createdDaysAgo))
       stageHistory.push({
         id: nextId('hst'),
@@ -774,8 +770,6 @@ export function buildDatabase(seed = SEED): Database {
         isOverride: false,
         daysInPreviousStage: idx === 0 ? null : step,
       })
-      if (stage === 'OFFERED' && !eng.firstOfferedOn) eng.firstOfferedOn = iso(at)
-      if (stage === 'SAMPLE_REQUESTED' && !eng.firstSampleOn) eng.firstSampleOn = iso(at)
       if (stage === 'APPROVED') {
         eng.approvedOn = iso(at)
         eng.approvalReference = `QA/APP/2026/${int(100, 399)}`
@@ -1626,8 +1620,6 @@ export function buildDatabase(seed = SEED): Database {
       stageBeforeHold: null,
       origin: 'PIPELINE',
       ownerUserId: storyOwner.id,
-      firstOfferedOn: bdNow(startDaysAgo - 8),
-      firstSampleOn: bdNow(startDaysAgo - 20),
       approvedOn: bdNow(startDaysAgo - 90),
       approvalReference: mp === bioconBudesonide ? 'SQ/QA/APP/2026/118' : 'SQ/QA/APP/2026/121',
       approvalConditions: null,

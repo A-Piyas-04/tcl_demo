@@ -563,8 +563,6 @@ export async function openEngagements(
       stageBeforeHold: null,
       origin: 'PIPELINE',
       ownerUserId: req.ownerUserId,
-      firstOfferedOn: null,
-      firstSampleOn: null,
       approvedOn: null,
       approvalReference: null,
       approvalConditions: null,
@@ -615,8 +613,8 @@ export async function openEngagements(
 export interface StageChangeInput {
   reasonCode?: string | null
   note?: string | null
-  /** the client's approval date, when moving to Approved */
-  effectiveOn?: string | null
+  /** the date the stage change actually happened, for every stage, not the keystroke */
+  occurredOn?: string | null
   /** the user has confirmed an override (sample before offer) */
   override?: boolean
   approvalReference?: string | null
@@ -650,31 +648,33 @@ export async function changeStage(
   if (check.requiresOverride && !input.note) {
     throw new RuleError('An override must carry a note explaining it.')
   }
-  if (to === 'APPROVED' && input.effectiveOn && input.effectiveOn > today()) {
-    throw new RuleError('The approval date cannot be in the future.')
+  // A future date is the one date that cannot be recorded: the event has not
+  // happened yet. Every past date is allowed, for any stage.
+  const occurredOn = input.occurredOn ?? today()
+  if (occurredOn > today()) {
+    throw new RuleError('That date is in the future. Record the date the change actually happened.')
   }
 
   const from = eng.stage
-  const days = Math.max(0, Math.round((Date.now() - new Date(eng.stageChangedAt).getTime()) / 86400000))
+  const days = Math.max(
+    0,
+    Math.round((new Date(occurredOn).getTime() - new Date(eng.stageChangedAt).getTime()) / 86400000),
+  )
 
   const after: Engagement = {
     ...eng,
     stage: to,
-    stageChangedAt: nowIso(),
+    // the date the change happened, typed by the person; updatedAt is the keystroke
+    stageChangedAt: occurredOn,
     stageReasonCode: input.reasonCode ?? null,
     stageNote: input.note ?? null,
     stageBeforeHold: to === 'ON_HOLD' ? from : null,
-    firstOfferedOn: to === 'OFFERED' ? (eng.firstOfferedOn ?? today()) : eng.firstOfferedOn,
-    firstSampleOn: to === 'SAMPLE_REQUESTED' ? (eng.firstSampleOn ?? today()) : eng.firstSampleOn,
-    approvedOn:
-      to === 'APPROVED' && from !== 'ON_HOLD'
-        ? (input.effectiveOn ?? today())
-        : to === 'REJECTED' || to === 'IDENTIFIED'
-          ? null
-          : eng.approvedOn,
+    // approved and commercial dates record when the event happened; a later
+    // rejection is a separate fact in stage history and does NOT unmake them
+    approvedOn: to === 'APPROVED' && from !== 'ON_HOLD' ? occurredOn : eng.approvedOn,
     approvalReference: to === 'APPROVED' ? (input.approvalReference ?? eng.approvalReference) : eng.approvalReference,
     approvalConditions: to === 'APPROVED' ? (input.approvalConditions ?? eng.approvalConditions) : eng.approvalConditions,
-    firstCommercialOn: to === 'COMMERCIAL' ? (eng.firstCommercialOn ?? today()) : eng.firstCommercialOn,
+    firstCommercialOn: to === 'COMMERCIAL' ? (eng.firstCommercialOn ?? occurredOn) : eng.firstCommercialOn,
     updatedAt: nowIso(),
   }
 
@@ -686,7 +686,7 @@ export async function changeStage(
         engagementId,
         fromStage: from,
         toStage: to,
-        changedAt: nowIso(),
+        changedAt: occurredOn,
         changedByUserId: store.currentUserId(),
         reasonCode: input.reasonCode ?? null,
         remark: input.note ?? null,
@@ -751,7 +751,11 @@ export async function createOffer(
 
   // The first offer advances the engagement; a revision leaves the stage alone.
   if (eng.stage === 'IDENTIFIED') {
-    await changeStage(input.engagementId, 'OFFERED', { note: `Offer v${versionNo} issued`, fromRecord: true })
+    await changeStage(input.engagementId, 'OFFERED', {
+      note: `Offer v${versionNo} recorded`,
+      occurredOn: input.offerDate,
+      fromRecord: true,
+    })
   }
   return offer
 }
@@ -815,6 +819,7 @@ export async function createSampleRound(
   if (eng.stage !== 'SAMPLE_REQUESTED') {
     await changeStage(input.engagementId, 'SAMPLE_REQUESTED', {
       fromRecord: true,
+      occurredOn: round.requestedOn,
       override: opts.override,
       note: opts.override ? opts.overrideNote : `Sample round ${round.roundNo} requested`,
     })
@@ -845,7 +850,11 @@ export async function recordSampleDispatch(
   audit('UPDATE', 'sample_round', id, `Sample round ${round.roundNo}`, diff(round, patch))
   const eng = db.engagements.find((e) => e.id === round.engagementId)
   if (eng?.stage === 'SAMPLE_REQUESTED') {
-    await changeStage(eng.id, 'SAMPLE_SENT', { note: `Dispatched by ${patch.courierName ?? 'courier'}`, fromRecord: true })
+    await changeStage(eng.id, 'SAMPLE_SENT', {
+      note: `Dispatched by ${patch.courierName ?? 'courier'}`,
+      occurredOn: patch.dispatchedOn ?? undefined,
+      fromRecord: true,
+    })
   }
 }
 
@@ -864,7 +873,11 @@ export async function recordSampleReceipt(id: ID, receivedOn: string): Promise<v
   audit('UPDATE', 'sample_round', id, `Sample round ${round.roundNo}`, { receivedOn: { old: round.receivedOn, new: receivedOn } })
   const eng = db.engagements.find((e) => e.id === round.engagementId)
   if (eng?.stage === 'SAMPLE_SENT') {
-    await changeStage(eng.id, 'UNDER_EVALUATION', { note: 'Client confirmed receipt', fromRecord: true })
+    await changeStage(eng.id, 'UNDER_EVALUATION', {
+      note: 'Client confirmed receipt',
+      occurredOn: receivedOn,
+      fromRecord: true,
+    })
   }
 }
 

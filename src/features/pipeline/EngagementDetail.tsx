@@ -18,6 +18,8 @@ import {
   companyName,
   currentPriceTiers,
   dealProgress,
+  firstOfferedOn,
+  firstSampleOn,
   latestPrice,
   nextStepFor,
   userName,
@@ -222,8 +224,8 @@ export function EngagementDetail() {
               <TradeSteps steps={deal.steps} />
             </div>
             <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="First offered">{fmtDate(engagement.firstOfferedOn)}</Field>
-              <Field label="First sample">{fmtDate(engagement.firstSampleOn)}</Field>
+              <Field label="First offered">{fmtDate(firstOfferedOn(db, engagement.id))}</Field>
+              <Field label="First sample">{fmtDate(firstSampleOn(db, engagement.id))}</Field>
               <Field label="Approved on">{fmtDate(engagement.approvedOn)}</Field>
               <Field label="First commercial supply">{fmtDate(engagement.firstCommercialOn)}</Field>
             </div>

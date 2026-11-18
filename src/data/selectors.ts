@@ -404,6 +404,21 @@ export interface DealProgress {
 }
 
 /**
+ * The date the first offer was recorded on an engagement, derived from the
+ * earliest offer rather than stored — so it can never drift from the record.
+ */
+export function firstOfferedOn(db: Database, engagementId: ID): string | null {
+  const dates = db.offers.filter((o) => o.engagementId === engagementId).map((o) => o.offerDate)
+  return dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : null
+}
+
+/** The date the first sample was requested, derived from the earliest round. */
+export function firstSampleOn(db: Database, engagementId: ID): string | null {
+  const dates = db.samples.filter((s) => s.engagementId === engagementId).map((s) => s.requestedOn)
+  return dates.length ? dates.reduce((a, b) => (a < b ? a : b)) : null
+}
+
+/**
  * The trade half of a deal: everything ordered through this client and source,
  * read from the order, indent, shipment and commission records.
  */

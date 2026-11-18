@@ -323,8 +323,8 @@ export interface Engagement {
   stageBeforeHold: EngagementStage | null
   origin: EngagementOrigin
   ownerUserId: ID
-  firstOfferedOn: string | null
-  firstSampleOn: string | null
+  // firstOfferedOn and firstSampleOn are no longer stored — they are derived
+  // from the earliest offer and sample so they can never drift from the record.
   approvedOn: string | null
   approvalReference: string | null
   approvalConditions: string | null

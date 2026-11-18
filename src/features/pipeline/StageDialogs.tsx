@@ -22,7 +22,6 @@ import {
   Button,
   DateInput,
   Dialog,
-  FormGrid,
   FormRow,
   InlineError,
   InlineWarning,
@@ -57,7 +56,7 @@ export function StageChangeDialog({
 }: StageChangeDialogProps) {
   const [reasonCode, setReasonCode] = React.useState('')
   const [note, setNote] = React.useState('')
-  const [effectiveOn, setEffectiveOn] = React.useState(todayIso())
+  const [occurredOn, setOccurredOn] = React.useState(todayIso())
   const [approvalReference, setApprovalReference] = React.useState('')
   const [approvalConditions, setApprovalConditions] = React.useState('')
   const [saving, setSaving] = React.useState(false)
@@ -70,7 +69,7 @@ export function StageChangeDialog({
   React.useEffect(() => {
     setReasonCode('')
     setNote('')
-    setEffectiveOn(todayIso())
+    setOccurredOn(todayIso())
     setApprovalReference('')
     setApprovalConditions('')
     setError(null)
@@ -86,8 +85,8 @@ export function StageChangeDialog({
       ? 'Choose a reason from the list.'
       : noteRequired && !note.trim()
         ? 'Write a note explaining this.'
-        : isApproval && effectiveOn > todayIso()
-          ? 'The approval date cannot be in the future.'
+        : occurredOn > todayIso()
+          ? 'That date is in the future. Record the date the change happened.'
           : null
 
   const submit = async (e?: React.FormEvent) => {
@@ -104,7 +103,7 @@ export function StageChangeDialog({
         changeStage(engagement.id, to, {
           reasonCode: reasonCode || null,
           note: note.trim() || null,
-          effectiveOn: isApproval ? effectiveOn : null,
+          occurredOn,
           override: check?.requiresOverride ? true : undefined,
           approvalReference: isApproval ? approvalReference.trim() || null : null,
           approvalConditions: isApproval ? approvalConditions.trim() || null : null,
@@ -193,6 +192,20 @@ export function StageChangeDialog({
 
         {requireNoteBecause ? <InlineWarning>{requireNoteBecause}</InlineWarning> : null}
 
+        {/* every stage change carries the date it actually happened, not today */}
+        <FormRow
+          label={isApproval ? "Client's approval date" : 'Date this happened'}
+          required
+          hint={isApproval ? "The date on the client's letter, not today's date." : 'Defaults to today; change it to the real date.'}
+        >
+          <DateInput
+            value={occurredOn}
+            max={todayIso()}
+            onChange={(e) => setOccurredOn(e.target.value)}
+            invalid={occurredOn > todayIso()}
+          />
+        </FormRow>
+
         {check?.requiresReason ? (
           <FormRow
             label="Reason"
@@ -211,24 +224,14 @@ export function StageChangeDialog({
 
         {isApproval ? (
           <>
-            <FormGrid>
-              <FormRow label="Client's approval date" required hint="The date on the client's letter, not today's date.">
-                <DateInput
-                  value={effectiveOn}
-                  max={todayIso()}
-                  onChange={(e) => setEffectiveOn(e.target.value)}
-                  invalid={effectiveOn > todayIso()}
-                />
-              </FormRow>
-              <FormRow label="Approval reference" hint="The client's own reference, e.g. QA/APP/2026/118.">
-                <Input
-                  value={approvalReference}
-                  onChange={(e) => setApprovalReference(e.target.value)}
-                  placeholder="QA/APP/2026/118"
-                  mono
-                />
-              </FormRow>
-            </FormGrid>
+            <FormRow label="Approval reference" hint="The client's own reference, e.g. QA/APP/2026/118.">
+              <Input
+                value={approvalReference}
+                onChange={(e) => setApprovalReference(e.target.value)}
+                placeholder="QA/APP/2026/118"
+                mono
+              />
+            </FormRow>
             <FormRow
               label="Conditions"
               hint="A conditional approval is still an approval, and the condition is shown as a warning on any order raised against this source."
