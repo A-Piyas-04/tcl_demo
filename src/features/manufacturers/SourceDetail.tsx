@@ -56,7 +56,7 @@ import {
 } from '@/data/api'
 import { findPriceOverlap, today } from '@/data/rules'
 import { runAction, useAsyncData } from '@/lib/hooks'
-import { fmtDate, fmtMoney, fmtQty, pluralise } from '@/lib/utils'
+import { fmtDate, fmtMoney, fmtQty, pluralise, todayIso } from '@/lib/utils'
 import type {
   FilingKind,
   ManufacturerProduct,
@@ -340,7 +340,7 @@ function PortfolioPanel({
 
   const toggle = async (next: boolean) => {
     setBusy(true)
-    await runAction(() => setPortfolio(mp.id, next, kind), {
+    await runAction(() => setPortfolio(mp.id, next, todayIso(), kind), {
       success: next
         ? 'Taken into the TCL portfolio. It can now be offered to clients.'
         : 'Removed from the portfolio. The period is kept on the record.',

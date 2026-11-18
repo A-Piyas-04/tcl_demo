@@ -11,9 +11,11 @@ import { ShieldAlert } from 'lucide-react'
 import { setManufacturerStatus } from '@/data/api'
 import { MANUFACTURER_STATUS_LABEL } from '@/data/reference'
 import { runAction } from '@/lib/hooks'
+import { todayIso } from '@/lib/utils'
 import type { Company, ManufacturerStatus } from '@/data/types'
 import {
   Badge,
+  DateInput,
   Dialog,
   DialogFooterActions,
   FormRow,
@@ -43,6 +45,7 @@ export function StatusChangeDialog({
   const current = company.manufacturer?.status ?? 'NEW'
   const [status, setStatus] = React.useState<ManufacturerStatus>(current)
   const [remark, setRemark] = React.useState('')
+  const [occurredOn, setOccurredOn] = React.useState(todayIso())
   const [error, setError] = React.useState<string | null>(null)
   const [saving, setSaving] = React.useState(false)
 
@@ -51,6 +54,7 @@ export function StatusChangeDialog({
     if (open) {
       setStatus(current)
       setRemark('')
+      setOccurredOn(todayIso())
       setError(null)
     }
   }, [open, current])
@@ -65,8 +69,12 @@ export function StatusChangeDialog({
       setError(`This manufacturer is already ${MANUFACTURER_STATUS_LABEL[current].toLowerCase()}.`)
       return
     }
+    if (occurredOn > todayIso()) {
+      setError('That date is in the future. Record the date the change happened.')
+      return
+    }
     setSaving(true)
-    const result = await runAction(() => setManufacturerStatus(company.id, status, remark), {
+    const result = await runAction(() => setManufacturerStatus(company.id, status, remark, occurredOn), {
       success: `${company.displayName} is now ${MANUFACTURER_STATUS_LABEL[status].toLowerCase()}.`,
       onError: setError,
     })
@@ -103,6 +111,15 @@ export function StatusChangeDialog({
               label: MANUFACTURER_STATUS_LABEL[s],
               description: s === current ? `${DESCRIPTION[s]} (current)` : DESCRIPTION[s],
             }))}
+          />
+        </FormRow>
+
+        <FormRow label="Date this happened" required hint="Defaults to today; change it to the date the status actually changed.">
+          <DateInput
+            value={occurredOn}
+            max={todayIso()}
+            onChange={(e) => setOccurredOn(e.target.value)}
+            invalid={occurredOn > todayIso()}
           />
         </FormRow>
 

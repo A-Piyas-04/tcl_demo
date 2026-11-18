@@ -171,7 +171,7 @@ export function ManufacturerProductForm() {
           })
         }
         if (withPortfolio) {
-          await setPortfolio(mp.id, true, representation)
+          await setPortfolio(mp.id, true, today(), representation)
         }
         if (withPrice && price != null && validTo) {
           await addPrice({

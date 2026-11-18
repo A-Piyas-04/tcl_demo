@@ -230,6 +230,7 @@ export async function setManufacturerStatus(
   id: ID,
   toStatus: Company['manufacturer'] extends infer _ ? NonNullable<Company['manufacturer']>['status'] : never,
   remark: string,
+  occurredOn: string,
 ): Promise<void> {
   requireWrite('changing a manufacturer status')
   await delay('write')
@@ -249,7 +250,7 @@ export async function setManufacturerStatus(
               ...c.manufacturer,
               status: toStatus,
               blacklistReason: toStatus === 'BLACKLISTED' ? remark : c.manufacturer.blacklistReason,
-              blacklistedOn: toStatus === 'BLACKLISTED' ? today() : c.manufacturer.blacklistedOn,
+              blacklistedOn: toStatus === 'BLACKLISTED' ? occurredOn : c.manufacturer.blacklistedOn,
             },
           }
         : c,
@@ -403,7 +404,7 @@ export async function removeFiling(id: ID): Promise<void> {
 }
 
 /** FR-M4-05 / AC-03: a blacklisted or inactive manufacturer cannot be represented. */
-export async function setPortfolio(mpId: ID, inPortfolio: boolean, representation: PortfolioItem['representation'] = 'INDENT'): Promise<void> {
+export async function setPortfolio(mpId: ID, inPortfolio: boolean, occurredOn: string, representation: PortfolioItem['representation'] = 'INDENT'): Promise<void> {
   requireWrite('changing the portfolio')
   await delay('write')
   const db = store.db()
@@ -429,7 +430,7 @@ export async function setPortfolio(mpId: ID, inPortfolio: boolean, representatio
           id: newId('pfi'),
           manufacturerProductId: mpId,
           representation,
-          startedOn: today(),
+          startedOn: occurredOn,
           endedOn: null,
           isActive: true,
           remarks: null,
@@ -437,7 +438,7 @@ export async function setPortfolio(mpId: ID, inPortfolio: boolean, representatio
       ]
     } else {
       db2.portfolio = db2.portfolio.map((p) =>
-        p.manufacturerProductId === mpId && p.isActive ? { ...p, isActive: false, endedOn: today() } : p,
+        p.manufacturerProductId === mpId && p.isActive ? { ...p, isActive: false, endedOn: occurredOn } : p,
       )
     }
   })
@@ -1001,7 +1002,7 @@ export async function createClientOrder(
 export async function raiseIndents(
   clientOrderId: ID,
   prices: Record<ID, number>,
-  opts: { proformaInvoiceRef?: string | null } = {},
+  opts: { proformaInvoiceRef?: string | null; orderDate?: string } = {},
 ): Promise<Indent[]> {
   requireWrite('raising an indent')
   await delay('write')
@@ -1033,7 +1034,7 @@ export async function raiseIndents(
       indentNumber: `IND-${new Date().getFullYear()}-${String(++seq).padStart(5, '0')}`,
       manufacturerCompanyId: mfrId,
       clientCompanyId: order.clientCompanyId,
-      orderDate: today(),
+      orderDate: opts.orderDate ?? today(),
       status: 'OPEN',
       currency: order.currency,
       incoterm: order.incoterm,

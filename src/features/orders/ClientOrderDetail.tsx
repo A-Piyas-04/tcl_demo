@@ -24,10 +24,11 @@ import {
 import { paymentTermLabel } from '@/data/reference'
 import { raiseIndents } from '@/data/api'
 import { runAction, useAsyncData } from '@/lib/hooks'
-import { fmtDate, fmtMoney, fmtQty, pluralise } from '@/lib/utils'
+import { fmtDate, fmtMoney, fmtQty, pluralise, todayIso } from '@/lib/utils'
 import type { ClientOrderLine } from '@/data/types'
 import {
   Badge,
+  DateInput,
   Dialog,
   DialogFooterActions,
   EmptyState,
@@ -451,6 +452,7 @@ function RaiseIndentDialog({
   const db = useDb()
   const [prices, setPrices] = React.useState<Record<string, number | null>>({})
   const [proforma, setProforma] = React.useState('')
+  const [orderDate, setOrderDate] = React.useState(todayIso())
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -484,12 +486,19 @@ function RaiseIndentDialog({
     setError(null)
     const payload: Record<string, number> = {}
     for (const [lineId, price] of Object.entries(prices)) if (price != null) payload[lineId] = price
+    if (orderDate > todayIso()) {
+      setError('That date is in the future. Record the date the indent was placed.')
+      return
+    }
     setBusy(true)
-    const result = await runAction(() => raiseIndents(orderId, payload, { proformaInvoiceRef: proforma.trim() || null }), {
-      success: (indents) =>
-        `${pluralise(indents.length, 'indent')} raised for ${clientName}. Any engagement at Approved has moved to Commercial, which is the commercial gate.`,
-      onError: setError,
-    })
+    const result = await runAction(
+      () => raiseIndents(orderId, payload, { proformaInvoiceRef: proforma.trim() || null, orderDate }),
+      {
+        success: (indents) =>
+          `${pluralise(indents.length, 'indent')} raised for ${clientName}. Any engagement at Approved has moved to Commercial, which is the commercial gate.`,
+        onError: setError,
+      },
+    )
     setBusy(false)
     if (result) onOpenChange(false)
   }
@@ -576,12 +585,26 @@ function RaiseIndentDialog({
         ))}
 
         {groups.length > 0 ? (
-          <FormRow
-            label="Manufacturer's proforma invoice reference"
-            hint="Recorded on every indent raised now. It can be added later if the manufacturer has not sent it."
-          >
-            <Input value={proforma} onChange={(e) => setProforma(e.target.value)} mono placeholder="PI-1042/2026" />
-          </FormRow>
+          <>
+            <FormRow
+              label="Indent date"
+              required
+              hint="The date the indent was placed on the manufacturer. Defaults to today; change it to the real date."
+            >
+              <DateInput
+                value={orderDate}
+                max={todayIso()}
+                onChange={(e) => setOrderDate(e.target.value)}
+                invalid={orderDate > todayIso()}
+              />
+            </FormRow>
+            <FormRow
+              label="Manufacturer's proforma invoice reference"
+              hint="Recorded on every indent raised now. It can be added later if the manufacturer has not sent it."
+            >
+              <Input value={proforma} onChange={(e) => setProforma(e.target.value)} mono placeholder="PI-1042/2026" />
+            </FormRow>
+          </>
         ) : null}
 
         {Object.values(prices).some((p) => p == null || p <= 0) && groups.length > 0 ? (
