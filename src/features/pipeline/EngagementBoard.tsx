@@ -36,7 +36,7 @@ import {
   manufacturers as mfrList,
   type EngagementRow,
 } from '@/data/selectors'
-import { PIPELINE_STAGES, STAGE_LABEL, STAGE_STYLE, stageConfig } from '@/data/reference'
+import { PIPELINE_STAGES, STAGE_LABEL, stageConfig } from '@/data/reference'
 import { changeStage, logExport } from '@/data/api'
 import { checkStageChange, stageNeedsRecord } from '@/data/rules'
 import { runAction, useAsyncData, useLocalPreference, useUrlFilters, useUrlSearch } from '@/lib/hooks'
@@ -275,11 +275,11 @@ export function EngagementBoard() {
       <div>
         <PageHeading
           title="Engagements"
-          subtitle="Client × supplier deals. Each card is one client considering one manufacturer's product, from first offer to commercial supply. Open a card to see its next step."
+          subtitle="One client considering one manufacturer's product"
           meta={
             <>
               <Badge tone="neutral">{pluralise(rows.length, 'engagement')}</Badge>
-              <Badge tone="warn">{pluralise(rows.filter((r) => r.isAgeing).length, 'ageing')}</Badge>
+              <Badge tone="warn">{rows.filter((r) => r.isAgeing).length} past threshold</Badge>
               {!canWrite ? <Badge tone="outline">Read only session</Badge> : null}
             </>
           }
@@ -380,10 +380,7 @@ export function EngagementBoard() {
           }
         />
         {canWrite && view === 'board' ? (
-          <p className="px-3 py-2 text-sm text-ink-500">
-            Drag a card to approve, pause or close it. Offers and samples are recorded on the engagement itself, which moves
-            the card for you.
-          </p>
+          <p className="px-3 py-2 text-sm text-ink-500">Drag a card to approve, pause or close it.</p>
         ) : null}
       </Panel>
 
@@ -530,13 +527,11 @@ function StageColumn({
   onOpen: (id: string) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage })
-  const style = STAGE_STYLE[stage]
   return (
     <div className="w-[17rem] shrink-0">
-      <Panel className={cn('transition-colors', isOver && 'border-accent-500 bg-accent-50/40')}>
-        <div className={cn('h-1 w-full', style.bar)} />
-        <div className="flex items-center justify-between gap-2 border-b border-paper-200 px-2.5 py-2">
-          <span className="truncate text-sm font-semibold text-ink-800">{STAGE_LABEL[stage]}</span>
+      <Panel className={cn('transition-colors', isOver && 'slab-accent bg-accent-50/40')}>
+        <div className="panel-head px-2.5 py-2">
+          <span className="truncate-end text-base font-semibold text-ink-900">{STAGE_LABEL[stage]}</span>
           <span className="flex items-center gap-1.5">
             <Tooltip content={`Ageing threshold ${stageConfig(stage).ageingThresholdDays} days`}>
               <span className="text-sm tabular text-ink-400">{stageConfig(stage).ageingThresholdDays}d</span>
@@ -631,7 +626,7 @@ function BoardCard({
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        'rounded-md border border-paper-300 bg-white p-2 ',
+        'panel slab-quiet pressable p-2 hover:shadow-lifted',
         shaking && 'animate-shake-x border-danger-300',
       )}
     >
@@ -672,7 +667,7 @@ function BoardCard({
 function OverlayCard({ row }: { row: Card | null }) {
   if (!row) return null
   return (
-    <div className="w-[15.5rem] rotate-1 rounded-md border border-accent-400 bg-white p-2 ">
+    <div className="panel slab-accent w-[15.5rem] rotate-1 p-2 shadow-pop">
       <span className="block truncate text-sm font-semibold text-ink-900">{row.client.displayName}</span>
       <span className="block truncate text-sm text-ink-700">{row.product.genericName}</span>
       <span className="block truncate text-sm text-ink-500">{row.manufacturer.displayName}</span>

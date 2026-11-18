@@ -165,7 +165,7 @@ export function ExpiringDocuments() {
                       {row.parentHref ? (
                         <Link
                           to={row.parentHref}
-                          className="max-w-[16rem] truncate text-sm font-medium text-accent-700 hover:underline"
+                          className="max-w-[16rem] truncate text-sm font-medium link"
                         >
                           {row.parentLabel}
                         </Link>

@@ -141,7 +141,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                     <>
                       Nothing matches “{query}”.
                       {canWrite ? (
-                        <button onClick={() => go('/products/new')} className="mt-2 block w-full text-accent-700 hover:underline">
+                        <button onClick={() => go('/products/new')} className="mt-2 block w-full link">
                           Create a product instead
                         </button>
                       ) : null}

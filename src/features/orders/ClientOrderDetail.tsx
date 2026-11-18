@@ -68,11 +68,11 @@ function LineOrigin({ lineId }: { lineId: string }) {
   const requirementId = db.requirementEngagements.find((l) => l.engagementId === engagementId)?.requirementId
   return (
     <span className="mt-0.5 flex flex-wrap gap-x-2 text-sm">
-      <Link to={`/engagements/${engagementId}`} className="text-accent-700 hover:underline">
+      <Link to={`/engagements/${engagementId}`} className="link">
         Engagement
       </Link>
       {requirementId ? (
-        <Link to={`/requirements/${requirementId}`} className="text-accent-700 hover:underline">
+        <Link to={`/requirements/${requirementId}`} className="link">
           Requirement
         </Link>
       ) : null}

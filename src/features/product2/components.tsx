@@ -122,14 +122,17 @@ const VARIANT = {
   sourcing: {
     icon: FlaskConical,
     label: 'Sourcing',
-    edge: 'border-l-[3px] border-l-stage-sample',
-    chip: 'bg-[#f3effb] text-[#5b3d9c] border-[#ddd2f3]',
+    // Sourcing and Trade are two series being compared, which is the one case
+    // a second hue is allowed. Accent for sourcing, info for trade — both from
+    // the token file; the old one-off hexes and `stage-*` scale are gone.
+    edge: 'border-l-[3px] border-l-accent-600',
+    chip: 'bg-accent-50 text-accent-700 border-accent-200',
   },
   trade: {
     icon: Ship,
     label: 'Trade',
-    edge: 'border-l-[3px] border-l-stage-offered',
-    chip: 'bg-[#eef4fb] text-[#1f4f79] border-[#cfe0f0]',
+    edge: 'border-l-[3px] border-l-info-600',
+    chip: 'bg-info-50 text-info-700 border-info-200',
   },
 } as const
 

@@ -163,7 +163,7 @@ export function EngagementDetail() {
     <div className="space-y-4">
       <PageHeading
         title={`${client?.displayName ?? 'Client'} · ${product?.genericName ?? 'Engagement'}`}
-        subtitle={`From ${manufacturer?.displayName ?? 'an unknown manufacturer'}${mp ? `, ${mp.grade}, ${mp.pharmacopoeia}` : ''}. An engagement follows one client considering one manufacturer's product, from first offer to commercial supply.`}
+        subtitle={`From ${manufacturer?.displayName ?? 'an unknown manufacturer'}${mp ? `, ${mp.grade}, ${mp.pharmacopoeia}` : ''}`}
         meta={
           <>
             <StageBadge stage={engagement.stage} />
@@ -260,7 +260,7 @@ export function EngagementDetail() {
           <div className="grid gap-4 lg:grid-cols-3">
             <Panel>
               <PanelHeader
-                title="The source"
+                title="Source"
                 subtitle={manufacturer ? countryName(manufacturer.countryCode) : undefined}
                 icon={<Building2 className="h-4 w-4" />}
                 actions={<PortfolioBadge inPortfolio={inPortfolio} offerable={inPortfolio && tiers.length > 0} />}
@@ -268,7 +268,7 @@ export function EngagementDetail() {
               <div className="space-y-3 p-4">
                 <FieldGrid cols={2}>
                   <Field label="Manufacturer">
-                    <Link to={`/manufacturers/${engagement.manufacturerCompanyId}`} className="text-accent-700 hover:underline">
+                    <Link to={`/manufacturers/${engagement.manufacturerCompanyId}`} className="link">
                       {manufacturer?.displayName ?? '—'}
                     </Link>
                   </Field>
@@ -295,11 +295,11 @@ export function EngagementDetail() {
             </Panel>
 
             <Panel>
-              <PanelHeader title="The client" icon={<Users className="h-4 w-4" />} />
+              <PanelHeader title="Client" icon={<Users className="h-4 w-4" />} />
               <div className="space-y-3 p-4">
                 <FieldGrid cols={2}>
                   <Field label="Client">
-                    <Link to={`/clients/${engagement.clientCompanyId}`} className="text-accent-700 hover:underline">
+                    <Link to={`/clients/${engagement.clientCompanyId}`} className="link">
                       {companyName(db, engagement.clientCompanyId)}
                     </Link>
                   </Field>
@@ -319,7 +319,7 @@ export function EngagementDetail() {
             </Panel>
 
             <Panel>
-              <PanelHeader title="Requirements served" subtitle="The client enquiries this engagement answers" />
+              <PanelHeader title="Requirements served" subtitle="Enquiries this engagement answers" />
               {requirements.length > 0 ? (
                 <ul className="divide-y divide-paper-200">
                   {requirements.map((r) => (
@@ -361,7 +361,7 @@ export function EngagementDetail() {
             entityType="ENGAGEMENT"
             entityId={engagement.id}
             title="Documents"
-            subtitle="Quotations, COAs, specifications and the client's approval letter"
+            subtitle="Quotations, certificates and the approval letter"
             emptyHint="Quotations, COAs and the client's approval letter belong on this engagement."
           />
         </TabPanel>
@@ -370,7 +370,7 @@ export function EngagementDetail() {
           <Panel>
             <PanelHeader
               title="Stage history"
-              subtitle="Every move, with who made it, why, and how long the previous stage lasted"
+              subtitle="Every move, with who made it and why"
               icon={<History className="h-4 w-4" />}
             />
             <div className="p-4">
@@ -451,7 +451,7 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
             return (
               <li key={o.id} className="px-4 py-2.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link to={`/client-orders/${o.id}`} className="font-mono text-sm font-medium text-accent-700 hover:underline">
+                  <Link to={`/client-orders/${o.id}`} className="font-mono text-sm font-medium link">
                     {o.coNumber}
                   </Link>
                   <OrderStatusBadge status={o.status} />
@@ -482,7 +482,7 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
               const commission = commissions.find((c) => c.indentId === i.id)
               return (
                 <li key={i.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-                  <Link to={`/indents/${i.id}`} className="font-mono text-sm font-medium text-accent-700 hover:underline">
+                  <Link to={`/indents/${i.id}`} className="font-mono text-sm font-medium link">
                     {i.indentNumber}
                   </Link>
                   <OrderStatusBadge status={i.status} />
@@ -515,7 +515,7 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
           <ul className="divide-y divide-paper-200">
             {shipments.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-                <Link to={`/shipments/${s.id}`} className="font-mono text-sm font-medium text-accent-700 hover:underline">
+                <Link to={`/shipments/${s.id}`} className="font-mono text-sm font-medium link">
                   {s.shipmentRef}
                 </Link>
                 <ShipmentStatusBadge status={s.status} />

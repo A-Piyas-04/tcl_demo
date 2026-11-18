@@ -334,7 +334,7 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               {unread.length ? (
                 <button
                   onClick={() => void markNotificationsRead(unread.map((n) => n.id))}
-                  className="text-sm text-accent-700 hover:underline"
+                  className="text-sm link"
                 >
                   Mark all read
                 </button>

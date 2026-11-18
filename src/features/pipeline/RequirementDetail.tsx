@@ -350,13 +350,13 @@ export function RequirementDetail() {
                 <Field label="Client">
                   <Link
                     to={`/clients/${requirement.clientCompanyId}`}
-                    className="text-accent-700 hover:underline"
+                    className="link"
                   >
                     {companyName(db, requirement.clientCompanyId)}
                   </Link>
                 </Field>
                 <Field label="Molecule">
-                  <Link to={`/products/${requirement.productId}`} className="text-accent-700 hover:underline">
+                  <Link to={`/products/${requirement.productId}`} className="link">
                     {product?.genericName ?? '—'}
                   </Link>
                 </Field>

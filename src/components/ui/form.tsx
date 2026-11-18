@@ -88,8 +88,8 @@ export function FormSection({
 // ------------------------------------------------------------------ input
 
 const CONTROL =
-  'w-full rounded border border-paper-400 bg-white px-2.5 text-sm text-ink-900 shadow-[inset_0_1px_1px_rgb(15_34_45/0.04)] ' +
-  'placeholder:text-ink-400 transition-colors hover:border-ink-500/40 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/25 ' +
+  'w-full rounded border border-ink-400 bg-white px-2.5 text-base text-ink-900 shadow-recessed ' +
+  'placeholder:text-ink-400 transition-colors hover:border-ink-500 focus:border-accent-600 focus:outline-none focus:ring-2 focus:ring-accent-600/30 ' +
   'disabled:cursor-not-allowed disabled:bg-paper-200 disabled:text-ink-400'
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean; mono?: boolean }>(

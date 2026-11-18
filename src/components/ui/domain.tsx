@@ -303,13 +303,14 @@ export function KpiTile({
   // carried by a left edge and by the figure itself — never by tinting the
   // whole card, which would make "a number is bad" look like a different
   // kind of object.
+  // Severity goes into the corner brackets. There is no side bar.
   const edge: Record<string, string> = {
-    default: 'border-l-paper-300',
-    accent: 'border-l-accent-600',
-    warn: 'border-l-warn-600',
-    danger: 'border-l-danger-600',
-    ok: 'border-l-ok-600',
-    ink: 'border-l-paper-300',
+    default: '',
+    accent: 'slab-accent',
+    warn: 'slab-warn',
+    danger: 'slab-danger',
+    ok: 'slab-ok',
+    ink: '',
   }
   const valueTone: Record<string, string> = {
     default: 'text-ink-900',
@@ -324,9 +325,9 @@ export function KpiTile({
   const body = (
     <div
       className={cn(
-        'flex h-full flex-col justify-between gap-2 rounded border border-l-2 border-paper-300 bg-white p-4 transition-colors',
+        'panel flex h-full flex-col justify-between gap-2 p-4',
         edge[tone],
-        to && 'group-hover:bg-paper-100',
+        to && 'pressable group-hover:shadow-lifted',
         span === 'wide' && 'sm:col-span-2',
         span === 'tall' && 'sm:row-span-2',
         span === 'big' && 'sm:col-span-2 sm:row-span-2',

@@ -166,7 +166,7 @@ export function DocumentLibrary() {
         r.parentHref ? (
           <Link
             to={r.parentHref}
-            className="truncate text-sm font-medium text-accent-700 hover:underline"
+            className="truncate text-sm font-medium link"
             onClick={(e) => e.stopPropagation()}
           >
             {r.parentLabel}

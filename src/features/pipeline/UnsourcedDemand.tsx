@@ -290,7 +290,7 @@ function GroupPanel({ group, rank }: { group: Group; rank: number }) {
             <span className="text-sm tabular text-ink-400">{fmtDate(r.requirement.enquiryDate)}</span>
             <Link
               to={`/requirements/${r.requirement.id}`}
-              className="text-sm font-medium text-accent-700 hover:underline"
+              className="text-sm font-medium link"
             >
               Open
             </Link>

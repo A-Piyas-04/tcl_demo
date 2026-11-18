@@ -219,7 +219,7 @@ function AttentionPanel({ groups, mineOnly }: { groups: AttentionGroup[]; mineOn
                             ))}
                           </ul>
                           {g.items.length > 3 && g.seeAll ? (
-                            <Link to={g.seeAll} className="ml-1.5 text-sm font-medium text-accent-700 hover:underline">
+                            <Link to={g.seeAll} className="ml-1.5 text-sm font-medium link">
                               See all {g.items.length}
                             </Link>
                           ) : g.items.length > 3 ? (
@@ -264,7 +264,7 @@ function PipelineTile({ data }: { data: DashboardData }) {
       </div>
       <p className="text-sm text-ink-500">
         <span className="font-semibold text-ok-600">{commercial}</span> in commercial supply ·{' '}
-        <Link to="/engagements" className="font-medium text-accent-700 hover:underline">
+        <Link to="/engagements" className="font-medium link">
           open the board
         </Link>
       </p>
@@ -331,7 +331,7 @@ function UnsourcedPanel({ data }: { data: DashboardData }) {
         subtitle={`${pluralise(molecules, 'molecule')} across ${pluralise(data.unsourced.length, 'open requirement')} with no represented source`}
         icon={<PackageSearch className="h-4 w-4" />}
         actions={
-          <Link to="/requirements/unsourced" className="text-sm font-medium text-accent-700 hover:underline">
+          <Link to="/requirements/unsourced" className="text-sm font-medium link">
             Open unsourced demand
           </Link>
         }

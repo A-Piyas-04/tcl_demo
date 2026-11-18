@@ -161,8 +161,20 @@ export function hashIndex(text: string, buckets: number): number {
   return h % buckets
 }
 
-export function pluralise(n: number, one: string, many = `${one}s`): string {
-  return `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`
+/**
+ * Counts read correctly without every call site having to remember the plural.
+ * "enquiry" became "9 enquirys" on two screens because the default was simply
+ * `one + 's'`; English spelling rules now apply unless a caller overrides them.
+ */
+export function pluralise(n: number, one: string, many?: string): string {
+  const plural =
+    many ??
+    (/[^aeiou]y$/i.test(one)
+      ? `${one.slice(0, -1)}ies`
+      : /(s|sh|ch|x|z)$/i.test(one)
+        ? `${one}es`
+        : `${one}s`)
+  return `${n.toLocaleString('en-US')} ${n === 1 ? one : plural}`
 }
 
 /** Builds a CSV and triggers a download. Exports are logged by the caller. */

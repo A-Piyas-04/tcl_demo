@@ -154,7 +154,7 @@ export function BatchDetail() {
             <Field label="Retest date">{fmtDate(batch.retestDate)}</Field>
             <Field label="Source">
               {mp ? (
-                <Link to={`/sources/${mp.id}`} className="text-accent-700 hover:underline">
+                <Link to={`/sources/${mp.id}`} className="link">
                   {product?.genericName} from {manufacturer?.displayName}
                 </Link>
               ) : (
@@ -237,7 +237,7 @@ export function BatchDetail() {
                       </td>
                       <td className="cell">
                         {indent ? (
-                          <Link to={`/indents/${indent.id}`} className="font-mono text-sm text-accent-700 hover:underline">
+                          <Link to={`/indents/${indent.id}`} className="font-mono text-sm link">
                             {indent.indentNumber}
                           </Link>
                         ) : (
@@ -298,7 +298,7 @@ export function BatchDetail() {
                     {order && orderLine ? (
                       <>
                         {' · against '}
-                        <Link to={`/client-orders/${order.id}`} className="font-mono text-accent-700 hover:underline">
+                        <Link to={`/client-orders/${order.id}`} className="font-mono link">
                           {order.coNumber}
                         </Link>
                         {` line ${orderLine.lineNo}`}

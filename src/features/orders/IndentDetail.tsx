@@ -242,7 +242,7 @@ export function IndentDetail() {
                         {order && orderLine ? (
                           <Link
                             to={`/client-orders/${order.id}`}
-                            className="font-mono text-sm text-accent-700 hover:underline"
+                            className="font-mono text-sm link"
                           >
                             {order.coNumber} line {orderLine.lineNo}
                           </Link>

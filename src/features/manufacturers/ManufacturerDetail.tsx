@@ -304,7 +304,7 @@ export function ManufacturerDetail() {
                             href={company.website}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-accent-700 hover:underline"
+                            className="link"
                           >
                             {company.website.replace(/^https?:\/\//, '')}
                           </a>
@@ -815,7 +815,7 @@ function ContactsTab({ loading, contacts }: { loading: boolean; contacts: Return
             {c.email ? (
               <a
                 href={`mailto:${c.email}`}
-                className="flex items-center gap-1.5 text-sm text-accent-700 hover:underline"
+                className="flex items-center gap-1.5 text-sm link"
               >
                 <Mail className="h-3.5 w-3.5" />
                 {c.email}

@@ -42,22 +42,22 @@ export function TradeSteps({ steps }: { steps: DealProgressData['steps'] }) {
 
 const TONE: Record<NextStep['tone'], { box: string; icon: React.ReactNode; label: string }> = {
   action: {
-    box: 'border-accent-300 bg-accent-50/70',
+    box: 'slab-accent bg-white',
     icon: <CircleDot className="h-4 w-4 text-accent-700" />,
     label: 'Next step',
   },
   waiting: {
-    box: 'border-paper-300 bg-paper-50',
+    box: 'bg-white',
     icon: <Clock3 className="h-4 w-4 text-ink-500" />,
     label: 'Waiting',
   },
   done: {
-    box: 'border-ok-200 bg-ok-50/70',
+    box: 'slab-ok bg-white',
     icon: <CheckCircle2 className="h-4 w-4 text-ok-600" />,
     label: 'On track',
   },
   closed: {
-    box: 'border-paper-300 bg-paper-100',
+    box: 'slab-quiet bg-white',
     icon: <Lock className="h-4 w-4 text-ink-400" />,
     label: 'Closed',
   },

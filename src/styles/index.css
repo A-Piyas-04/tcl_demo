@@ -45,6 +45,13 @@
     /* Every figure in the product lines up, in tables, tiles and totals. */
     font-variant-numeric: tabular-nums lining-nums;
     font-feature-settings: 'cv05' 1, 'ss01' 1;
+    /* The workspace is a surface, not a void: a fine machined grain that only
+       registers at the edges of the panels sitting on it. */
+    background-image:
+      linear-gradient(rgb(14 20 25 / 0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(14 20 25 / 0.022) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-attachment: fixed;
   }
 
   /* Kept as a no-op so existing call sites stay valid; the body rule does the work. */
@@ -85,13 +92,88 @@
 }
 
 @layer components {
-  /* The base surface. Borders carry structure; there is no card shadow. */
+  /**
+   * THE SLAB — the one container shape in this product.
+   *
+   * Square corners, a near-invisible hairline, and two machined BRACKETS at
+   * opposite corners (top-left, bottom-right), like the registration marks on
+   * a technical drawing or the corner clips on a specimen card. The brackets
+   * are what you actually see; the hairline only closes the shape.
+   *
+   * Severity is carried BY THE BRACKETS — they take the colour and thicken.
+   * There is no bar down any side of anything, and nothing is rounded.
+   *
+   * Built from pseudo-elements rather than clip-path on purpose: clip-path
+   * and filter both create a containing block, which would break the sticky
+   * table headers these panels wrap.
+   */
+  .slab,
   .panel {
-    @apply rounded border border-paper-300 bg-white;
+    --edge: theme('colors.ink.400');
+    --bracket: 2px;
+    --reach: 14px;
+    @apply relative border border-paper-300 shadow-raised;
+    background-image: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
+    border-bottom-color: theme('colors.paper.400');
   }
 
+  .slab::before,
+  .panel::before,
+  .slab::after,
+  .panel::after {
+    content: '';
+    position: absolute;
+    width: var(--reach);
+    height: var(--reach);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* top-left bracket */
+  .slab::before,
+  .panel::before {
+    top: -1px;
+    left: -1px;
+    border-top: var(--bracket) solid var(--edge);
+    border-left: var(--bracket) solid var(--edge);
+  }
+
+  /* bottom-right bracket */
+  .slab::after,
+  .panel::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: var(--bracket) solid var(--edge);
+    border-right: var(--bracket) solid var(--edge);
+  }
+
+  /* Severity, in the brackets. The only place a container carries status. */
+  .slab-ok {
+    --edge: theme('colors.ok.600');
+    --bracket: 3px;
+  }
+  .slab-warn {
+    --edge: theme('colors.warn.600');
+    --bracket: 3px;
+  }
+  .slab-danger {
+    --edge: theme('colors.danger.600');
+    --bracket: 3px;
+  }
+  .slab-accent {
+    --edge: theme('colors.accent.600');
+    --bracket: 3px;
+  }
+  /* A nested plate (a card inside a panel) marks itself more quietly. */
+  .slab-quiet {
+    --edge: theme('colors.paper.400');
+    --reach: 10px;
+  }
+
+  /* The head is milled into the plate, so the title sits in a shallow channel. */
   .panel-head {
-    @apply flex items-center justify-between gap-4 border-b border-paper-200 px-4 py-3;
+    @apply flex items-center justify-between gap-4 border-b border-paper-300 px-4 py-3;
+    background-image: linear-gradient(180deg, #f8fafb 0%, #f1f4f7 100%);
   }
 
   .hairline {
@@ -103,9 +185,24 @@
     @apply h-11 px-4 align-middle;
   }
 
-  /* Table header: 13px sentence case at 7.4:1. No caps, no letterspacing. */
+  /* Table header: recessed, 13px sentence case at 7.4:1. No caps, no letterspacing. */
   .th {
     @apply h-10 select-none px-4 text-left align-middle text-sm font-semibold text-ink-600;
+    background-image: linear-gradient(180deg, #eef1f5 0%, #e6eaef 100%);
+    box-shadow: inset 0 -1px 0 theme('colors.paper.400');
+  }
+
+  /* A recess cut into a panel: filter bars, totals strips, read-only wells. */
+  .well {
+    @apply rounded border border-paper-300 bg-paper-200 shadow-recessed;
+  }
+
+  /* Anything you can pick up presses in when you push it. */
+  .pressable {
+    @apply transition-[transform,box-shadow] duration-100;
+  }
+  .pressable:active {
+    transform: translateY(1px);
   }
 
   /* Minimum hit target: 36px pointer, 44px touch. */
@@ -135,6 +232,23 @@
   /* Truncate the end of a name, never the first word. */
   .truncate-end {
     @apply block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  /**
+   * A link is dark text with a quiet rule under it — readable at 14px against
+   * a white panel, and unambiguous without relying on colour.
+   *
+   * It is deliberately NOT brand-coloured at rest. The accent was carrying
+   * every link, every chip and several panel backgrounds at once, which is
+   * what made the product read as decorated rather than professional. The
+   * brand now appears on the primary action, the active nav item, the current
+   * step — and on a link only while the pointer is over it.
+   */
+  .link {
+    @apply text-ink-900 underline decoration-paper-400 decoration-1 underline-offset-[3px] transition-colors;
+  }
+  .link:hover {
+    @apply text-accent-700 decoration-accent-600;
   }
 }
 

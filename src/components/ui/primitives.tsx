@@ -135,11 +135,15 @@ type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
  * the screen. An Accept/Reject pair is `primary` + `secondary`.
  */
 const BUTTON_VARIANT: Record<ButtonVariant, string> = {
-  primary: 'bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800 disabled:bg-accent-600/50',
-  secondary: 'bg-white text-ink-800 border border-ink-400 hover:bg-paper-100 active:bg-paper-200',
+  // A key you press: lit along the top, hard edge underneath, and it sinks.
+  primary:
+    'text-white shadow-key bg-gradient-to-b from-accent-500 to-accent-700 hover:from-accent-400 hover:to-accent-600 active:shadow-pressed active:from-accent-700 active:to-accent-700 disabled:opacity-50',
+  secondary:
+    'bg-gradient-to-b from-white to-paper-100 text-ink-800 border border-ink-400 shadow-raised hover:to-paper-200 active:shadow-pressed active:from-paper-200',
   ghost: 'text-ink-700 hover:bg-paper-200 active:bg-paper-300',
-  subtle: 'bg-paper-200 text-ink-800 hover:bg-paper-300 active:bg-paper-400',
-  danger: 'bg-white text-danger-700 border border-danger-500 hover:bg-danger-50 active:bg-danger-100',
+  subtle: 'bg-gradient-to-b from-paper-100 to-paper-200 text-ink-800 shadow-raised active:shadow-pressed',
+  danger:
+    'bg-gradient-to-b from-white to-danger-50 text-danger-700 border border-danger-500 shadow-raised hover:to-danger-100 active:shadow-pressed',
 }
 
 /** Every size clears the 36px pointer target; `.hit` raises it to 44px on touch. */
@@ -166,8 +170,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex select-none items-center whitespace-nowrap font-medium transition-[background-color,border-color,box-shadow,transform] duration-150',
-        'disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.985]',
+        'pressable inline-flex select-none items-center whitespace-nowrap font-semibold',
+        'disabled:cursor-not-allowed disabled:opacity-60 disabled:active:translate-y-0',
         BUTTON_VARIANT[variant],
         BUTTON_SIZE[size],
         className,

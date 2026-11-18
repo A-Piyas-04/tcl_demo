@@ -384,7 +384,7 @@ export function ShipmentDetail() {
                     {order && orderLine ? (
                       <>
                         {' · against '}
-                        <Link to={`/client-orders/${order.id}`} className="font-mono text-accent-700 hover:underline">
+                        <Link to={`/client-orders/${order.id}`} className="font-mono link">
                           {order.coNumber}
                         </Link>{' '}
                         line {orderLine.lineNo}

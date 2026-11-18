@@ -66,10 +66,10 @@ type CellTone = 'default' | 'accent' | 'warn' | 'danger' | 'ok'
 
 const CELL_SURFACE: Record<CellTone, string> = {
   default: 'bg-white',
-  accent: 'bg-accent-50/60 border-accent-200',
-  warn: 'bg-warn-50/70 border-warn-200',
-  danger: 'bg-danger-50/70 border-danger-200',
-  ok: 'bg-ok-50/70 border-ok-200',
+  accent: 'bg-white slab-accent',
+  warn: 'bg-white slab-warn',
+  danger: 'bg-white slab-danger',
+  ok: 'bg-white slab-ok',
 }
 
 const CELL_VALUE: Record<CellTone, string> = {

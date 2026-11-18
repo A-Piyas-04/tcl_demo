@@ -92,11 +92,44 @@ export default {
   fontSize,
   fontWeight,
   colors: { paper, ink, accent, ok, warn, danger, info },
-  // One radius everywhere. `full` survives for dots and pills only.
-  borderRadius: { none: '0', DEFAULT: '6px', sm: '6px', md: '6px', lg: '6px', xl: '6px', full: '9999px' },
-  // Borders carry structure. One elevation, for things that truly float.
+  /**
+   * SQUARE. Containers in this product are not rounded rectangles.
+   *
+   * The rounded card with a coloured bar down one side is the single most
+   * common shape in dashboard software, and it carries no meaning. Every
+   * container here is a square-cornered plate marked at two opposite corners
+   * with machined brackets (see `.slab` in styles/index.css); severity lives
+   * in those brackets, so there is no bar anywhere in the product.
+   *
+   * `full` survives for dots, avatars and progress tracks only.
+   */
+  borderRadius: { none: '0', DEFAULT: '0', sm: '0', md: '0', lg: '0', xl: '0', full: '9999px' },
+
+  /**
+   * ELEVATION — "instrument", not "card".
+   *
+   * The flat white rectangle with a tinted edge is what every dashboard
+   * template ships with. This is a real depth system instead: one light
+   * source above, a 1px lit top edge on anything raised, and tight dark
+   * shadows rather than big soft clouds. The result reads as machined panels
+   * on a console — which is what this product actually is.
+   *
+   * Four steps, each meaning something:
+   *   recessed — cut into the surface: inputs, table headers, wells
+   *   raised   — sitting on it: panels, tiles, rows you can pick up
+   *   lifted   — picked up: hover, drag, the active card
+   *   pop      — off the surface entirely: menus, dialogs, tooltips
+   */
   boxShadow: {
     none: 'none',
-    pop: '0 8px 24px -8px rgb(23 30 38 / 0.22), 0 2px 6px rgb(23 30 38 / 0.08)',
+    recessed: 'inset 0 1px 2px rgb(14 20 25 / 0.08), inset 0 0 0 1px rgb(14 20 25 / 0.04)',
+    raised:
+      'inset 0 1px 0 rgb(255 255 255 / 0.95), 0 1px 1px rgb(14 20 25 / 0.05), 0 2px 4px -1px rgb(14 20 25 / 0.07)',
+    lifted:
+      'inset 0 1px 0 rgb(255 255 255 / 0.95), 0 2px 4px -1px rgb(14 20 25 / 0.07), 0 10px 20px -8px rgb(14 20 25 / 0.16)',
+    pop: 'inset 0 1px 0 rgb(255 255 255 / 0.6), 0 14px 36px -10px rgb(14 20 25 / 0.3), 0 3px 10px -3px rgb(14 20 25 / 0.14)',
+    // the primary action is a physical key: lit top edge, hard bottom edge
+    key: 'inset 0 1px 0 rgb(255 255 255 / 0.26), inset 0 -1px 0 rgb(14 20 25 / 0.3), 0 1px 2px rgb(14 20 25 / 0.3), 0 3px 6px -2px rgb(14 20 25 / 0.28)',
+    pressed: 'inset 0 2px 4px rgb(14 20 25 / 0.28), inset 0 1px 0 rgb(14 20 25 / 0.16)',
   },
 }

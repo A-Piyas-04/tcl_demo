@@ -1456,7 +1456,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
       groups.push({
         key: 'lc',
         area: 'Trade',
-        title: `${lcs.length} ${lcs.length === 1 ? 'letter of credit expires' : 'letters of credit expire'} within 45 days, or has already expired`,
+        title: `${lcs.length} ${lcs.length === 1 ? 'letter of credit expires' : 'letters of credit expire'} within 45 days, or ${lcs.length === 1 ? 'has' : 'have'} already expired`,
         why: 'Ask the client to extend the LC before the manufacturer ships.',
         tone: 'warn',
         seeAll: '/indents?lc=expiring',
