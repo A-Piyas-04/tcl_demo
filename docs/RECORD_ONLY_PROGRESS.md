@@ -122,7 +122,11 @@ Still to do (each needs new UI, deferred as not "quick"):
 - `createOffer` supersede-all → prompt with live offers pre-ticked.
 - `CommissionActions.tsx` computed amount/status → editable suggestion.
 
-### Step 10 — Port product2's model + demurrage
+### Step 10 — Port product2's model + demurrage — NOT STARTED (deferred)
+Large and **additive** (new entities and seed data, not removal of wrong behaviour), so it was left for
+last and is not yet done. The record-only *behaviour* violations are all fixed without it; this is model
+completeness. Full spec below.
+
 New `types.ts` entities: `LcRecord` (with `expiryDate` **and `latestShipmentDate`**), `ProformaInvoice`
 (replacing the `proformaInvoiceRef` string), `DemurrageCharge` (child of shipment, `shipmentId`
 nullable). Add `Shipment.shippedOn` (**the main model has no actual departure date today**),
@@ -142,12 +146,20 @@ the empty-state "Record client order" link remain as neutral affordances. produc
 kept with "Next step" → "Not recorded yet". No screen renders "Next step", "Pick sources" or
 "available to offer" any more.
 
-### Step 12 — Dead code, tests, spec
-Delete `demoStories`, `ResolvedStory`, `DEMO_STORIES` (no UI consumer). Rewrite
-`scripts/walkthrough.mjs` (it's already stale — line 115 asserts the removed drag refusal, line 126
-references deleted demo stories, lines 128-135 assert "Choose which sources to offer"; fix `OUT`
-defaulting to `/tmp/tcl-walk` on Windows). Amend `dcos/05-user-flows.md:47` ("Select one or more
-sources" → record an offer) and note against FR-M7-05 that *propose* means a confirmable dialog.
+### Step 12 — Dead code, tests, spec — MOSTLY DONE ✅
+Done:
+- Deleted `demoStories`, `ResolvedStory`, `DEMO_STORIES`, `DemoStory` (no UI consumer).
+- Amended `dcos/05-user-flows.md` (the "Select one or more sources → create engagement per source" flow
+  became "Record an offer already made → find or create the engagement at Offered"; dropped the
+  offer-blocked-until-price-renewed gate).
+- Noted against **FR-M7-05** that *propose* means a confirmable dialog with an editable date, never a
+  stage change the system performs on its own.
+
+Still to do:
+- **Rewrite `scripts/walkthrough.mjs`** — it is stale (asserts the removed drag refusal, the deleted demo
+  stories, and "Choose which sources to offer"; `OUT` defaults to `/tmp/tcl-walk`, wrong on Windows).
+  Deferred as a dev-only harness; `npx tsc --noEmit` and `npm run build` are the live gates and both are
+  green.
 
 ---
 

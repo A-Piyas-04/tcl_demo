@@ -12,7 +12,6 @@ import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { fmtDate } from '@/lib/utils'
 import { convertQty, stageConfig } from './reference'
 import { deriveTradeStatuses, today } from './rules'
-import { DEMO_STORIES } from './seed'
 import type {
   Batch,
   ClientOrder,
@@ -1347,57 +1346,6 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
   }
 
   return groups
-}
-
-// --------------------------------------------------------- demo stories
-
-export interface ResolvedStory {
-  key: string
-  title: string
-  subtitle: string
-  point: string
-  href: string
-  stage: EngagementStage | null
-}
-
-/** The presentation route, resolved against whatever the data holds now. */
-export function demoStories(db: Database): ResolvedStory[] {
-  const byName = (name: string) => db.companies.find((c) => c.displayName === name)
-  const out: ResolvedStory[] = []
-  for (const s of DEMO_STORIES) {
-    const client = byName(s.client)
-    const product = db.products.find((p) => p.genericName === s.product)
-    if (!client || !product) continue
-    if (!s.manufacturer) {
-      const req = db.requirements
-        .filter((r) => r.clientCompanyId === client.id && r.productId === product.id)
-        .sort((a, b) => (a.enquiryDate < b.enquiryDate ? 1 : -1))[0]
-      if (!req) continue
-      out.push({
-        key: s.key,
-        title: s.title,
-        subtitle: `${client.displayName} · ${product.genericName}`,
-        point: s.point,
-        href: `/requirements/${req.id}`,
-        stage: null,
-      })
-      continue
-    }
-    const mfr = byName(s.manufacturer)
-    const e = db.engagements.find(
-      (x) => x.clientCompanyId === client.id && x.productId === product.id && x.manufacturerCompanyId === mfr?.id,
-    )
-    if (!e) continue
-    out.push({
-      key: s.key,
-      title: s.title,
-      subtitle: `${client.displayName} · ${product.genericName} from ${s.manufacturer}`,
-      point: s.point,
-      href: `/engagements/${e.id}`,
-      stage: e.stage,
-    })
-  }
-  return out
 }
 
 // ---------------------------------------------------------------- search
