@@ -127,7 +127,7 @@ export function DuplicateReview() {
     <div className="space-y-4">
       <PageHeading
         title="Duplicate review"
-        subtitle="Companies and products saved past a near-match warning, beside the records they most resemble."
+        subtitle="Records saved past a near-match warning"
         meta={
           <>
             <Badge tone={flagged.length > 0 ? 'warn' : 'ok'}>{pluralise(flagged.length, 'record')} flagged</Badge>
@@ -183,9 +183,9 @@ export function DuplicateReview() {
                 </FieldGrid>
 
                 <div className="space-y-2">
-                  <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Likely matches</p>
+                  <p className="text-sm font-medium text-ink-500">Likely matches</p>
                   {row.candidates.length === 0 ? (
-                    <p className="text-xs leading-relaxed text-ink-500">
+                    <p className="text-sm leading-relaxed text-ink-500">
                       Nothing above fifty per cent similarity remains. Whatever it was first compared against may since
                       have been archived, so this flag can probably be cleared.
                     </p>
@@ -197,12 +197,12 @@ export function DuplicateReview() {
                             <LinkButton to={cand.to} variant="ghost" size="sm" className="-ml-2 max-w-full">
                               <span className="truncate">{cand.name}</span>
                             </LinkButton>
-                            <span className="shrink-0 text-xs font-semibold tabular text-ink-700">
+                            <span className="shrink-0 text-sm font-semibold tabular text-ink-700">
                               {fmtPct(cand.score * 100, 0)}
                             </span>
                           </div>
-                          <p className="truncate text-2xs text-ink-500">{cand.subtitle}</p>
-                          <p className="mt-0.5 font-mono text-2xs text-ink-400">{normaliseName(cand.name)}</p>
+                          <p className="truncate text-sm text-ink-500">{cand.subtitle}</p>
+                          <p className="mt-0.5 font-mono text-sm text-ink-400">{normaliseName(cand.name)}</p>
                           <Meter
                             value={cand.score}
                             max={1}
@@ -266,7 +266,7 @@ function MergeDialog({ row, onClose }: { row: Flagged; onClose: () => void }) {
         </Button>
       }
     >
-      <div className="space-y-3 text-xs leading-relaxed text-ink-600">
+      <div className="space-y-3 text-sm leading-relaxed text-ink-600">
         <p className="font-medium text-ink-800">What a merge would do</p>
         <ul className="ml-4 list-disc space-y-1.5">
           <li>

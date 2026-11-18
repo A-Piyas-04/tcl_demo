@@ -80,7 +80,7 @@ export function ExpiringDocuments() {
       <div>
         <PageHeading
           title="Reports"
-          subtitle="Expiring documents: a warning before a shipment is held, not after."
+          subtitle="A warning before a shipment is held"
           meta={
             <>
               <Badge tone="neutral">{pluralise(all.length, 'document')}</Badge>
@@ -156,7 +156,7 @@ export function ExpiringDocuments() {
                     <li key={row.document.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-ink-900">{row.document.title}</p>
-                        <p className="truncate text-xs text-ink-500">
+                        <p className="truncate text-sm text-ink-500">
                           {documentTypeName(row.document.typeCode)}
                           {row.document.referenceNumber ? ` · ${row.document.referenceNumber}` : ''} · uploaded by{' '}
                           {userName(db, row.document.uploadedByUserId)}
@@ -165,17 +165,17 @@ export function ExpiringDocuments() {
                       {row.parentHref ? (
                         <Link
                           to={row.parentHref}
-                          className="max-w-[16rem] truncate text-xs font-medium text-accent-700 hover:underline"
+                          className="max-w-[16rem] truncate text-sm font-medium text-accent-700 hover:underline"
                         >
                           {row.parentLabel}
                         </Link>
                       ) : (
-                        <span className="max-w-[16rem] truncate text-xs text-ink-600">{row.parentLabel}</span>
+                        <span className="max-w-[16rem] truncate text-sm text-ink-600">{row.parentLabel}</span>
                       )}
-                      <span className="w-24 text-right text-xs tabular text-ink-600">
+                      <span className="w-24 text-right text-sm tabular text-ink-600">
                         {fmtDate(row.document.expiresOn)}
                       </span>
-                      <span className="w-24 text-right text-xs tabular">
+                      <span className="w-24 text-right text-sm tabular">
                         {(row.daysRemaining ?? 0) < 0 ? (
                           <span className="font-semibold text-danger-700">
                             {Math.abs(row.daysRemaining ?? 0)} days ago

@@ -69,7 +69,7 @@ export function Dialog({
                       {title}
                     </DialogPrimitive.Title>
                     {description ? (
-                      <DialogPrimitive.Description className="mt-0.5 text-xs leading-relaxed text-ink-500">
+                      <DialogPrimitive.Description className="mt-0.5 text-sm leading-relaxed text-ink-500">
                         {description}
                       </DialogPrimitive.Description>
                     ) : null}
@@ -205,7 +205,7 @@ export function Drawer({
                       {title}
                     </DialogPrimitive.Title>
                     {subtitle ? (
-                      <DialogPrimitive.Description className="truncate text-xs text-ink-500">
+                      <DialogPrimitive.Description className="truncate text-sm text-ink-500">
                         {subtitle}
                       </DialogPrimitive.Description>
                     ) : null}
@@ -292,14 +292,14 @@ export function MenuItem({
     >
       {icon ? <span className="shrink-0 text-ink-500">{icon}</span> : null}
       <span className="flex-1 truncate">{children}</span>
-      {shortcut ? <span className="font-mono text-[10px] text-ink-400">{shortcut}</span> : null}
+      {shortcut ? <span className="font-mono text-sm text-ink-400">{shortcut}</span> : null}
     </DropdownPrimitive.Item>
   )
 }
 
 export function MenuLabel({ children }: { children: React.ReactNode }) {
   return (
-    <DropdownPrimitive.Label className="px-2 py-1 text-2xs font-semibold uppercase tracking-wider text-ink-400">
+    <DropdownPrimitive.Label className="px-2 py-1 text-sm font-semibold text-ink-400">
       {children}
     </DropdownPrimitive.Label>
   )
@@ -369,7 +369,7 @@ export function Tooltip({
         <TooltipPrimitive.Content
           side={side}
           sideOffset={6}
-          className="z-50 max-w-xs rounded border border-ink-800 bg-ink-900 px-2 py-1 text-xs leading-relaxed text-paper-100 shadow-pop data-[state=delayed-open]:animate-fade-up"
+          className="z-50 max-w-xs rounded border border-ink-800 bg-ink-900 px-2 py-1 text-sm leading-relaxed text-paper-100 shadow-pop data-[state=delayed-open]:animate-fade-up"
         >
           {content}
           <TooltipPrimitive.Arrow className="fill-ink-900" />

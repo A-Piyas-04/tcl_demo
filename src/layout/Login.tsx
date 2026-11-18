@@ -12,6 +12,7 @@ import { ArrowRight, Eye, Lock, ShieldCheck } from 'lucide-react'
 import { useDb, useStore } from '@/data/store'
 import { Avatar, Badge, Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { Mark } from './Mark'
 
 export function LoginScreen() {
   const db = useDb()
@@ -63,15 +64,13 @@ export function LoginScreen() {
           className="flex flex-col justify-center gap-5 px-1 py-4"
         >
           <div className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-accent-500 font-mono text-lg font-bold text-ink-950">
-              T
-            </span>
+            <Mark className="h-10 w-10 shrink-0 text-accent-400" />
             <div>
               <p className="text-lg font-semibold text-paper-100">Techstream Ltd</p>
-              <p className="text-xs text-ink-500">Sourcing platform</p>
+              <p className="text-sm text-ink-500">Sourcing platform</p>
             </div>
           </div>
-          <h1 className="max-w-sm text-3xl font-semibold leading-tight tracking-tight text-paper-100">
+          <h1 className="max-w-sm text-2xl font-semibold leading-tight text-paper-100">
             Who buys what, from whom, at what stage.
           </h1>
           <p className="max-w-sm text-sm leading-relaxed text-ink-400">
@@ -85,7 +84,7 @@ export function LoginScreen() {
               ['Engagements', db.engagements.length],
             ].map(([label, value]) => (
               <div key={String(label)}>
-                <dt className="text-2xs uppercase tracking-wider text-ink-600">{label}</dt>
+                <dt className="text-sm text-ink-600">{label}</dt>
                 <dd className="mt-0.5 text-xl font-semibold tabular text-paper-100">{String(value)}</dd>
               </div>
             ))}
@@ -100,13 +99,13 @@ export function LoginScreen() {
         >
           <div className="border-b border-paper-200 bg-white px-5 py-3.5">
             <h2 className="text-sm font-semibold text-ink-900">Sign in</h2>
-            <p className="mt-0.5 text-xs text-ink-500">
-              A demonstration: choose a colleague to sign in as. No password is checked.
+            <p className="mt-0.5 text-sm text-ink-500">
+              Choose a colleague to sign in as.
             </p>
           </div>
 
           <div className="scroll-slim max-h-[22rem] overflow-y-auto px-3 py-3">
-            <p className="px-1 pb-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-400">Full access</p>
+            <p className="px-1 pb-1.5 text-sm font-semibold text-ink-400">Full access</p>
             <ul className="space-y-1">
               {fullAccess.map((u) => (
                 <li key={u.id}>
@@ -119,7 +118,7 @@ export function LoginScreen() {
                 </li>
               ))}
             </ul>
-            <p className="px-1 pb-1.5 pt-3 text-2xs font-semibold uppercase tracking-wider text-ink-400">View only</p>
+            <p className="px-1 pb-1.5 pt-3 text-sm font-semibold text-ink-400">View only</p>
             <ul className="space-y-1">
               {viewers.map((u) => (
                 <li key={u.id}>
@@ -136,7 +135,7 @@ export function LoginScreen() {
           </div>
 
           <div className="flex items-center justify-between gap-3 border-t border-paper-200 bg-white px-5 py-3">
-            <p className="flex items-center gap-1.5 text-2xs text-ink-400">
+            <p className="flex items-center gap-1.5 text-sm text-ink-400">
               <Lock className="h-3 w-3" />
               Internal use only — no client or manufacturer logs in.
             </p>
@@ -182,7 +181,7 @@ function PersonButton({
       <Avatar name={name} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-ink-900">{name}</span>
-        <span className="block truncate text-2xs text-ink-500">{detail}</span>
+        <span className="block truncate text-sm text-ink-500">{detail}</span>
       </span>
       {viewer ? (
         <Badge tone="info" className="shrink-0">
@@ -215,14 +214,14 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
       >
         <div className="flex flex-col items-center gap-5">
           <motion.div
-            className="relative grid h-14 w-14 place-items-center rounded-xl bg-accent-500 font-mono text-2xl font-bold text-ink-950"
+            className="relative grid h-14 w-14 place-items-center text-accent-400"
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           >
-            T
+            <Mark className="h-14 w-14" />
             <motion.span
-              className="absolute inset-0 rounded-xl border-2 border-accent-400"
+              className="absolute inset-0 rounded-full border-2 border-accent-400"
               animate={{ scale: [1, 1.35], opacity: [0.7, 0] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
             />
@@ -239,7 +238,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
             {steps.map((s, i) => (
               <motion.p
                 key={s}
-                className="absolute left-0 right-0 text-xs text-ink-500"
+                className="absolute left-0 right-0 text-sm text-ink-500"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: [0, 1, 1, 0] }}
                 transition={{ duration: 1.25, times: [0, 0.2, 0.75, 1], delay: i * 0.4 }}

@@ -9,6 +9,7 @@
  */
 
 import { differenceInCalendarDays, parseISO } from 'date-fns'
+import { fmtDate } from '@/lib/utils'
 import { convertQty, stageConfig } from './reference'
 import { today } from './rules'
 import { DEMO_STORIES } from './seed'
@@ -742,7 +743,7 @@ function commercialStep(db: Database, e: Engagement, orderHref: string): NextSte
     return {
       tone: 'waiting',
       title: 'Goods on the way',
-      detail: `${moving.shipmentRef} is ${moving.status.toLowerCase().replace(/_/g, ' ')}${moving.eta ? `, ETA ${moving.eta}` : ''}. Record arrival and clearance as they happen.`,
+      detail: `${moving.shipmentRef} is ${moving.status.toLowerCase().replace(/_/g, ' ')}${moving.eta ? `, ETA ${fmtDate(moving.eta)}` : ''}. Record arrival and clearance as they happen.`,
       action: { kind: 'link', href: `/shipments/${moving.id}`, label: 'Track shipment' },
       actionLabel: 'Track shipment',
     }
@@ -1333,7 +1334,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         label: dealLabel(e),
         sublabel: `round ${s.roundNo} ${fromLabel(e)}`,
         href: `/engagements/${e.id}?tab=work`,
-        meta: `${daysSince(s.dispatchedOn!)}d`,
+        meta: `${daysSince(s.dispatchedOn!)} days`,
       })),
     })
   }
@@ -1374,7 +1375,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         label: dealLabel(e),
         sublabel: fromLabel(e),
         href: `/engagements/${e.id}`,
-        meta: e.approvedOn ? `${daysSince(e.approvedOn)}d` : undefined,
+        meta: e.approvedOn ? `${daysSince(e.approvedOn)} days` : undefined,
       })),
     })
   }
@@ -1396,9 +1397,9 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
       items: unmatched.map((r) => ({
         id: r.id,
         label: `${companyName(db, r.clientCompanyId)} · ${productName(db, r.productId)}`,
-        sublabel: `asked ${r.enquiryDate}`,
+        sublabel: `asked ${fmtDate(r.enquiryDate)}`,
         href: `/requirements/${r.id}`,
-        meta: `${daysSince(r.enquiryDate)}d`,
+        meta: `${daysSince(r.enquiryDate)} days`,
       })),
     })
   }
@@ -1432,7 +1433,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
         why: 'Confirm with the forwarder and update the shipment.',
         tone: 'warn',
         seeAll: '/shipments',
-        items: late.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: shipLabel(s), href: `/shipments/${s.id}`, meta: `ETA ${s.eta}` })),
+        items: late.map((s) => ({ id: s.id, label: s.shipmentRef, sublabel: shipLabel(s), href: `/shipments/${s.id}`, meta: `ETA ${fmtDate(s.eta)}` })),
       })
     }
     const cleared = db.shipments.filter((s) => s.status === 'CLEARED')
@@ -1455,7 +1456,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
       groups.push({
         key: 'lc',
         area: 'Trade',
-        title: `${lcs.length} ${lcs.length === 1 ? 'letter of credit expires' : 'letters of credit expire'} within 45 days or already has`,
+        title: `${lcs.length} ${lcs.length === 1 ? 'letter of credit expires' : 'letters of credit expire'} within 45 days, or has already expired`,
         why: 'Ask the client to extend the LC before the manufacturer ships.',
         tone: 'warn',
         seeAll: '/indents?lc=expiring',
@@ -1464,7 +1465,7 @@ export function attentionGroups(db: Database, ownerId?: ID): AttentionGroup[] {
           label: i.indentNumber,
           sublabel: `${companyName(db, i.clientCompanyId)} · on ${companyName(db, i.manufacturerCompanyId)}`,
           href: `/indents/${i.id}`,
-          meta: i.lcExpiryDate ?? undefined,
+          meta: i.lcExpiryDate ? fmtDate(i.lcExpiryDate) : undefined,
         })),
       })
     }

@@ -124,10 +124,10 @@ export function ClientOrderList() {
       value: (r) => r.order.coNumber,
       cell: (r) => (
         <span className="block min-w-0">
-          <span className="block truncate font-mono text-[0.8rem] tabular font-medium text-ink-900">
+          <span className="block truncate font-mono text-sm tabular font-medium text-ink-900">
             {r.order.coNumber}
           </span>
-          <span className="block truncate text-2xs text-ink-500">{fmtDate(r.order.orderDate)}</span>
+          <span className="block truncate text-sm text-ink-500">{fmtDate(r.order.orderDate)}</span>
         </span>
       ),
     },
@@ -198,7 +198,7 @@ export function ClientOrderList() {
             <Badge tone="warn">Override</Badge>
           </Tooltip>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -207,7 +207,7 @@ export function ClientOrderList() {
       optional: true,
       value: (r) => r.order.clientReference,
       cell: (r) => (
-        <span className="font-mono text-2xs text-ink-600">{r.order.clientReference ?? '—'}</span>
+        <span className="font-mono text-sm text-ink-600">{r.order.clientReference ?? '—'}</span>
       ),
     },
     {
@@ -215,7 +215,7 @@ export function ClientOrderList() {
       header: 'Delivery site',
       optional: true,
       value: (r) => r.siteName,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.siteName}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.siteName}</span>,
     },
   ]
 
@@ -224,8 +224,7 @@ export function ClientOrderList() {
       <div>
         <PageHeading
           title="Orders"
-          subtitle="Client orders say what a client wants and from which source. No TCL price sits on them: the client pays the manufacturer, and TCL earns commission."
-          meta={<Badge tone="neutral">{pluralise(db.clientOrders.length, 'client order')}</Badge>}
+          subtitle="What a client wants, and from which source"
           actions={
             <WriteOnly>
               <LinkButton to="/client-orders/new" variant="primary" size="md" icon={<Plus className="h-3.5 w-3.5" />}>
@@ -276,14 +275,14 @@ export function ClientOrderList() {
                   onChange={(e) => setValue('from', e.target.value)}
                   aria-label="Ordered on or after"
                 />
-                <span className="text-xs text-ink-400">to</span>
+                <span className="text-sm text-ink-400">to</span>
                 <DateInput
                   value={values.to}
                   onChange={(e) => setValue('to', e.target.value)}
                   aria-label="Ordered on or before"
                 />
               </div>
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-600">
+              <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-600">
                 <input
                   type="checkbox"
                   checked={values.override === '1'}
@@ -305,9 +304,8 @@ export function ClientOrderList() {
           exportName="client-orders"
           exportFilters={queryString}
           onExport={(count) => void logExport('client order list', queryString, count)}
-          rowTone={(r) => (r.order.hasOverride ? 'bg-warn-50/40' : undefined)}
           toolbar={
-            <span className="flex flex-wrap items-center gap-2.5 text-xs text-ink-500">
+            <span className="flex flex-wrap items-center gap-2.5 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'order') : '…'}
               <FulfilmentLegend />

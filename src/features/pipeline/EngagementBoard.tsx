@@ -220,10 +220,11 @@ export function EngagementBoard() {
     },
     {
       key: 'since',
+      align: 'right',
       header: 'Stage changed',
       optional: true,
       value: (r) => r.engagement.stageChangedAt.slice(0, 10),
-      cell: (r) => <span className="text-xs tabular text-ink-500">{fmtDate(r.engagement.stageChangedAt)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-500">{fmtDate(r.engagement.stageChangedAt)}</span>,
     },
     {
       key: 'offers',
@@ -231,7 +232,7 @@ export function EngagementBoard() {
       align: 'right',
       optional: true,
       value: (r) => r.offerCount,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{r.offerCount || '—'}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{r.offerCount || '—'}</span>,
     },
     {
       key: 'samples',
@@ -239,7 +240,7 @@ export function EngagementBoard() {
       align: 'right',
       optional: true,
       value: (r) => r.sampleCount,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{r.sampleCount || '—'}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{r.sampleCount || '—'}</span>,
     },
     {
       key: 'dual',
@@ -252,7 +253,7 @@ export function EngagementBoard() {
             <Badge tone="accent">Dual</Badge>
           </Tooltip>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -263,7 +264,7 @@ export function EngagementBoard() {
       cell: (r) => (
         <span className="flex items-center gap-1.5">
           <Avatar name={r.ownerName} size="xs" />
-          <span className="truncate text-xs text-ink-600">{r.ownerName}</span>
+          <span className="truncate text-sm text-ink-600">{r.ownerName}</span>
         </span>
       ),
     },
@@ -372,14 +373,14 @@ export function EngagementBoard() {
             </>
           }
           trailing={
-            <span className="flex items-center gap-1.5 text-xs text-ink-500">
+            <span className="flex items-center gap-1.5 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {loading ? '…' : pluralise(rows.length, 'engagement')}
             </span>
           }
         />
         {canWrite && view === 'board' ? (
-          <p className="px-3 py-2 text-2xs text-ink-500">
+          <p className="px-3 py-2 text-sm text-ink-500">
             Drag a card to approve, pause or close it. Offers and samples are recorded on the engagement itself, which moves
             the card for you.
           </p>
@@ -464,7 +465,7 @@ export function EngagementBoard() {
                   ) : (
                     <ChevronRight className="h-3.5 w-3.5 text-ink-400" />
                   )}
-                  <span className="flex-1 truncate text-xs font-semibold text-ink-700">Held and closed</span>
+                  <span className="flex-1 truncate text-sm font-semibold text-ink-700">Held and closed</span>
                   <Badge tone="neutral">{closed.length}</Badge>
                 </button>
                 {showClosed ? (
@@ -485,7 +486,7 @@ export function EngagementBoard() {
                     {CLOSED_STAGES.map((stage) => (
                       <li key={stage} className="flex items-center justify-between gap-2 px-2.5 py-2">
                         <StageBadge stage={stage} size="sm" />
-                        <span className="text-xs tabular text-ink-600">
+                        <span className="text-sm tabular text-ink-600">
                           {rows.filter((r) => r.stage === stage).length}
                         </span>
                       </li>
@@ -535,10 +536,10 @@ function StageColumn({
       <Panel className={cn('transition-colors', isOver && 'border-accent-500 bg-accent-50/40')}>
         <div className={cn('h-1 w-full', style.bar)} />
         <div className="flex items-center justify-between gap-2 border-b border-paper-200 px-2.5 py-2">
-          <span className="truncate text-xs font-semibold text-ink-800">{STAGE_LABEL[stage]}</span>
+          <span className="truncate text-sm font-semibold text-ink-800">{STAGE_LABEL[stage]}</span>
           <span className="flex items-center gap-1.5">
             <Tooltip content={`Ageing threshold ${stageConfig(stage).ageingThresholdDays} days`}>
-              <span className="text-2xs tabular text-ink-400">{stageConfig(stage).ageingThresholdDays}d</span>
+              <span className="text-sm tabular text-ink-400">{stageConfig(stage).ageingThresholdDays}d</span>
             </Tooltip>
             <Badge tone="neutral">{rows.length}</Badge>
           </span>
@@ -556,7 +557,7 @@ function StageColumn({
             ))}
           </AnimatePresence>
           {rows.length === 0 ? (
-            <p className="px-1 py-6 text-center text-2xs leading-relaxed text-ink-400">
+            <p className="px-1 py-6 text-center text-sm leading-relaxed text-ink-400">
               Nothing at {STAGE_LABEL[stage].toLowerCase()}
             </p>
           ) : null}
@@ -590,7 +591,7 @@ function ClosedGroup({
     >
       <div className="flex items-center justify-between gap-2 px-0.5">
         <StageBadge stage={stage} size="sm" />
-        <span className="text-2xs tabular text-ink-500">{rows.length}</span>
+        <span className="text-sm tabular text-ink-500">{rows.length}</span>
       </div>
       {rows.map((row) => (
         <BoardCard
@@ -630,7 +631,7 @@ function BoardCard({
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        'rounded-md border border-paper-300 bg-white p-2 shadow-tile',
+        'rounded-md border border-paper-300 bg-white p-2 ',
         shaking && 'animate-shake-x border-danger-300',
       )}
     >
@@ -647,8 +648,8 @@ function BoardCard({
         ) : null}
         <button onClick={() => onOpen(row.engagement.id)} className="min-w-0 flex-1 text-left">
           <span className="block truncate text-sm font-semibold text-ink-900">{row.client.displayName}</span>
-          <span className="block truncate text-xs text-ink-700">{row.product.genericName}</span>
-          <span className="block truncate text-2xs text-ink-500">{row.manufacturer.displayName}</span>
+          <span className="block truncate text-sm text-ink-700">{row.product.genericName}</span>
+          <span className="block truncate text-sm text-ink-500">{row.manufacturer.displayName}</span>
         </button>
       </div>
       <div className="mt-2 flex items-center gap-1.5">
@@ -671,10 +672,10 @@ function BoardCard({
 function OverlayCard({ row }: { row: Card | null }) {
   if (!row) return null
   return (
-    <div className="w-[15.5rem] rotate-1 rounded-md border border-accent-400 bg-white p-2 shadow-raised">
+    <div className="w-[15.5rem] rotate-1 rounded-md border border-accent-400 bg-white p-2 ">
       <span className="block truncate text-sm font-semibold text-ink-900">{row.client.displayName}</span>
-      <span className="block truncate text-xs text-ink-700">{row.product.genericName}</span>
-      <span className="block truncate text-2xs text-ink-500">{row.manufacturer.displayName}</span>
+      <span className="block truncate text-sm text-ink-700">{row.product.genericName}</span>
+      <span className="block truncate text-sm text-ink-500">{row.manufacturer.displayName}</span>
     </div>
   )
 }

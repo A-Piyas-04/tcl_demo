@@ -60,7 +60,7 @@ export function FilterBar({
           >
             {open ? 'Fewer filters' : 'More filters'}
             {moreActive > 0 ? (
-              <span className="rounded bg-accent-100 px-1 text-[10px] font-semibold text-accent-800">{moreActive}</span>
+              <span className="rounded bg-accent-100 px-1 text-sm font-semibold text-accent-800">{moreActive}</span>
             ) : null}
           </Button>
         ) : null}

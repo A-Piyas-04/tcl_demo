@@ -190,6 +190,7 @@ export function CommissionReport() {
     },
     {
       key: 'collected',
+      align: 'right',
       header: 'Collected',
       width: '9rem',
       value: (r) => (r.earned > 0 ? Math.round((r.received / r.earned) * 100) : 0),
@@ -330,15 +331,15 @@ export function CommissionReport() {
                     to={`/indents/${row.indent.id}`}
                     variant="ghost"
                     size="sm"
-                    className="h-auto px-0 font-mono text-xs font-medium text-accent-700"
+                    className="h-auto px-0 font-mono text-sm font-medium text-accent-700"
                   >
                     {row.indent.indentNumber}
                   </LinkButton>
-                  <span className="min-w-0 flex-1 truncate text-xs text-ink-600">
+                  <span className="min-w-0 flex-1 truncate text-sm text-ink-600">
                     {row.clientName} · {row.manufacturerName}
                   </span>
-                  <span className="text-xs tabular text-ink-500">{fmtDate(row.indent.orderDate)}</span>
-                  <span className="w-24 text-right text-xs tabular text-ink-700">
+                  <span className="text-sm tabular text-ink-500">{fmtDate(row.indent.orderDate)}</span>
+                  <span className="w-24 text-right text-sm tabular text-ink-700">
                     {fmtMoney(row.indentValue, row.indent.currency, { compact: true, decimals: 0 })}
                   </span>
                 </li>
@@ -354,7 +355,7 @@ export function CommissionReport() {
 
       <Panel>
         <div className="flex flex-wrap items-center gap-2 border-b border-paper-200 p-3">
-          <span className="text-2xs font-medium uppercase tracking-wide text-ink-500">By</span>
+          <span className="text-sm font-medium text-ink-500">By</span>
           <SegmentedControl
             value={axis}
             onChange={setAxis}
@@ -365,7 +366,7 @@ export function CommissionReport() {
               { value: 'month', label: 'Month' },
             ]}
           />
-          <span className="ml-auto text-xs text-ink-500">
+          <span className="ml-auto text-sm text-ink-500">
             Bars show earnings against the largest row, {fmtMoney(peak, 'USD', { compact: true, decimals: 0 })}.
           </span>
         </div>

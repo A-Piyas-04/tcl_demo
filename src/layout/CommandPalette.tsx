@@ -136,7 +136,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               </div>
 
               <Command.List className="scroll-slim max-h-[52vh] overflow-y-auto p-1.5">
-                <Command.Empty className="px-3 py-8 text-center text-xs text-ink-400">
+                <Command.Empty className="px-3 py-8 text-center text-sm text-ink-400">
                   {query.trim().length >= 2 ? (
                     <>
                       Nothing matches “{query}”.
@@ -160,7 +160,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                           <Icon className="h-3.5 w-3.5 shrink-0 text-ink-400" />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm text-ink-900">{hit.label}</span>
-                            <span className="block truncate text-2xs text-ink-400">
+                            <span className="block truncate text-sm text-ink-400">
                               {hit.sublabel}
                               {hit.matchedOn ? ` · matched on ${hit.matchedOn}` : ''}
                             </span>
@@ -191,7 +191,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                       <Item key={g.to} value={`go ${g.label}`} onSelect={() => go(g.to)}>
                         <Icon className="h-3.5 w-3.5 shrink-0 text-ink-400" />
                         <span className="flex-1 text-sm text-ink-900">{g.label}</span>
-                        {g.keys ? <span className="font-mono text-[10px] text-ink-300">{g.keys}</span> : null}
+                        {g.keys ? <span className="font-mono text-sm text-ink-300">{g.keys}</span> : null}
                       </Item>
                     )
                   })}
@@ -199,7 +199,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
                 ) : null}
               </Command.List>
 
-              <div className="flex items-center justify-between border-t border-paper-200 bg-paper-50 px-3 py-1.5 text-2xs text-ink-400">
+              <div className="flex items-center justify-between border-t border-paper-200 bg-paper-50 px-3 py-1.5 text-sm text-ink-400">
                 <span className="flex items-center gap-1.5">
                   <Kbd>↑</Kbd>
                   <Kbd>↓</Kbd>
@@ -218,7 +218,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 }
 
 function GroupHeading({ children }: { children: React.ReactNode }) {
-  return <span className="px-2 text-2xs font-semibold uppercase tracking-wider text-ink-400">{children}</span>
+  return <span className="px-2 text-sm font-semibold text-ink-400">{children}</span>
 }
 
 function Item({

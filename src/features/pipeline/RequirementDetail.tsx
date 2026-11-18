@@ -150,7 +150,7 @@ export function RequirementDetail() {
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold text-ink-900">{row.manufacturer.displayName}</span>
-                    <span className="block truncate font-mono text-2xs text-ink-500">
+ <span className="block truncate text-sm text-ink-500">
                       {row.mp.grade} · {row.mp.pharmacopoeia}
                     </span>
                   </span>
@@ -161,7 +161,7 @@ export function RequirementDetail() {
                       <AgeingFlag days={row.daysInStage} threshold={stageConfig(row.stage).ageingThresholdDays} />
                     </span>
                   </span>
-                  <span className="flex min-w-0 items-center gap-1.5 text-xs text-ink-600">
+                  <span className="flex min-w-0 items-center gap-1.5 text-sm text-ink-600">
                     <span className="min-w-0 flex-1 truncate">
                       <span className="text-ink-400">Next: </span>
                       {step.title}
@@ -276,7 +276,7 @@ export function RequirementDetail() {
                 </ul>
                 <WriteOnly>
                   <div className="flex flex-wrap items-center justify-between gap-2 border-t border-paper-200 bg-paper-50 px-3 py-2.5">
-                    <p className="text-xs text-ink-500">
+                    <p className="text-sm text-ink-500">
                       {selected.length === 0
                         ? 'Select one or more sources. Engaging several at once is normal: the client will approve one, some or none.'
                         : `${pluralise(selected.length, 'source')} selected.`}
@@ -326,7 +326,7 @@ export function RequirementDetail() {
                       >
                         {s.manufacturer.displayName}
                       </Link>
-                      <span className="font-mono text-2xs text-ink-500">
+ <span className="text-sm text-ink-500">
                         {s.mp.grade} · {s.mp.pharmacopoeia}
                       </span>
                       <Tooltip content={reason.detail}>
@@ -362,7 +362,7 @@ export function RequirementDetail() {
                 </Field>
                 <Field label="Annual quantity">
                   {fmtQty(requirement.estAnnualQty, requirement.qtyUom)}
-                  {requirement.qtyIsIndicative ? <span className="ml-1 text-2xs text-ink-400">indicative</span> : null}
+                  {requirement.qtyIsIndicative ? <span className="ml-1 text-sm text-ink-400">indicative</span> : null}
                 </Field>
                 <Field label="Target price">
                   {fmtMoney(requirement.targetPrice, requirement.targetCurrency ?? 'USD', { decimals: 0 })}
@@ -401,7 +401,7 @@ export function RequirementDetail() {
               <div className="space-y-3 p-4">
                 {requirement.duplicateReason ? (
                   <div>
-                    <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">
+                    <p className="text-sm font-medium text-ink-500">
                       Why a second open requirement
                     </p>
                     <p className="mt-0.5 text-sm leading-relaxed text-ink-800">{requirement.duplicateReason}</p>
@@ -446,7 +446,7 @@ function CandidateRow({
           <Link to={`/sources/${source.mp.id}`} className="text-sm font-semibold text-ink-900 hover:text-accent-700">
             {source.manufacturer.displayName}
           </Link>
-          <span className="text-xs text-ink-500">{countryName(source.manufacturer.countryCode)}</span>
+          <span className="text-sm text-ink-500">{countryName(source.manufacturer.countryCode)}</span>
           <PortfolioBadge inPortfolio={source.inPortfolio} offerable={source.isOfferable} />
           {existing ? (
             <Tooltip content="An engagement already exists for this client and source. It will be linked to this requirement, not duplicated.">
@@ -457,11 +457,11 @@ function CandidateRow({
             </Tooltip>
           ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-600">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-600">
           <span>
             <span className="text-ink-400">Grade </span>
             {source.mp.grade}
-            <span className="ml-1.5 font-mono text-2xs text-ink-500">{source.mp.pharmacopoeia}</span>
+ <span className="ml-1.5 text-sm text-ink-500">{source.mp.pharmacopoeia}</span>
           </span>
           <span className="flex items-center gap-1">
             <FilingDot present={source.hasDmf} label="DMF" />
@@ -480,12 +480,12 @@ function CandidateRow({
             {source.site?.name ?? 'not recorded'}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           {tier ? (
             <>
               <span className="font-medium tabular text-ink-900">
                 {fmtMoney(tier.price, tier.currency, { decimals: 0 })}
-                <span className="text-2xs text-ink-400">
+                <span className="text-sm text-ink-400">
                   /{tier.perUom} {tier.incoterm}
                 </span>
               </span>

@@ -94,8 +94,8 @@ export function SystemHealth() {
         <div className="grid gap-3 p-3.5 sm:grid-cols-2 lg:grid-cols-4">
           {counts.map((c) => (
             <div key={c.key} className="rounded-md border border-paper-300 bg-white p-3">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{c.label}</p>
-              <p className="mt-2 text-2xl font-semibold leading-none tracking-tight text-ink-900 tabular">
+              <p className="text-sm font-semibold text-ink-500">{c.label}</p>
+              <p className="mt-2 text-2xl font-semibold leading-none text-ink-900 tabular">
                 {fmtNumber(c.count)}
               </p>
             </div>
@@ -160,7 +160,7 @@ export function SystemHealth() {
           setConfirming(false)
         }}
       >
-        <ul className="ml-4 list-disc space-y-1.5 text-xs leading-relaxed text-ink-600">
+        <ul className="ml-4 list-disc space-y-1.5 text-sm leading-relaxed text-ink-600">
           <li>
             Every record added or edited during this session, including new users, products, engagements and orders.
           </li>

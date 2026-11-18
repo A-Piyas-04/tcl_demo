@@ -114,7 +114,7 @@ export function P2Orders() {
             />
           }
           trailing={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {pluralise(bundles.length, 'order')}
               {activeCount ? <Badge tone="accent">{activeCount} filters</Badge> : null}

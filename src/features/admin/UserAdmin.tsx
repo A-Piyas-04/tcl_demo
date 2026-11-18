@@ -128,7 +128,7 @@ export function UserAdmin() {
       header: 'Email',
       sortable: true,
       value: (r) => r.user.email,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.user.email}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.user.email}</span>,
     },
     {
       key: 'department',
@@ -136,7 +136,7 @@ export function UserAdmin() {
       sortable: true,
       optional: true,
       value: (r) => r.user.department,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.user.department ?? '—'}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.user.department ?? '—'}</span>,
     },
     {
       key: 'role',
@@ -163,24 +163,26 @@ export function UserAdmin() {
     },
     {
       key: 'activated',
+      align: 'right',
       header: 'Activated',
       width: '9rem',
       sortable: true,
       value: (r) => r.user.activatedAt,
       cell: (r) =>
         r.user.activatedAt ? (
-          <span className="text-xs tabular text-ink-600">{fmtDate(r.user.activatedAt)}</span>
+          <span className="text-sm tabular text-ink-600">{fmtDate(r.user.activatedAt)}</span>
         ) : (
           <Badge tone="warn">Password not set</Badge>
         ),
     },
     {
       key: 'lastLogin',
+      align: 'right',
       header: 'Last sign-in',
       width: '10rem',
       sortable: true,
       value: (r) => r.user.lastLoginAt,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDateTime(r.user.lastLoginAt)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDateTime(r.user.lastLoginAt)}</span>,
     },
     {
       key: 'owned',
@@ -191,9 +193,9 @@ export function UserAdmin() {
       value: (r) => r.clients + r.requirements + r.engagements,
       cell: (r) => {
         const total = r.clients + r.requirements + r.engagements
-        if (total === 0) return <span className="text-xs text-ink-400">—</span>
+        if (total === 0) return <span className="text-sm text-ink-400">—</span>
         return (
-          <span className="text-xs tabular text-ink-700">
+          <span className="text-sm tabular text-ink-700">
             {total}
             <span className="text-ink-400">
               {' '}
@@ -234,7 +236,6 @@ export function UserAdmin() {
         subtitle="Who can sign in, which of the two roles they hold, and what they own."
         meta={
           <>
-            <Badge tone="neutral">{pluralise(db.users.filter((u) => u.isActive).length, 'active user')}</Badge>
             <Badge tone="accent">{pluralise(fullAccessHolders.length, 'activated Full Access holder')}</Badge>
             {db.users.some((u) => u.isActive && !u.activatedAt) ? (
               <Badge tone="warn">
@@ -272,7 +273,7 @@ export function UserAdmin() {
           exportName="users"
           onExport={(count) => void logExport('user list', '', count)}
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <Users className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'user') : '…'}
             </span>
@@ -300,11 +301,11 @@ export function UserAdmin() {
           <div className="space-y-3 p-3.5">
             <dl className="grid gap-x-5 gap-y-1 sm:grid-cols-2">
               <div className="flex items-center gap-1">
-                <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">Full Access</dt>
+                <dt className="text-sm font-medium text-ink-500">Full Access</dt>
                 <HelpTip>Reads every module and may create, edit, delete, approve, export and administer.</HelpTip>
               </div>
               <div className="flex items-center gap-1">
-                <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">View Only</dt>
+                <dt className="text-sm font-medium text-ink-500">View Only</dt>
                 <HelpTip>Reads and exports every module, changes nothing.</HelpTip>
               </div>
             </dl>
@@ -336,8 +337,8 @@ export function UserAdmin() {
                 ['Deactivation', 'Blocks sign-in and keeps every historical record attributed'],
               ].map(([label, value]) => (
                 <div key={label} className="min-w-0">
-                  <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">{label}</dt>
-                  <dd className="mt-0.5 text-xs leading-snug text-ink-700">{value}</dd>
+                  <dt className="text-sm font-medium text-ink-500">{label}</dt>
+                  <dd className="mt-0.5 text-sm leading-snug text-ink-700">{value}</dd>
                 </div>
               ))}
             </dl>
@@ -467,7 +468,7 @@ function AddUserDialog({
 
         <div className="flex items-start gap-2 rounded border border-paper-300 bg-paper-50 p-2.5">
           <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-400" />
-          <p className="flex items-center gap-1 text-xs text-ink-500">
+          <p className="flex items-center gap-1 text-sm text-ink-500">
             On save, a single-use activation link is emailed; no email is sent in this prototype.
             <HelpTip>
               Until the person follows the link and sets a password meeting the policy, the account cannot sign in, and
@@ -528,13 +529,13 @@ function RoleDialog({ row, users, onClose }: { row: Row; users: User[]; onClose:
         {!guard.ok ? (
           <>
             <InlineError>{guard.error}</InlineError>
-            <p className="text-xs leading-relaxed text-ink-500">
+            <p className="text-sm leading-relaxed text-ink-500">
               Give another activated user Full Access first, then come back to this change. A user who has been invited
               but has never set a password cannot sign in, so they do not count towards the one holder the system keeps.
             </p>
           </>
         ) : (
-          <ul className="ml-4 list-disc space-y-1.5 text-xs leading-relaxed text-ink-600">
+          <ul className="ml-4 list-disc space-y-1.5 text-sm leading-relaxed text-ink-600">
             <li>The change takes effect on their next request, not at their next sign-in. They do not need to sign out.</li>
             <li>
               {next === 'VIEWER'
@@ -616,7 +617,7 @@ function ActiveDialog({ row, users, onClose }: { row: Row; users: User[]; onClos
         {!guard.ok ? (
           <>
             <InlineError>{guard.error}</InlineError>
-            <p className="text-xs leading-relaxed text-ink-500">
+            <p className="text-sm leading-relaxed text-ink-500">
               Give another activated user Full Access first, then deactivate this one.
             </p>
           </>

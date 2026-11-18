@@ -148,34 +148,34 @@ export function ProductDetail() {
       {/* summary strip as discrete cells, not one wide band */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Sources known</p>
+          <p className="text-sm font-semibold text-ink-500">Sources known</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{data?.sources.length ?? '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">{portfolioCount} represented by TCL</p>
+          <p className="mt-0.5 text-sm text-ink-500">{portfolioCount} represented by TCL</p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Clients engaged</p>
+          <p className="text-sm font-semibold text-ink-500">Clients engaged</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{clientCount || '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             {(data?.engagements ?? []).filter((e) => e.stage === 'COMMERCIAL').length} in commercial supply
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Default unit</p>
+          <p className="text-sm font-semibold text-ink-500">Default unit</p>
           <p className="mt-1 text-2xl font-semibold text-ink-900">{product.defaultUom}</p>
-          <p className="mt-0.5 text-xs text-ink-500">{product.hsCode ? `HS ${product.hsCode}` : 'No HS code recorded'}</p>
+          <p className="mt-0.5 text-sm text-ink-500">{product.hsCode ? `HS ${product.hsCode}` : 'No HS code recorded'}</p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Open requirements</p>
+          <p className="text-sm font-semibold text-ink-500">Open requirements</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">
             {(data?.requirements ?? []).filter((r) => ['OPEN', 'SOURCING', 'ENGAGED'].includes(r.status)).length || '—'}
           </p>
-          <p className="mt-0.5 text-xs text-ink-500">{pluralise(data?.requirements.length ?? 0, 'enquiry')} in total</p>
+          <p className="mt-0.5 text-sm text-ink-500">{pluralise(data?.requirements.length ?? 0, 'enquiry')} in total</p>
         </Panel>
       </div>
 
       {product.synonyms.length ? (
         <Panel className="flex flex-wrap items-center gap-2 px-4 py-3">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-ink-500">
+          <span className="flex items-center gap-1.5 text-sm font-medium text-ink-500">
             <Tag className="h-3.5 w-3.5" />
             Also known as
           </span>
@@ -242,7 +242,7 @@ export function ProductDetail() {
                       <FileText className="h-4 w-4 shrink-0 text-ink-400" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm text-ink-900">{d.document.title}</span>
-                        <span className="block truncate text-xs text-ink-500">
+                        <span className="block truncate text-sm text-ink-500">
                           {d.document.typeCode} · uploaded {fmtDate(d.document.uploadedAt)}
                         </span>
                       </span>
@@ -318,7 +318,7 @@ function SourcesTab({
       cell: (r) => (
         <span className="text-sm text-ink-800">
           {r.mp.grade}
-          <span className="ml-1.5 font-mono text-2xs text-ink-500">{r.mp.pharmacopoeia}</span>
+ <span className="ml-1.5 text-sm text-ink-500">{r.mp.pharmacopoeia}</span>
         </span>
       ),
     },
@@ -348,14 +348,14 @@ function SourcesTab({
       value: (r) => r.priceTiers[0]?.price ?? null,
       cell: (r) => {
         const tier = r.priceTiers[0]
-        if (!tier) return <span className="text-xs text-warn-600">No valid price</span>
+        if (!tier) return <span className="text-sm text-warn-600">No valid price</span>
         return (
           <Tooltip
             content={`${r.priceTiers.length} valid tier${r.priceTiers.length === 1 ? '' : 's'} · expires ${fmtDate(r.earliestPriceExpiry)}`}
           >
             <span className="text-sm tabular text-ink-900">
               {fmtMoney(tier.price, tier.currency, { decimals: 0 })}
-              <span className="text-2xs text-ink-400">/{tier.perUom} {tier.incoterm}</span>
+              <span className="text-sm text-ink-400">/{tier.perUom} {tier.incoterm}</span>
             </span>
           </Tooltip>
         )
@@ -367,7 +367,7 @@ function SourcesTab({
       align: 'right',
       optional: true,
       value: (r) => r.mp.moqQty,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtQty(r.mp.moqQty, r.mp.moqUom)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtQty(r.mp.moqQty, r.mp.moqUom)}</span>,
     },
     {
       key: 'lead',
@@ -375,7 +375,7 @@ function SourcesTab({
       align: 'right',
       width: '6.5rem',
       value: (r) => r.mp.leadTimeDays,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{r.mp.leadTimeDays ? `${r.mp.leadTimeDays}d` : '—'}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{r.mp.leadTimeDays ? `${r.mp.leadTimeDays}d` : '—'}</span>,
     },
     {
       key: 'clients',
@@ -384,7 +384,7 @@ function SourcesTab({
       width: '6rem',
       value: (r) => r.engagementCount,
       cell: (r) => (
-        <span className="text-xs tabular text-ink-700">
+        <span className="text-sm tabular text-ink-700">
           {r.engagementCount || '—'}
           {r.commercialCount > 0 ? <span className="text-ok-600"> ({r.commercialCount})</span> : null}
         </span>
@@ -536,7 +536,7 @@ function ClientsTab({ loading, rows }: { loading: boolean; rows: ReturnType<type
                     className="flex w-full items-center gap-3 rounded border border-transparent px-2 py-1.5 text-left transition-colors hover:border-paper-300 hover:bg-paper-100"
                   >
                     <span className="min-w-0 flex-1 truncate text-sm text-ink-800">{r.manufacturer.displayName}</span>
-                    <span className="hidden font-mono text-2xs text-ink-500 sm:inline">
+ <span className="hidden text-sm text-ink-500 sm:inline">
                       {r.mp.grade} · {r.mp.pharmacopoeia}
                     </span>
                     <StageBadge stage={r.stage} size="sm" />
@@ -597,7 +597,7 @@ function PricesTab({ loading, sources }: { loading: boolean; sources: SourceRow[
                   </Link>
                 </td>
                 <td className="cell text-ink-700">{s.mp.grade}</td>
-                <td className="cell font-mono text-xs">{tier.incoterm}</td>
+ <td className="cell text-sm">{tier.incoterm}</td>
                 <td className="cell text-right tabular">{fmtQty(tier.minQty, tier.perUom)}</td>
                 <td className="cell text-right font-medium tabular">
                   {fmtMoney(tier.price, tier.currency)}/{tier.perUom}
@@ -655,9 +655,9 @@ function RequirementsTab({
                   {r.kind === 'NEW_DEVELOPMENT' ? 'New development' : 'Alternate source'}
                 </Badge>
                 {r.requiredPharmacopoeia ? <Badge tone="outline">{r.requiredPharmacopoeia}</Badge> : null}
-                <span className="text-xs text-ink-500">{fmtQty(r.estAnnualQty, r.qtyUom)}/year</span>
-                <span className="w-24 text-right text-xs tabular text-ink-400">{fmtDate(r.enquiryDate)}</span>
-                <span className="w-20 text-right text-xs text-ink-500">{userName(db, r.ownerUserId)}</span>
+                <span className="text-sm text-ink-500">{fmtQty(r.estAnnualQty, r.qtyUom)}/year</span>
+                <span className="w-24 text-right text-sm tabular text-ink-400">{fmtDate(r.enquiryDate)}</span>
+                <span className="w-20 text-right text-sm text-ink-500">{userName(db, r.ownerUserId)}</span>
               </button>
             </li>
           ))}

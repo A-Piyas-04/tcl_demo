@@ -132,7 +132,7 @@ export function RequirementList() {
           <Badge tone="outline">{r.requirement.requiredPharmacopoeia}</Badge>
         ) : (
           <Tooltip content="No standard named, so every pharmacopoeia is a candidate.">
-            <span className="text-xs text-ink-400">Any</span>
+            <span className="text-sm text-ink-400">Any</span>
           </Tooltip>
         ),
     },
@@ -147,7 +147,7 @@ export function RequirementList() {
           {fmtQty(r.requirement.estAnnualQty, r.requirement.qtyUom)}
           {r.requirement.qtyIsIndicative ? (
             <Tooltip content="Indicative only, so this requirement is left out of value-weighted reports.">
-              <span className="ml-1 text-2xs text-ink-400">est.</span>
+              <span className="ml-1 text-sm text-ink-400">est.</span>
             </Tooltip>
           ) : null}
         </span>
@@ -184,7 +184,7 @@ export function RequirementList() {
         r.candidateCount > 0 ? (
           <span className="text-sm tabular font-medium text-ink-900">{r.candidateCount}</span>
         ) : (
-          <span className="text-xs text-warn-600">None</span>
+          <span className="text-sm text-warn-600">None</span>
         ),
     },
     {
@@ -194,7 +194,7 @@ export function RequirementList() {
       value: (r) => r.engagementCount,
       cell: (r) =>
         r.engagementCount === 0 ? (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ) : (
           <span className="flex items-center gap-1.5">
             <span className="text-sm tabular text-ink-800">{r.engagementCount}</span>
@@ -213,7 +213,7 @@ export function RequirementList() {
         OPEN_STATUSES.includes(r.requirement.status) ? (
           <span className="text-sm tabular text-ink-700">{r.daysOpen}d</span>
         ) : (
-          <span className="text-xs text-ink-400">closed</span>
+          <span className="text-sm text-ink-400">closed</span>
         ),
     },
     {
@@ -222,7 +222,7 @@ export function RequirementList() {
       sortable: true,
       optional: true,
       value: (r) => r.ownerName,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.ownerName}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.ownerName}</span>,
     },
   ]
 
@@ -234,7 +234,7 @@ export function RequirementList() {
       <div>
         <PageHeading
           title="Requirements"
-          subtitle="What clients have asked for. Open one to see who can supply it and what to do next."
+          subtitle="What clients have asked for"
           meta={
             <>
               <Badge tone="neutral">
@@ -322,7 +322,7 @@ export function RequirementList() {
                   onChange={(e) => setValue('from', e.target.value)}
                   aria-label="Enquiries from"
                 />
-                <span className="text-xs text-ink-400">to</span>
+                <span className="text-sm text-ink-400">to</span>
                 <DateInput value={values.to} onChange={(e) => setValue('to', e.target.value)} aria-label="Enquiries to" />
               </div>
             </>
@@ -339,7 +339,7 @@ export function RequirementList() {
           exportFilters={queryString}
           onExport={(count) => void logExport('requirement list', queryString, count)}
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'requirement') : '…'}
               {filtersOn ? <Badge tone="accent">{activeCount} filters</Badge> : null}

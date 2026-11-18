@@ -247,7 +247,7 @@ export function RelationshipMatrix({ axis }: { axis: 'client' | 'manufacturer' }
             <table className="border-separate border-spacing-0 text-sm">
               <thead>
                 <tr>
-                  <th className="sticky left-0 top-0 z-30 h-32 w-56 border-b border-r border-paper-300 bg-paper-100 px-3 text-left align-bottom text-2xs font-semibold uppercase tracking-wide text-ink-500">
+                  <th className="sticky left-0 top-0 z-30 h-32 w-56 border-b border-r border-paper-300 bg-paper-100 px-3 text-left align-bottom text-sm font-semibold text-ink-500">
                     {axis === 'client' ? 'Client' : 'Manufacturer'}
                   </th>
                   {matrix.products.map((product) => (
@@ -256,7 +256,7 @@ export function RelationshipMatrix({ axis }: { axis: 'client' | 'manufacturer' }
                       className="sticky top-0 z-20 h-32 w-10 border-b border-paper-300 bg-paper-100 p-0 align-bottom"
                     >
                       <div className="flex h-32 w-10 items-end justify-center pb-1.5">
-                        <span className="whitespace-nowrap text-[11px] font-medium text-ink-700 [writing-mode:vertical-rl] rotate-180">
+                        <span className="whitespace-nowrap text-sm font-medium text-ink-700 [writing-mode:vertical-rl] rotate-180">
                           {product.genericName}
                         </span>
                       </div>
@@ -272,7 +272,7 @@ export function RelationshipMatrix({ axis }: { axis: 'client' | 'manufacturer' }
                         to={axis === 'client' ? `/clients/${company.id}` : `/manufacturers/${company.id}`}
                         variant="ghost"
                         size="sm"
-                        className="h-auto max-w-full truncate px-0 text-xs font-medium text-ink-900"
+                        className="h-auto max-w-full truncate px-0 text-sm font-medium text-ink-900"
                       >
                         {company.displayName}
                       </LinkButton>
@@ -302,7 +302,7 @@ export function RelationshipMatrix({ axis }: { axis: 'client' | 'manufacturer' }
                               type="button"
                               onClick={() => openCell(cell)}
                               style={{ backgroundColor: cellBackground(cell.stage, cell.count) }}
-                              className="h-9 w-10 text-center text-[11px] font-semibold tabular text-ink-800 transition-shadow hover:shadow-[inset_0_0_0_2px_rgb(12_120_107)]"
+                              className="h-9 w-10 text-center text-sm font-semibold tabular text-ink-800 transition-shadow hover:shadow-[inset_0_0_0_2px_rgb(12_120_107)]"
                             >
                               {mode === 'counts' ? cell.count : STAGE_CODE[cell.stage]}
                             </button>
@@ -319,17 +319,17 @@ export function RelationshipMatrix({ axis }: { axis: 'client' | 'manufacturer' }
 
         <div className="flex flex-wrap items-start justify-between gap-3 border-t border-paper-200 p-3">
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Cells in this view</p>
+            <p className="text-sm font-medium text-ink-500">Cells in this view</p>
             <ul className="flex flex-wrap items-center gap-1.5">
               {stagesPresent.map((s) => (
                 <li key={s} className="flex items-center gap-1">
                   <span
-                    className="grid h-5 w-7 place-items-center rounded-sm text-[10px] font-semibold text-ink-800"
+                    className="grid h-5 w-7 place-items-center rounded-sm text-sm font-semibold text-ink-800"
                     style={{ backgroundColor: cellBackground(s, 1) }}
                   >
                     {STAGE_CODE[s]}
                   </span>
-                  <span className="text-2xs text-ink-600">{STAGE_LABEL[s]}</span>
+                  <span className="text-sm text-ink-600">{STAGE_LABEL[s]}</span>
                 </li>
               ))}
             </ul>
@@ -359,7 +359,7 @@ export function RelationshipMatrix({ axis }: { axis: 'client' | 'manufacturer' }
                 <p className="truncate text-sm font-medium text-ink-900">
                   {axis === 'client' ? row.manufacturer.displayName : row.client.displayName}
                 </p>
-                <p className="truncate text-xs text-ink-500">
+                <p className="truncate text-sm text-ink-500">
                   {row.mp.grade} {row.mp.pharmacopoeia} · owner {row.ownerName} · stage set {fmtDate(row.engagement.stageChangedAt)}
                 </p>
               </div>

@@ -61,7 +61,7 @@ export function FulfilmentBar({
           <Meter value={shipped} max={ordered} tone="bg-accent-500" className="h-1" />
           <Meter value={delivered} max={ordered} tone="bg-ok-500" className="h-1" />
         </div>
-        <div className="mt-1 text-[10px] tabular text-ink-500">{pct(delivered)}% delivered</div>
+        <div className="mt-1 text-sm tabular text-ink-500">{pct(delivered)}% delivered</div>
       </div>
     </Tooltip>
   )
@@ -69,7 +69,7 @@ export function FulfilmentBar({
 
 export function FulfilmentLegend() {
   return (
-    <span className="flex flex-wrap items-center gap-3 text-[10px] text-ink-500">
+    <span className="flex flex-wrap items-center gap-3 text-sm text-ink-500">
       <span className="flex items-center gap-1">
         <span className="h-1.5 w-3 rounded-full bg-accent-300" /> indented
       </span>
@@ -155,12 +155,12 @@ export function StatCell({
   const { caption: hintCaption, tip: hintTip } = splitBlurb(hint)
   return (
     <Panel className="p-3.5">
-      <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+      <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-500">
         {label}
         <HelpTip>{hintTip}</HelpTip>
       </p>
       <p className={`mt-1 truncate text-2xl font-semibold tabular ${valueTone}`}>{value}</p>
-      {hintCaption ? <p className="mt-0.5 text-xs text-ink-500">{hintCaption}</p> : null}
+      {hintCaption ? <p className="mt-0.5 text-sm text-ink-500">{hintCaption}</p> : null}
     </Panel>
   )
 }

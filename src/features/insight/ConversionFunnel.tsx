@@ -157,7 +157,7 @@ export function ConversionFunnel() {
             </span>
           </Tooltip>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
   ]
@@ -181,7 +181,7 @@ export function ConversionFunnel() {
     <div className="space-y-4">
       <PageHeading
         title="Conversion funnel"
-        subtitle="Offered to sample to approved to commercial, with the time each step takes."
+        subtitle="Time taken at each step"
         meta={
           <>
             <Badge tone="neutral">{pluralise(data?.total ?? 0, 'engagement in the pipeline', 'engagements in the pipeline')}</Badge>
@@ -234,7 +234,7 @@ export function ConversionFunnel() {
                 return (
                   <div key={step.key} className="space-y-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-xs font-medium text-ink-800">{step.label}</span>
+                      <span className="text-sm font-medium text-ink-800">{step.label}</span>
                       <span className="text-sm font-semibold tabular text-ink-900">{count}</span>
                     </div>
                     <div className="h-5 overflow-hidden rounded bg-paper-200">
@@ -247,11 +247,11 @@ export function ConversionFunnel() {
                       />
                     </div>
                     {previous != null ? (
-                      <p className="text-2xs text-ink-500">
+                      <p className="text-sm text-ink-500">
                         {previous > 0 ? fmtPct((count / previous) * 100, 0) : '—'} of the step before
                       </p>
                     ) : (
-                      <p className="text-2xs text-ink-500">The widest step, so the rest are read against it</p>
+                      <p className="text-sm text-ink-500">The widest step, so the rest are read against it</p>
                     )}
                   </div>
                 )
@@ -277,11 +277,11 @@ export function ConversionFunnel() {
                   <span className="min-w-0 flex-1 text-sm text-ink-800">
                     {t.from} to {t.to}
                   </span>
-                  <span className="text-xs tabular text-ink-500">{t.ratio != null ? fmtPct(t.ratio, 0) : '—'}</span>
+                  <span className="text-sm tabular text-ink-500">{t.ratio != null ? fmtPct(t.ratio, 0) : '—'}</span>
                   <span className="w-24 text-right text-sm font-semibold tabular text-ink-900">
                     {t.avgDays != null ? `${t.avgDays} days` : '—'}
                   </span>
-                  <span className="w-20 text-right text-2xs text-ink-400">
+                  <span className="w-20 text-right text-sm text-ink-400">
                     {t.count > 0 ? `${pluralise(t.count, 'case')}` : 'no cases'}
                   </span>
                 </li>
@@ -297,7 +297,7 @@ export function ConversionFunnel() {
 
       <Panel>
         <div className="flex flex-wrap items-center gap-2 border-b border-paper-200 p-3">
-          <span className="text-2xs font-medium uppercase tracking-wide text-ink-500">Break down by</span>
+          <span className="text-sm font-medium text-ink-500">Break down by</span>
           <SegmentedControl
             value={breakdown}
             onChange={setBreakdown}

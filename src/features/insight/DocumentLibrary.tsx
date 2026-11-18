@@ -155,7 +155,7 @@ export function DocumentLibrary() {
       sortable: true,
       width: '11rem',
       value: (r) => documentTypeName(r.document.typeCode),
-      cell: (r) => <span className="text-xs text-ink-700">{documentTypeName(r.document.typeCode)}</span>,
+      cell: (r) => <span className="text-sm text-ink-700">{documentTypeName(r.document.typeCode)}</span>,
     },
     {
       key: 'parent',
@@ -166,13 +166,13 @@ export function DocumentLibrary() {
         r.parentHref ? (
           <Link
             to={r.parentHref}
-            className="truncate text-xs font-medium text-accent-700 hover:underline"
+            className="truncate text-sm font-medium text-accent-700 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {r.parentLabel}
           </Link>
         ) : (
-          <span className="truncate text-xs text-ink-600">{r.parentLabel}</span>
+          <span className="truncate text-sm text-ink-600">{r.parentLabel}</span>
         ),
     },
     {
@@ -181,7 +181,7 @@ export function DocumentLibrary() {
       optional: true,
       width: '9rem',
       value: (r) => parentKindLabel(r.document.entityType),
-      cell: (r) => <span className="text-xs text-ink-500">{parentKindLabel(r.document.entityType)}</span>,
+      cell: (r) => <span className="text-sm text-ink-500">{parentKindLabel(r.document.entityType)}</span>,
     },
     {
       key: 'reference',
@@ -197,23 +197,25 @@ export function DocumentLibrary() {
       header: 'Issuing authority',
       optional: true,
       value: (r) => r.document.issuingAuthority,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.document.issuingAuthority ?? '—'}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.document.issuingAuthority ?? '—'}</span>,
     },
     {
       key: 'issued',
+      align: 'right',
       header: 'Issued',
       sortable: true,
       width: '7.5rem',
       value: (r) => r.document.issuedOn,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.document.issuedOn)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.document.issuedOn)}</span>,
     },
     {
       key: 'expires',
+      align: 'right',
       header: 'Expires',
       sortable: true,
       width: '7.5rem',
       value: (r) => r.document.expiresOn,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.document.expiresOn)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.document.expiresOn)}</span>,
     },
     {
       key: 'days',
@@ -224,11 +226,11 @@ export function DocumentLibrary() {
       value: (r) => r.daysRemaining,
       cell: (r) =>
         r.daysRemaining == null ? (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ) : r.daysRemaining < 0 ? (
-          <span className="text-xs font-medium tabular text-danger-700">{Math.abs(r.daysRemaining)} overdue</span>
+          <span className="text-sm font-medium tabular text-danger-700">{Math.abs(r.daysRemaining)} overdue</span>
         ) : (
-          <span className={`text-xs tabular ${r.daysRemaining <= 90 ? 'font-medium text-warn-600' : 'text-ink-600'}`}>
+          <span className={`text-sm tabular ${r.daysRemaining <= 90 ? 'font-medium text-warn-600' : 'text-ink-600'}`}>
             {r.daysRemaining}
           </span>
         ),
@@ -246,9 +248,9 @@ export function DocumentLibrary() {
           <span className="flex flex-col items-start gap-0.5">
             <StateBadge row={r} />
             {newer ? (
-              <span className="text-[10px] text-ink-400">replaced by v{newer.versionNo}</span>
+              <span className="text-sm text-ink-400">replaced by v{newer.versionNo}</span>
             ) : older ? (
-              <span className="text-[10px] text-ink-400">supersedes v{older.versionNo}</span>
+              <span className="text-sm text-ink-400">supersedes v{older.versionNo}</span>
             ) : null}
           </span>
         )
@@ -256,13 +258,14 @@ export function DocumentLibrary() {
     },
     {
       key: 'uploaded',
+      align: 'right',
       header: 'Uploaded',
       optional: true,
       value: (r) => `${userName(db, r.document.uploadedByUserId)} ${r.document.uploadedAt}`,
       cell: (r) => (
-        <span className="flex flex-col text-xs leading-tight text-ink-600">
+        <span className="flex flex-col text-sm leading-tight text-ink-600">
           <span>{userName(db, r.document.uploadedByUserId)}</span>
-          <span className="text-[10px] text-ink-400">{fmtDateTime(r.document.uploadedAt)}</span>
+          <span className="text-sm text-ink-400">{fmtDateTime(r.document.uploadedAt)}</span>
         </span>
       ),
     },
@@ -296,10 +299,9 @@ export function DocumentLibrary() {
       <div>
       <PageHeading
         title="Reports"
-        subtitle="Documents and certificates across every record. Each document also appears on the client, manufacturer, source, engagement or order it belongs to."
+        subtitle="Documents and certificates across every record"
         meta={
           <>
-            <Badge tone="neutral">{pluralise(counts.total, 'document')}</Badge>
             {counts.expiring > 0 ? <Badge tone="warn">{counts.expiring} expiring</Badge> : null}
             {counts.expired > 0 ? <Badge tone="danger">{counts.expired} expired</Badge> : null}
           </>
@@ -398,7 +400,7 @@ export function DocumentLibrary() {
           exportFilters={queryString}
           onExport={(count) => void logExport('document library', queryString, count)}
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <Paperclip className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'document') : '…'}
             </span>
@@ -428,7 +430,7 @@ export function DocumentLibrary() {
 
       <Panel>
         <PanelHeader title="Where each document belongs" subtitle="FR-M10-01, so a certificate reaches every record that needs it" />
-        <ul className="grid gap-2 p-4 text-xs leading-relaxed text-ink-600 sm:grid-cols-2">
+        <ul className="grid gap-2 p-4 text-sm leading-relaxed text-ink-600 sm:grid-cols-2">
           {PARENT_KINDS.map((p) => (
             <li key={p.value}>
               <span className="font-semibold text-ink-900">{p.label}.</span> {p.belongs}.
@@ -701,7 +703,7 @@ function UploadDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
                 disabled={draft.noExpiry}
                 invalid={badDates}
               />
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-600">
+              <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-600">
                 <input
                   type="checkbox"
                   checked={draft.noExpiry}
@@ -730,11 +732,11 @@ function UploadDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
                 Choose a file
               </Button>
               {file ? (
-                <span className="text-xs text-ink-600">
+                <span className="text-sm text-ink-600">
                   {file.name} · <span className={oversize ? 'font-semibold text-danger-700' : ''}>{fileSize(file.size)}</span>
                 </span>
               ) : (
-                <span className="text-xs text-ink-400">No file chosen</span>
+                <span className="text-sm text-ink-400">No file chosen</span>
               )}
             </div>
             {oversize ? (
@@ -752,7 +754,7 @@ function UploadDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                   />
                 </div>
-                <p className="text-2xs text-ink-500">Transferring {progress}% of {file?.name}</p>
+                <p className="text-sm text-ink-500">Transferring {progress}% of {file?.name}</p>
               </div>
             ) : null}
           </div>
@@ -776,7 +778,7 @@ function UploadDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
             loading={progress != null}
             disabled={!canSubmit}
             extra={
-              <span className="mr-auto text-2xs text-ink-400">
+              <span className="mr-auto text-sm text-ink-400">
                 No file store sits behind this prototype, so the transfer is simulated and the metadata is stored.
               </span>
             }

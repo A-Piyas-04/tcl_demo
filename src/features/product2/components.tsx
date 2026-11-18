@@ -154,10 +154,10 @@ export function WorkflowTrack({
   const v = VARIANT[variant]
   const Icon = v.icon
   return (
-    <div className={cn('rounded-md border border-paper-300 bg-white p-3.5 shadow-tile', v.edge, className)}>
+    <div className={cn('rounded-md border border-paper-300 bg-white p-3.5 ', v.edge, className)}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className={cn('inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wider', v.chip)}>
+          <span className={cn('inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-sm font-semibold ', v.chip)}>
             <Icon className="h-3 w-3" />
             {v.label}
           </span>
@@ -192,7 +192,7 @@ export function WorkflowTrack({
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.25, delay: i * 0.05 }}
                 className={cn(
-                  'relative z-[1] grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-semibold',
+                  'relative z-[1] grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-sm font-semibold',
                   s.state === 'done' && 'border-ok-500 bg-ok-500 text-white',
                   s.state === 'rejected' && 'border-danger-500 bg-danger-500 text-white',
                   s.state === 'current' && 'border-ink-300 bg-white text-ink-600 ring-4 ring-paper-200',
@@ -204,7 +204,7 @@ export function WorkflowTrack({
               <span className="min-w-0 sm:px-1">
                 <span
                   className={cn(
-                    'block text-xs font-medium leading-tight',
+                    'block text-sm font-medium leading-tight',
                     s.state === 'done' && 'text-ok-600',
                     s.state === 'rejected' && 'text-danger-700',
                     s.state === 'current' && 'text-ink-900',
@@ -213,11 +213,11 @@ export function WorkflowTrack({
                 >
                   {s.label}
                 </span>
-                <span className="mt-0.5 block text-2xs text-ink-400">
+                <span className="mt-0.5 block text-sm text-ink-400">
                   {s.state === 'current' ? 'Next step' : s.date && s.state !== 'pending' ? fmtDate(s.date) : ' '}
                 </span>
                 {s.note ? (
-                  <span className={cn('mt-0.5 block text-2xs leading-snug', s.state === 'rejected' ? 'text-danger-600' : 'text-ink-500')}>
+                  <span className={cn('mt-0.5 block text-sm leading-snug', s.state === 'rejected' ? 'text-danger-600' : 'text-ink-500')}>
                     {s.note}
                   </span>
                 ) : null}
@@ -264,7 +264,7 @@ export function DecimalInput({
         className={suffix ? 'pr-12' : undefined}
       />
       {suffix ? (
-        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-ink-400">{suffix}</span>
+        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm font-medium text-ink-400">{suffix}</span>
       ) : null}
     </div>
   )
@@ -286,11 +286,11 @@ export function CalcRow({
 }) {
   return (
     <div className={cn('flex items-baseline justify-between gap-3 py-1.5', emphasis && 'border-t border-paper-300 pt-2')}>
-      <span className={cn('text-xs', emphasis ? 'font-semibold text-ink-900' : muted ? 'text-ink-400' : 'text-ink-600')}>
+      <span className={cn('text-sm', emphasis ? 'font-semibold text-ink-900' : muted ? 'text-ink-400' : 'text-ink-600')}>
         {label}
-        {hint ? <span className="ml-1 text-2xs text-ink-400">{hint}</span> : null}
+        {hint ? <span className="ml-1 text-sm text-ink-400">{hint}</span> : null}
       </span>
-      <span className={cn('font-mono text-sm tabular', emphasis ? 'font-semibold text-ink-900' : muted ? 'text-ink-400' : 'text-ink-800')}>
+ <span className={cn('text-sm tabular', emphasis ? 'font-semibold text-ink-900' : muted ? 'text-ink-400' : 'text-ink-800')}>
         {value}
       </span>
     </div>

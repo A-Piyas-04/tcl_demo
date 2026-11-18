@@ -93,7 +93,7 @@ export function PeersView() {
       cell: (r) => (
         <span className="text-sm text-ink-800">
           {r.manufacturer.displayName}
-          <span className="ml-1.5 font-mono text-2xs text-ink-500">
+ <span className="ml-1.5 text-sm text-ink-500">
             {r.mp.grade} · {r.mp.pharmacopoeia}
           </span>
         </span>
@@ -114,7 +114,7 @@ export function PeersView() {
       sortable: true,
       width: '9rem',
       value: (r) => r.engagement.approvedOn,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.engagement.approvedOn)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.engagement.approvedOn)}</span>,
     },
     {
       key: 'commercial',
@@ -125,9 +125,9 @@ export function PeersView() {
       value: (r) => r.engagement.firstCommercialOn,
       cell: (r) =>
         r.engagement.firstCommercialOn ? (
-          <span className="text-xs tabular text-ink-700">{fmtDate(r.engagement.firstCommercialOn)}</span>
+          <span className="text-sm tabular text-ink-700">{fmtDate(r.engagement.firstCommercialOn)}</span>
         ) : (
-          <span className="text-xs text-ink-400">Not yet supplying</span>
+          <span className="text-sm text-ink-400">Not yet supplying</span>
         ),
     },
     {
@@ -135,7 +135,7 @@ export function PeersView() {
       header: 'Owner',
       optional: true,
       value: (r) => r.ownerName,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.ownerName}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.ownerName}</span>,
     },
   ]
 
@@ -152,7 +152,7 @@ export function PeersView() {
               Each visit is written to the security log with the user, the molecule and the time, because the clients
               listed here compete with one another. Both Full Access and View Only sessions may open it.
             </NoteTip>
-            <Link to={`/products/${product.id}`} className="text-xs text-accent-700 underline">
+            <Link to={`/products/${product.id}`} className="text-sm text-accent-700 underline">
               Open the molecule
             </Link>
           </>
@@ -290,11 +290,11 @@ function BySource({ rows }: { rows: EngagementRow[] }) {
                     className="flex w-full items-center gap-3 rounded border border-transparent px-2 py-1.5 text-left transition-colors hover:border-paper-300 hover:bg-paper-100"
                   >
                     <span className="min-w-0 flex-1 truncate text-sm text-ink-800">{r.client.displayName}</span>
-                    <span className="hidden font-mono text-2xs text-ink-500 sm:inline">
+ <span className="hidden text-sm text-ink-500 sm:inline">
                       {r.mp.grade} · {r.mp.pharmacopoeia}
                     </span>
                     <StageBadge stage={r.stage} size="sm" />
-                    <span className="w-24 text-right text-2xs tabular text-ink-500">
+                    <span className="w-24 text-right text-sm tabular text-ink-500">
                       {fmtDate(r.engagement.firstCommercialOn ?? r.engagement.approvedOn)}
                     </span>
                   </button>

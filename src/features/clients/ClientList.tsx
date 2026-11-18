@@ -164,7 +164,7 @@ export function ClientList() {
         r.commercialCount > 0 ? (
           <Badge tone="ok">{r.commercialCount} supplying</Badge>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -176,7 +176,7 @@ export function ClientList() {
       cell: (r) => (
         <span className="flex items-center gap-2">
           <Avatar name={r.ownerName} size="sm" />
-          <span className="truncate text-xs text-ink-700">{r.ownerName}</span>
+          <span className="truncate text-sm text-ink-700">{r.ownerName}</span>
         </span>
       ),
     },
@@ -186,7 +186,7 @@ export function ClientList() {
       optional: true,
       value: (r) => paymentTermLabel(r.client.client?.paymentTermCode ?? null),
       cell: (r) => (
-        <span className="truncate text-xs text-ink-600">
+        <span className="truncate text-sm text-ink-600">
           {paymentTermLabel(r.client.client?.paymentTermCode ?? null)}
         </span>
       ),
@@ -196,7 +196,7 @@ export function ClientList() {
       header: 'Therapeutic focus',
       optional: true,
       value: (r) => r.client.client?.therapeuticFocus ?? null,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.client.client?.therapeuticFocus ?? '—'}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.client.client?.therapeuticFocus ?? '—'}</span>,
     },
     {
       key: 'first',
@@ -206,7 +206,7 @@ export function ClientList() {
       width: '8.5rem',
       value: (r) => r.client.client?.firstBusinessDate ?? null,
       cell: (r) => (
-        <span className="text-xs tabular text-ink-600">{fmtDate(r.client.client?.firstBusinessDate)}</span>
+        <span className="text-sm tabular text-ink-600">{fmtDate(r.client.client?.firstBusinessDate)}</span>
       ),
     },
   ]
@@ -225,10 +225,9 @@ export function ClientList() {
       <div>
       <PageHeading
         title="Clients"
-        subtitle="Every company that buys through TCL, what it takes and who looks after it."
+        subtitle="Who buys through TCL, and what they take"
         meta={
           <>
-            <Badge tone="neutral">{pluralise(clientList(db).filter((c) => c.isActive).length, 'client')}</Badge>
             <Badge tone="ok">
               {pluralise(
                 clientList(db).filter((c) => c.isActive && c.client?.status === 'ACTIVE').length,
@@ -302,7 +301,7 @@ export function ClientList() {
                 placeholder="Any owner"
                 options={owners}
               />
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-600">
+              <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-600">
                 <input
                   type="checkbox"
                   checked={values.inactive === '1'}
@@ -325,7 +324,7 @@ export function ClientList() {
           exportFilters={queryString}
           onExport={(count) => void logExport('client list', queryString, count)}
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'client') : '…'}
               {filtersOn ? <Badge tone="accent">{activeCount} filters</Badge> : null}

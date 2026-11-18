@@ -302,17 +302,17 @@ export function ClientForm() {
                 This looks like a company already on the register
               </p>
               <div className="space-y-1">
-                <p className="text-xs text-ink-600">Similar legal names:</p>
+                <p className="text-sm text-ink-600">Similar legal names:</p>
                 <ul className="flex flex-wrap gap-1.5">
                   {dup.near.map((n) => (
                     <li key={n.id}>
                       <button
                         type="button"
                         onClick={() => navigate(`/clients/${n.id}`)}
-                        className="rounded border border-paper-300 bg-white px-2 py-1 text-xs text-ink-800 transition-colors hover:border-accent-400"
+                        className="rounded border border-paper-300 bg-white px-2 py-1 text-sm text-ink-800 transition-colors hover:border-accent-400"
                       >
                         {n.name}
-                        <span className="ml-1.5 text-2xs text-ink-400">{Math.round(n.score * 100)}% alike</span>
+                        <span className="ml-1.5 text-sm text-ink-400">{Math.round(n.score * 100)}% alike</span>
                       </button>
                     </li>
                   ))}
@@ -323,7 +323,7 @@ export function ClientForm() {
                 onChange={setAcknowledged}
                 label="I have checked these and this is a genuinely different company"
               />
-              <p className="text-2xs text-ink-500">The new record will be tagged for duplicate review either way.</p>
+              <p className="text-sm text-ink-500">The new record will be tagged for duplicate review either way.</p>
             </div>
           </Panel>
         ) : null}
@@ -383,7 +383,7 @@ export function ClientForm() {
         <Panel>
           <PanelHeader
             title="Commercial terms"
-            subtitle="Recorded for reference. None of it is enforced by the system in v1."
+            subtitle="Recorded for reference"
           />
           <div className="space-y-4 p-4">
             <FormGrid cols={3}>
@@ -514,7 +514,7 @@ export function ClientForm() {
         {error ? <InlineError>{error}</InlineError> : null}
 
         <div className="flex items-center justify-between gap-3 pb-6">
-          <p className="text-xs text-ink-400">
+          <p className="text-sm text-ink-400">
             {editing ? 'Changes are written to the audit log.' : 'Creation is written to the audit log.'}
           </p>
           <div className="flex items-center gap-2">

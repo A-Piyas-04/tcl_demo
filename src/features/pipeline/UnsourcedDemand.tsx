@@ -150,7 +150,7 @@ export function UnsourcedDemand() {
       <div>
         <PageHeading
           title="Requirements"
-          subtitle="Unsourced demand: open requirements TCL cannot answer today, ranked by the weight of demand behind each molecule."
+          subtitle="Open requirements TCL cannot answer today"
           meta={
             <>
               <Badge tone="warn">{pluralise(all.length, 'molecule')}</Badge>
@@ -241,7 +241,7 @@ function GroupPanel({ group, rank }: { group: Group; rank: number }) {
       <PanelHeader
         title={
           <span className="flex items-center gap-2">
-            <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-ink-900 text-[10px] font-semibold text-white">
+            <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-ink-900 text-sm font-semibold text-white">
               {rank}
             </span>
             <Link to={`/products/${group.productId}`} className="truncate hover:text-accent-700">
@@ -284,13 +284,13 @@ function GroupPanel({ group, rank }: { group: Group; rank: number }) {
             {r.requirement.requiredPharmacopoeia ? (
               <Badge tone="outline">{r.requirement.requiredPharmacopoeia}</Badge>
             ) : null}
-            <span className="text-xs tabular text-ink-600">
+            <span className="text-sm tabular text-ink-600">
               {fmtQty(r.requirement.estAnnualQty, r.requirement.qtyUom)}
             </span>
-            <span className="text-xs tabular text-ink-400">{fmtDate(r.requirement.enquiryDate)}</span>
+            <span className="text-sm tabular text-ink-400">{fmtDate(r.requirement.enquiryDate)}</span>
             <Link
               to={`/requirements/${r.requirement.id}`}
-              className="text-xs font-medium text-accent-700 hover:underline"
+              className="text-sm font-medium text-accent-700 hover:underline"
             >
               Open
             </Link>
@@ -299,17 +299,17 @@ function GroupPanel({ group, rank }: { group: Group; rank: number }) {
       </ul>
 
       <div className="space-y-2 border-t border-paper-200 bg-paper-50 p-3">
-        <p className="text-xs leading-relaxed text-ink-600">{copy.detail}</p>
+        <p className="text-sm leading-relaxed text-ink-600">{copy.detail}</p>
         {group.unrepresented.length > 0 ? (
           <ul className="flex flex-wrap gap-1.5">
             {group.unrepresented.slice(0, 4).map((s) => (
               <li key={s.mp.id}>
                 <Link
                   to={`/sources/${s.mp.id}`}
-                  className="inline-flex items-center gap-1.5 rounded border border-paper-300 bg-white px-2 py-1 text-xs text-ink-800 transition-colors hover:border-accent-400"
+                  className="inline-flex items-center gap-1.5 rounded border border-paper-300 bg-white px-2 py-1 text-sm text-ink-800 transition-colors hover:border-accent-400"
                 >
                   {s.manufacturer.displayName}
-                  <span className="font-mono text-2xs text-ink-400">
+ <span className="text-sm text-ink-400">
                     {s.mp.grade} · {s.mp.pharmacopoeia}
                   </span>
                 </Link>
@@ -338,9 +338,9 @@ function GroupPanel({ group, rank }: { group: Group; rank: number }) {
 function Cell({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{label}</p>
+      <p className="text-sm font-semibold text-ink-500">{label}</p>
       <p className="mt-0.5 truncate text-sm font-medium tabular text-ink-900">{value}</p>
-      {note ? <p className="text-2xs text-ink-400">{note}</p> : null}
+      {note ? <p className="text-sm text-ink-400">{note}</p> : null}
     </div>
   )
 }

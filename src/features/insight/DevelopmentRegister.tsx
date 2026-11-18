@@ -137,10 +137,10 @@ export function DevelopmentRegister() {
       value: (r) => r.manufacturerName,
       cell: (r) =>
         r.manufacturerName ? (
-          <span className="truncate text-xs text-ink-700">{r.manufacturerName}</span>
+          <span className="truncate text-sm text-ink-700">{r.manufacturerName}</span>
         ) : (
           <Tooltip content="The requirement has no source against it yet, so it counts once with no manufacturer.">
-            <span className="text-xs text-ink-400">No source yet</span>
+            <span className="text-sm text-ink-400">No source yet</span>
           </Tooltip>
         ),
     },
@@ -154,32 +154,35 @@ export function DevelopmentRegister() {
         r.stageAtPeriodEnd ? (
           <StageBadge stage={r.stageAtPeriodEnd} size="sm" />
         ) : (
-          <span className="text-xs text-ink-400">Not started</span>
+          <span className="text-sm text-ink-400">Not started</span>
         ),
     },
     {
       key: 'enquiry',
+      align: 'right',
       header: 'Enquiry date',
       sortable: true,
       width: '7.5rem',
       value: (r) => r.enquiryDate,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.enquiryDate)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.enquiryDate)}</span>,
     },
     {
       key: 'approved',
+      align: 'right',
       header: 'Approved',
       sortable: true,
       width: '7.5rem',
       value: (r) => r.approvedOn,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.approvedOn)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.approvedOn)}</span>,
     },
     {
       key: 'commercial',
+      align: 'right',
       header: 'First commercial',
       sortable: true,
       width: '8.5rem',
       value: (r) => r.firstCommercialOn,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.firstCommercialOn)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.firstCommercialOn)}</span>,
     },
     {
       key: 'owner',
@@ -187,7 +190,7 @@ export function DevelopmentRegister() {
       sortable: true,
       width: '9rem',
       value: (r) => r.ownerName,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.ownerName}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.ownerName}</span>,
     },
   ]
 
@@ -240,7 +243,6 @@ export function DevelopmentRegister() {
         meta={
           <>
             <Badge tone="accent">{pluralise(totals.requirements, 'requirement')}</Badge>
-            <Badge tone="neutral">{pluralise(totals.rows, 'row')}</Badge>
           </>
         }
         actions={<ExportButton onClick={exportRows} disabled={!rows || rows.length === 0} />}
@@ -249,24 +251,24 @@ export function DevelopmentRegister() {
       <Panel>
         <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Month</p>
+            <p className="text-sm font-medium text-ink-500">Month</p>
             <input
               type="month"
               value={from.slice(0, 7)}
               onChange={(e) => pickMonth(e.target.value)}
-              className="h-8 w-full rounded border border-paper-400 bg-white px-2.5 font-mono text-sm tabular text-ink-900 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/25"
+ className="h-8 w-full rounded border border-paper-400 bg-white px-2.5 text-sm tabular text-ink-900 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/25"
             />
           </div>
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Or a range, from</p>
+            <p className="text-sm font-medium text-ink-500">Or a range, from</p>
             <DateInput value={from} onChange={(e) => setValue('from', e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">To</p>
+            <p className="text-sm font-medium text-ink-500">To</p>
             <DateInput value={to} onChange={(e) => setValue('to', e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Kind</p>
+            <p className="text-sm font-medium text-ink-500">Kind</p>
             <Select
               value={kind}
               onChange={(v) => setValue('kind', v)}
@@ -282,7 +284,7 @@ export function DevelopmentRegister() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 p-3">
-          <span className="text-2xs font-medium uppercase tracking-wide text-ink-500">Group by</span>
+          <span className="text-sm font-medium text-ink-500">Group by</span>
           <SegmentedControl
             value={grouping}
             onChange={setGrouping}
@@ -377,7 +379,7 @@ export function DevelopmentRegister() {
                 <li key={group.key} className="flex items-center gap-3 px-4 py-2.5">
                   <span className="min-w-0 flex-1 truncate text-sm text-ink-800">{group.key}</span>
                   <span className="text-sm font-semibold tabular text-ink-900">{group.requirements}</span>
-                  <span className="w-12 text-right text-xs tabular text-ink-400">({group.rows.length})</span>
+                  <span className="w-12 text-right text-sm tabular text-ink-400">({group.rows.length})</span>
                 </li>
               ))}
             </ul>
@@ -395,7 +397,7 @@ export function DevelopmentRegister() {
           exportFilters={queryString}
           onExport={(count) => void logExport('development register', queryString, count)}
           toolbar={
-            <span className="text-xs text-ink-500">
+            <span className="text-sm text-ink-500">
               {isWholeMonth ? fmtMonth(from) : `${fmtDate(from)} to ${fmtDate(to)}`} ·{' '}
               {rows ? pluralise(rows.length, 'row') : '…'}
             </span>

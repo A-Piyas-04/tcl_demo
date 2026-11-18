@@ -116,7 +116,7 @@ export function SamplePanel({
     <Panel>
       <PanelHeader
         title="Sample rounds"
-        subtitle="Request, dispatch, client receipt, result. Each step moves the stage for you."
+        subtitle="Request, dispatch, receipt, result"
         icon={<FlaskConical className="h-4 w-4" />}
         actions={
           <>
@@ -195,7 +195,7 @@ export function SamplePanel({
               <AlertTriangle className="h-4 w-4" />
               Round {lastFailed.roundNo} failed. There are two ways forward
             </p>
-            <p className="text-xs leading-relaxed text-ink-600">
+            <p className="text-sm leading-relaxed text-ink-600">
               {reasonName(lastFailed.rejectionReasonCode) ?? 'No reason recorded'}
               {lastFailed.outcomeNotes ? `. ${lastFailed.outcomeNotes}` : '.'}
             </p>
@@ -247,11 +247,11 @@ function RoundRow({
   return (
     <li className="space-y-2 px-3 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-paper-200 text-[10px] font-semibold text-ink-700">
+        <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-paper-200 text-sm font-semibold text-ink-700">
           {round.roundNo}
         </span>
         <span className="text-sm font-semibold text-ink-900">{SAMPLE_PURPOSE_LABEL[round.purpose]}</span>
-        <span className="text-xs tabular text-ink-600">{fmtQty(round.requestedQty, round.qtyUom)}</span>
+        <span className="text-sm tabular text-ink-600">{fmtQty(round.requestedQty, round.qtyUom)}</span>
         <Badge
           tone={
             round.outcome === 'PASS'
@@ -288,13 +288,13 @@ function RoundRow({
       </FieldGrid>
 
       {round.outcome === 'FAIL' ? (
-        <p className="rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-xs leading-relaxed text-danger-700">
+        <p className="rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-sm leading-relaxed text-danger-700">
           <span className="font-medium">Rejected: </span>
           {reasonName(round.rejectionReasonCode) ?? 'reason not recorded'}
           {round.outcomeNotes ? ` — ${round.outcomeNotes}` : ''}
         </p>
       ) : round.outcomeNotes ? (
-        <p className="text-xs italic leading-relaxed text-ink-500">“{round.outcomeNotes}”</p>
+        <p className="text-sm leading-relaxed text-ink-500">“{round.outcomeNotes}”</p>
       ) : null}
 
       <WriteOnly>

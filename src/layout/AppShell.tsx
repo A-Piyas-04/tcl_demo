@@ -49,6 +49,7 @@ import {
   Switch,
   Tooltip,
 } from '@/components/ui'
+import { Mark } from './Mark'
 import { CommandPalette } from './CommandPalette'
 import { Breadcrumbs } from './Breadcrumbs'
 
@@ -110,7 +111,6 @@ export function AppShell() {
   const [paletteOpen, setPaletteOpen] = React.useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const user = useCurrentUser()
 
   // ⌘K / Ctrl-K opens the palette; g-then-key jumps to a section.
   React.useEffect(() => {
@@ -170,13 +170,11 @@ export function AppShell() {
         className="sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-ink-800 bg-ink-900 md:flex"
       >
         <div className="flex h-[3.25rem] items-center gap-2.5 border-b border-ink-800 px-3">
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-accent-500 font-mono text-[13px] font-bold text-ink-950">
-            T
-          </span>
+          <Mark className="h-7 w-7 shrink-0 text-accent-400" />
           {!collapsed ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-w-0 leading-tight">
               <p className="truncate text-sm font-semibold text-paper-100">Techstream</p>
-              <p className="truncate text-[10px] text-ink-500">Sourcing platform</p>
+              <p className="truncate text-sm text-ink-500">Sourcing platform</p>
             </motion.div>
           ) : null}
         </div>
@@ -195,7 +193,7 @@ export function AppShell() {
           <RailLink item={ADMIN_ITEM} collapsed={collapsed} />
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-ink-500 transition-colors hover:bg-ink-850 hover:text-paper-200"
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-ink-500 transition-colors hover:bg-ink-850 hover:text-paper-200"
           >
             {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
             {!collapsed ? 'Collapse' : null}
@@ -221,11 +219,6 @@ export function AppShell() {
             </AnimatePresence>
           </div>
         </main>
-        <footer className="border-t border-paper-300 px-4 py-3 sm:px-6">
-          <p className="mx-auto max-w-[94rem] text-2xs text-ink-400">
-            Prototype with demonstration data — no live database. Signed in as {user?.fullName ?? 'guest'}.
-          </p>
-        </footer>
       </div>
 
       <MobileNav />
@@ -301,7 +294,7 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
 
         <button
           onClick={onOpenPalette}
-          className="group hidden h-8 items-center gap-2 rounded-md border border-paper-300 bg-white px-2.5 text-xs text-ink-400 shadow-tile transition-colors hover:border-paper-400 hover:text-ink-600 sm:flex"
+          className="group hidden h-8 items-center gap-2 rounded-md border border-paper-300 bg-white px-2.5 text-sm text-ink-400 transition-colors hover:border-paper-400 hover:text-ink-600 sm:flex"
         >
           <Search className="h-3.5 w-3.5" />
           <span className="pr-6">Search anything…</span>
@@ -329,7 +322,7 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               <Bell className="h-4 w-4" />
               {unread.length ? (
                 <span className="absolute right-1 top-1 flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-accent-400" />
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-accent-400" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-500" />
                 </span>
               ) : null}
@@ -341,7 +334,7 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
               {unread.length ? (
                 <button
                   onClick={() => void markNotificationsRead(unread.map((n) => n.id))}
-                  className="text-2xs text-accent-700 hover:underline"
+                  className="text-sm text-accent-700 hover:underline"
                 >
                   Mark all read
                 </button>
@@ -349,13 +342,13 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             </div>
             <ul className="scroll-slim max-h-80 divide-y divide-paper-200 overflow-y-auto">
               {mine.length === 0 ? (
-                <li className="px-3 py-6 text-center text-xs text-ink-400">Nothing waiting for you.</li>
+                <li className="px-3 py-6 text-center text-sm text-ink-400">Nothing waiting for you.</li>
               ) : (
                 mine.map((n) => (
                   <li key={n.id} className={cn('px-3 py-2', !n.isRead && 'bg-accent-50/40')}>
-                    <p className="text-xs font-medium text-ink-800">{n.title}</p>
-                    {n.body ? <p className="mt-0.5 text-2xs leading-relaxed text-ink-500">{n.body}</p> : null}
-                    <p className="mt-1 text-2xs text-ink-400">{fmtAgo(n.createdAt)}</p>
+                    <p className="text-sm font-medium text-ink-800">{n.title}</p>
+                    {n.body ? <p className="mt-0.5 text-sm leading-relaxed text-ink-500">{n.body}</p> : null}
+                    <p className="mt-1 text-sm text-ink-400">{fmtAgo(n.createdAt)}</p>
                   </li>
                 ))
               )}
@@ -368,8 +361,8 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             <button className="flex items-center gap-2 rounded-md py-1 pl-1 pr-1.5 transition-colors hover:bg-paper-200">
               <Avatar name={user?.fullName ?? 'Guest'} />
               <span className="hidden min-w-0 text-left leading-tight sm:block">
-                <span className="block truncate text-xs font-medium text-ink-900">{user?.fullName}</span>
-                <span className="block truncate text-[10px] text-ink-400">
+                <span className="block truncate text-sm font-medium text-ink-900">{user?.fullName}</span>
+                <span className="block truncate text-sm text-ink-400">
                   {role === 'FULL_ACCESS' ? 'Full access' : 'View only'}
                 </span>
               </span>
@@ -379,15 +372,15 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             <MenuLabel>Signed in</MenuLabel>
             <div className="px-2 pb-2">
               <p className="text-sm font-medium text-ink-900">{user?.fullName}</p>
-              <p className="text-2xs text-ink-500">{user?.email}</p>
-              <p className="mt-0.5 text-2xs text-ink-400">{user?.department}</p>
+              <p className="text-sm text-ink-500">{user?.email}</p>
+              <p className="mt-0.5 text-sm text-ink-400">{user?.department}</p>
             </div>
             <MenuSeparator />
 
-            <MenuLabel>Demonstration controls</MenuLabel>
+            <MenuLabel>Session</MenuLabel>
             <div className="space-y-2.5 px-2 py-2">
               <div>
-                <p className="mb-1 text-2xs text-ink-500">Role in force</p>
+                <p className="mb-1 text-sm text-ink-500">Access level</p>
                 <SegmentedControl
                   size="sm"
                   value={role}
@@ -399,7 +392,7 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
                 />
               </div>
               <div>
-                <p className="mb-1 text-2xs text-ink-500">Simulated latency</p>
+                <p className="mb-1 text-sm text-ink-500">Response delay</p>
                 <SegmentedControl
                   size="sm"
                   value={presenter.latency}
@@ -415,12 +408,11 @@ function TopBar({ onOpenPalette }: { onOpenPalette: () => void }) {
                 checked={presenter.showRuleHints}
                 onChange={(v) => setPresenter({ showRuleHints: v })}
                 label="Show rule notes"
-                description="Explain the rules the prototype enforces."
               />
             </div>
             <MenuSeparator />
             <MenuItem icon={<RefreshCw className="h-3.5 w-3.5" />} onSelect={() => resetDemoData()}>
-              Reset demonstration data
+              Reset data
             </MenuItem>
             <MenuItem icon={<LogOut className="h-3.5 w-3.5" />} onSelect={() => signOut()}>
               Sign out
@@ -451,7 +443,7 @@ function MobileNav() {
                 to={item.to}
                 end={item.end}
                 className={cn(
-                  'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[10px] transition-colors active:bg-ink-800',
+                  'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-sm transition-colors active:bg-ink-800',
                   itemIsActive(item, location.pathname) ? 'text-accent-300' : 'text-ink-400',
                 )}
               >

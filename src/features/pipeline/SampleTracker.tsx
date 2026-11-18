@@ -154,28 +154,30 @@ export function SampleTracker() {
       sortable: true,
       value: (r) => r.round.requestedQty,
       cell: (r) => (
-        <span className="text-xs tabular text-ink-700">{fmtQty(r.round.requestedQty, r.round.qtyUom)}</span>
+        <span className="text-sm tabular text-ink-700">{fmtQty(r.round.requestedQty, r.round.qtyUom)}</span>
       ),
     },
     {
       key: 'requested',
+      align: 'right',
       header: 'Requested',
       optional: true,
       sortable: true,
       value: (r) => r.round.requestedOn,
-      cell: (r) => <span className="text-xs tabular text-ink-500">{fmtDate(r.round.requestedOn)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-500">{fmtDate(r.round.requestedOn)}</span>,
     },
     {
       key: 'dispatched',
+      align: 'right',
       header: 'Dispatched',
       sortable: true,
       width: '7.5rem',
       value: (r) => r.round.dispatchedOn,
       cell: (r) =>
         r.round.dispatchedOn ? (
-          <span className="text-xs tabular text-ink-600">{fmtDate(r.round.dispatchedOn)}</span>
+          <span className="text-sm tabular text-ink-600">{fmtDate(r.round.dispatchedOn)}</span>
         ) : (
-          <span className="text-xs text-ink-400">not yet</span>
+          <span className="text-sm text-ink-400">not yet</span>
         ),
     },
     {
@@ -187,13 +189,13 @@ export function SampleTracker() {
       value: (r) => r.daysSinceDispatch,
       cell: (r) =>
         r.daysSinceDispatch == null ? (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ) : r.isOverdue ? (
           <Tooltip content={`No outcome after ${r.daysSinceDispatch} days, beyond the ${threshold}-day threshold for Under evaluation.`}>
-            <span className="text-xs font-medium tabular text-warn-600">{r.daysSinceDispatch}d</span>
+            <span className="text-sm font-medium tabular text-warn-600">{r.daysSinceDispatch}d</span>
           </Tooltip>
         ) : (
-          <span className="text-xs tabular text-ink-600">{r.daysSinceDispatch}d</span>
+          <span className="text-sm tabular text-ink-600">{r.daysSinceDispatch}d</span>
         ),
     },
     {
@@ -215,7 +217,7 @@ export function SampleTracker() {
           {r.isOverdue ? <Badge tone="warn">Overdue</Badge> : null}
           {r.round.outcome === 'FAIL' && r.round.rejectionReasonCode ? (
             <Tooltip content={reasonName(r.round.rejectionReasonCode) ?? ''}>
-              <span className="text-2xs text-ink-400">why</span>
+              <span className="text-sm text-ink-400">why</span>
             </Tooltip>
           ) : null}
         </span>
@@ -227,7 +229,7 @@ export function SampleTracker() {
       sortable: true,
       optional: true,
       value: (r) => r.ownerName,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.ownerName}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.ownerName}</span>,
     },
   ]
 
@@ -236,10 +238,9 @@ export function SampleTracker() {
       <div>
         <PageHeading
           title="Engagements"
-          subtitle="Sample rounds across every engagement, so nothing sits silently at a client. Samples are requested and recorded on the engagement itself."
+          subtitle="Rounds across every engagement, oldest first"
           meta={
             <>
-              <Badge tone="neutral">{pluralise(all.length, 'round')}</Badge>
               {overdueCount > 0 ? <Badge tone="warn">{pluralise(overdueCount, 'overdue')}</Badge> : null}
               <Tooltip content="From the Under evaluation ageing threshold in the stage configuration.">
                 <Badge tone="outline">Overdue after {threshold} days</Badge>
@@ -309,9 +310,8 @@ export function SampleTracker() {
           exportName="sample-rounds"
           exportFilters={queryString}
           onExport={(count) => void logExport('sample tracker', queryString, count)}
-          rowTone={(r) => (r.isOverdue ? 'bg-warn-50/50' : undefined)}
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {loading ? '…' : pluralise(all.length, 'sample round')}
               {activeCount > 0 ? <Badge tone="accent">{activeCount} filters</Badge> : null}

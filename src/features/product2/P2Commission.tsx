@@ -73,7 +73,7 @@ export function P2Commission() {
       sortable: true,
       width: '8.5rem',
       value: (r) => r.b.order.orderRef,
-      cell: (r) => <span className="font-mono text-xs font-medium text-ink-900">{r.b.order.orderRef}</span>,
+      cell: (r) => <span className="font-mono text-sm font-medium text-ink-900">{r.b.order.orderRef}</span>,
     },
     {
       key: 'api',
@@ -82,7 +82,7 @@ export function P2Commission() {
       cell: (r) => (
         <span className="min-w-0">
           <span className="block truncate text-sm text-ink-800">{data.apiProducts.find((a) => a.id === r.b.order.apiProductId)?.name}</span>
-          <span className="block truncate text-2xs text-ink-400">{partyName(data, r.b.order.clientId)}</span>
+          <span className="block truncate text-sm text-ink-400">{partyName(data, r.b.order.clientId)}</span>
         </span>
       ),
     },
@@ -92,8 +92,8 @@ export function P2Commission() {
       width: '11rem',
       value: (r) => `${r.f.basis} ${r.b.commission?.percentage}`,
       cell: (r) => (
-        <span className="text-xs text-ink-700">
-          {r.f.basis ? COMMISSION_BASIS_LABEL[r.f.basis] : '—'} <span className="font-mono text-ink-500">@ {fmtDecPct(r.f.percentage)}</span>
+        <span className="text-sm text-ink-700">
+ {r.f.basis ? COMMISSION_BASIS_LABEL[r.f.basis] : '—'} <span className="text-ink-500">@ {fmtDecPct(r.f.percentage)}</span>
         </span>
       ),
     },
@@ -103,7 +103,7 @@ export function P2Commission() {
       align: 'right',
       width: '9rem',
       value: (r) => fmtDecMoney(r.f.commissionableAmount, r.b.order.currency),
-      cell: (r) => <span className="font-mono text-xs tabular text-ink-600">{fmtDecMoney(r.f.commissionableAmount, r.b.order.currency, 0)}</span>,
+ cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDecMoney(r.f.commissionableAmount, r.b.order.currency, 0)}</span>,
     },
     {
       key: 'expected',
@@ -111,7 +111,7 @@ export function P2Commission() {
       align: 'right',
       width: '8.5rem',
       value: (r) => fmtDecMoney(r.f.expectedCommission, r.b.order.currency),
-      cell: (r) => <span className="font-mono text-xs tabular text-ink-800">{fmtDecMoney(r.f.expectedCommission, r.b.order.currency)}</span>,
+ cell: (r) => <span className="text-sm tabular text-ink-800">{fmtDecMoney(r.f.expectedCommission, r.b.order.currency)}</span>,
     },
     {
       key: 'received',
@@ -122,15 +122,15 @@ export function P2Commission() {
       cell: (r) =>
         r.f.receivedCommission != null ? (
           <span className="min-w-0 text-right">
-            <span className="block font-mono text-xs tabular text-ok-600">{fmtDecMoney(r.f.receivedCommission, r.b.order.currency)}</span>
+ <span className="block text-sm tabular text-ok-600">{fmtDecMoney(r.f.receivedCommission, r.b.order.currency)}</span>
             {r.f.variance ? (
-              <span className={`block font-mono text-2xs ${r.f.variance < 0n ? 'text-danger-600' : 'text-ink-400'}`}>
+ <span className={`block text-sm ${r.f.variance < 0n ? 'text-danger-600' : 'text-ink-400'}`}>
                 {fmtDecMoney(r.f.variance, r.b.order.currency, 2, true)}
               </span>
             ) : null}
           </span>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -142,12 +142,12 @@ export function P2Commission() {
         r.b.commission?.status === 'RECEIVED' ? (
           <span>
             <Badge tone="ok">Received</Badge>
-            <span className="ml-1.5 text-2xs text-ink-400">{fmtDate(r.b.commission.receivedOn)}</span>
+            <span className="ml-1.5 text-sm text-ink-400">{fmtDate(r.b.commission.receivedOn)}</span>
           </span>
         ) : r.due ? (
           <Badge tone="accent">Due — delivered</Badge>
         ) : (
-          <span className="text-xs text-ink-500">{tradeStatusLabel(r.b)}</span>
+          <span className="text-sm text-ink-500">{tradeStatusLabel(r.b)}</span>
         ),
     },
   ]

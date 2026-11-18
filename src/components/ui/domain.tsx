@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react'
-import { motion, useInView, useMotionValue, useSpring } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { AlertCircle, ArrowRight, Check, CircleDot, Pause, X } from 'lucide-react'
 import { cn, fmtDate, fmtNumber } from '@/lib/utils'
@@ -24,14 +24,14 @@ import type {
   ManufacturerStatus,
   StageHistoryEntry,
 } from '@/data/types'
-import { Badge, HelpTip, splitBlurb } from './primitives'
+import { Badge, splitBlurb } from './primitives'
 import { Tooltip } from './overlays'
 
 // ------------------------------------------------------------ stage chip
 
+/** One badge size across the app; `size` is accepted and ignored. */
 export function StageBadge({
   stage,
-  size = 'md',
   showDot = true,
 }: {
   stage: EngagementStage
@@ -42,12 +42,11 @@ export function StageBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded border font-medium',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded border px-2 py-0.5 text-xs font-semibold',
         style.chip,
-        size === 'sm' ? 'px-1.5 py-px text-[10px]' : 'px-2 py-0.5 text-2xs',
       )}
     >
-      {showDot ? <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', style.dot)} /> : null}
+      {showDot ? <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', style.dot)} aria-hidden /> : null}
       {STAGE_LABEL[stage]}
     </span>
   )
@@ -128,61 +127,57 @@ export function StageRail({
   const anchor = isExit ? (stageBeforeHold ?? furthestPipeline(reachedSet)) : stage
   const anchorIndex = anchor ? PIPELINE_STAGES.indexOf(anchor) : -1
 
+  // The date the track arrived where it now stands.
+  const arrivedOn = React.useMemo(() => {
+    const entries = (history ?? []).filter((h) => h.toStage === stage)
+    if (entries.length === 0) return null
+    return entries.reduce((a, b) => (a.changedAt > b.changedAt ? a : b)).changedAt
+  }, [history, stage])
+
+  // One inline row: a segmented track, then a single line naming where it
+  // stands and when it got there. Under 56px tall, labels and all.
   return (
     <div className="space-y-2">
-      <div className="flex items-stretch gap-1">
+      <div className="flex items-stretch gap-1" role="img" aria-label={`Stage: ${STAGE_LABEL[stage]}`}>
         {PIPELINE_STAGES.map((s: EngagementStage, i: number) => {
           // a migrated record has a single history entry, so everything before it counts as passed
           const reached = reachedSet.size > 1 ? reachedSet.has(s) : i <= anchorIndex
           const isCurrent = !isExit && s === stage
-          const style = STAGE_STYLE[s]
           return (
-            <div key={s} className="group relative min-w-0 flex-1">
+            <div key={s} className="min-w-0 flex-1">
               <Tooltip content={STAGE_LABEL[s]}>
-                <div className="flex flex-col gap-1.5">
-                  <motion.div
-                    className={cn(
-                      'h-1.5 rounded-full',
-                      reached ? style.bar : 'bg-paper-300',
-                      isCurrent && 'ring-2 ring-offset-1 ring-offset-white',
-                    )}
-                    style={isCurrent ? { boxShadow: '0 0 0 2px rgb(255 255 255), 0 0 0 3.5px currentColor' } : undefined}
-                    initial={{ scaleX: 0, originX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.4, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                  {!compact ? (
-                    <span
-                      className={cn(
-                        'block truncate text-[10px] leading-tight',
-                        isCurrent ? 'font-semibold text-ink-900' : reached ? 'text-ink-600' : 'text-ink-400',
-                      )}
-                    >
-                      {STAGE_LABEL[s]}
-                    </span>
-                  ) : null}
-                </div>
+                <div
+                  className={cn(
+                    'h-1.5 rounded-full',
+                    isCurrent ? 'bg-accent-700' : reached ? 'bg-accent-400' : 'bg-paper-300',
+                  )}
+                />
               </Tooltip>
             </div>
           )
         })}
       </div>
-      {isExit ? (
-        <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-2xs font-medium',
-              STAGE_STYLE[stage].chip,
-            )}
-          >
-            {RAIL_ICON[stage]}
-            {STAGE_LABEL[stage]}
-          </span>
-          {stage === 'ON_HOLD' && stageBeforeHold ? (
-            <span className="text-2xs text-ink-500">
-              paused at {STAGE_LABEL[stageBeforeHold]} — it can only resume there
-            </span>
-          ) : null}
+      {!compact ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          {isExit ? (
+            <>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-xs font-semibold',
+                  STAGE_STYLE[stage].chip,
+                )}
+              >
+                {RAIL_ICON[stage]}
+                {STAGE_LABEL[stage]}
+              </span>
+              {stage === 'ON_HOLD' && stageBeforeHold ? (
+                <span className="text-ink-500">Paused at {STAGE_LABEL[stageBeforeHold]}</span>
+              ) : null}
+            </>
+          ) : (
+            <span className="font-semibold text-ink-900">{STAGE_LABEL[stage]}</span>
+          )}
+          {arrivedOn ? <span className="text-ink-500">{fmtDate(arrivedOn)}</span> : null}
         </div>
       ) : null}
     </div>
@@ -235,17 +230,17 @@ export function StageTimeline({
               )}
             </span>
             {h.isOverride ? <Badge tone="warn">Override</Badge> : null}
-            <span className="text-xs text-ink-400">
+            <span className="text-sm text-ink-400">
               {fmtDate(h.changedAt)} · {userName(h.changedByUserId)}
               {h.daysInPreviousStage != null ? ` · ${h.daysInPreviousStage}d in previous stage` : ''}
             </span>
           </div>
           {h.reasonCode ? (
-            <p className="mt-0.5 text-xs text-ink-600">
+            <p className="mt-0.5 text-sm text-ink-600">
               <span className="font-medium">Reason:</span> {reasonName(h.reasonCode)}
             </p>
           ) : null}
-          {h.remark ? <p className="mt-0.5 text-xs italic leading-relaxed text-ink-500">“{h.remark}”</p> : null}
+          {h.remark ? <p className="mt-1 text-sm leading-relaxed text-ink-600">“{h.remark}”</p> : null}
         </motion.li>
       ))}
     </ol>
@@ -254,7 +249,15 @@ export function StageTimeline({
 
 // ------------------------------------------------------------ KPI tiles
 
-/** Counts up when the tile scrolls into view. */
+/**
+ * A figure in a tile.
+ *
+ * This used to count up from zero when it scrolled into view, which meant a
+ * tile below the fold *read zero* until the reader happened to scroll to it —
+ * the number on screen disagreed with the number in the hint beneath it, and
+ * with the list the tile links to. A count is a fact, not an effect: it now
+ * renders its value immediately. The name is kept so call sites stay valid.
+ */
 export function AnimatedNumber({
   value,
   format = fmtNumber,
@@ -264,23 +267,7 @@ export function AnimatedNumber({
   format?: (n: number) => string
   className?: string
 }) {
-  const ref = React.useRef<HTMLSpanElement>(null)
-  const inView = useInView(ref, { once: true, margin: '-40px' })
-  const motionValue = useMotionValue(0)
-  const spring = useSpring(motionValue, { duration: 900, bounce: 0 })
-  const [display, setDisplay] = React.useState(0)
-
-  React.useEffect(() => {
-    if (inView) motionValue.set(value)
-  }, [inView, value, motionValue])
-
-  React.useEffect(() => spring.on('change', (v) => setDisplay(v)), [spring])
-
-  return (
-    <span ref={ref} className={cn('tabular', className)}>
-      {format(Math.round(display))}
-    </span>
-  )
+  return <span className={className}>{format(value)}</span>
 }
 
 /**
@@ -312,32 +299,34 @@ export function KpiTile({
   span?: 'wide' | 'tall' | 'big'
   className?: string
 }) {
-  const tones: Record<string, string> = {
-    default: 'bg-white border-paper-300',
-    accent: 'bg-accent-50/60 border-accent-200',
-    warn: 'bg-warn-50/70 border-warn-200',
-    danger: 'bg-danger-50/70 border-danger-200',
-    ok: 'bg-ok-50/70 border-ok-200',
-    ink: 'bg-ink-900 border-ink-800 text-paper-100',
+  // Every tile is the same white card with the same border. Severity is
+  // carried by a left edge and by the figure itself — never by tinting the
+  // whole card, which would make "a number is bad" look like a different
+  // kind of object.
+  const edge: Record<string, string> = {
+    default: 'border-l-paper-300',
+    accent: 'border-l-accent-600',
+    warn: 'border-l-warn-600',
+    danger: 'border-l-danger-600',
+    ok: 'border-l-ok-600',
+    ink: 'border-l-paper-300',
   }
-  const { caption: hintCaption, tip: hintTip } = splitBlurb(hint)
   const valueTone: Record<string, string> = {
     default: 'text-ink-900',
-    accent: 'text-accent-800',
-    warn: 'text-warn-600',
+    accent: 'text-ink-900',
+    warn: 'text-warn-700',
     danger: 'text-danger-700',
-    ok: 'text-ok-600',
-    ink: 'text-white',
+    ok: 'text-ok-700',
+    ink: 'text-ink-900',
   }
+  const { caption: hintCaption } = splitBlurb(hint)
 
   const body = (
-    <motion.div
-      whileHover={to ? { y: -2 } : undefined}
-      transition={{ duration: 0.18 }}
+    <div
       className={cn(
-        'group flex h-full flex-col justify-between gap-2 rounded-lg border p-3.5 shadow-tile transition-shadow',
-        to && 'hover:shadow-raised',
-        tones[tone],
+        'flex h-full flex-col justify-between gap-2 rounded border border-l-2 border-paper-300 bg-white p-4 transition-colors',
+        edge[tone],
+        to && 'group-hover:bg-paper-100',
         span === 'wide' && 'sm:col-span-2',
         span === 'tall' && 'sm:row-span-2',
         span === 'big' && 'sm:col-span-2 sm:row-span-2',
@@ -345,47 +334,32 @@ export function KpiTile({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p
-          className={cn(
-            'inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider',
-            tone === 'ink' ? 'text-paper-300' : 'text-ink-500',
-          )}
-        >
-          {label}
-          <HelpTip className={tone === 'ink' ? 'text-paper-400' : undefined}>{hintTip}</HelpTip>
-        </p>
-        {icon ? (
-          <span className={cn('shrink-0', tone === 'ink' ? 'text-accent-300' : 'text-ink-300')}>{icon}</span>
-        ) : null}
+        <p className="text-sm text-ink-600">{label}</p>
+        {icon ? <span className="shrink-0 text-ink-400">{icon}</span> : null}
       </div>
 
       {value !== undefined ? (
         <div className="flex items-baseline gap-1.5">
-          <span className={cn('text-3xl font-semibold leading-none tracking-tight', valueTone[tone])}>{value}</span>
-          {unit ? (
-            <span className={cn('text-xs font-medium', tone === 'ink' ? 'text-paper-300' : 'text-ink-400')}>{unit}</span>
-          ) : null}
+          <span className={cn('text-xl font-semibold leading-none', valueTone[tone])}>{value}</span>
+          {unit ? <span className="text-sm text-ink-500">{unit}</span> : null}
         </div>
       ) : null}
 
       {children}
 
       {hintCaption || footer ? (
-        <div
-          className={cn(
-            'text-xs leading-relaxed',
-            tone === 'ink' ? 'text-paper-300' : 'text-ink-500',
-          )}
-        >
+        <div className="text-sm leading-snug text-ink-500">
           {hintCaption}
           {footer}
         </div>
       ) : null}
-    </motion.div>
+    </div>
   )
 
+  // A tile that leads somewhere says so by being a link; one that does not is
+  // not dressed up to look clickable.
   return to ? (
-    <Link to={to} className="block h-full focus-visible:rounded-lg">
+    <Link to={to} className="group block h-full rounded">
       {body}
     </Link>
   ) : (
@@ -398,7 +372,7 @@ export function TileGrid({ children, className }: { children: React.ReactNode; c
   return (
     <div
       className={cn(
-        'grid auto-rows-[minmax(8.5rem,auto)] grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4',
+        'grid auto-rows-[minmax(7rem,auto)] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4',
         className,
       )}
     >
@@ -412,8 +386,8 @@ export function TileGrid({ children, className }: { children: React.ReactNode; c
 export function Sparkline({
   values,
   className,
-  tone = 'stroke-accent-500',
-  fill = 'fill-accent-500/10',
+  tone = 'stroke-accent-600',
+  fill = 'fill-accent-100',
 }: {
   values: number[]
   className?: string
@@ -470,7 +444,7 @@ export function MiniBars({
       {items.map((item, i) => {
         const row = (
           <>
-            <span className="w-[6.75rem] shrink-0 truncate text-2xs text-ink-600">{item.label}</span>
+            <span className="w-32 shrink-0 truncate-end text-sm text-ink-600">{item.label}</span>
             <span className="h-2 flex-1 overflow-hidden rounded-full bg-paper-200">
               <motion.span
                 className={cn('block h-full rounded-full', item.tone)}
@@ -479,7 +453,7 @@ export function MiniBars({
                 transition={{ duration: 0.6, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
               />
             </span>
-            <span className="w-7 shrink-0 text-right text-2xs font-semibold tabular text-ink-700">{item.value}</span>
+            <span className="w-10 shrink-0 text-right text-sm font-semibold text-ink-900">{item.value}</span>
           </>
         )
         return (
@@ -500,18 +474,23 @@ export function MiniBars({
 
 // ---------------------------------------------------------------- misc
 
+/**
+ * An age in days, graded. A stalled record should not be the same grey as a
+ * fresh one, so severity sits on the figure itself — with an icon beside it,
+ * so the signal never rests on colour alone.
+ */
 export function AgeingFlag({ days, threshold }: { days: number; threshold: number }) {
-  if (threshold <= 0 || days <= threshold) {
-    return <span className="text-xs tabular text-ink-500">{days}d</span>
-  }
-  return (
-    <Tooltip content={`Beyond the ${threshold}-day threshold for this stage.`}>
-      <span className="inline-flex items-center gap-1 text-xs font-medium tabular text-warn-600">
-        <AlertCircle className="h-3 w-3" />
-        {days}d
-      </span>
-    </Tooltip>
+  const over = threshold > 0 && days > threshold
+  const far = threshold > 0 && days > threshold * 2
+  const tone = far ? 'text-danger-700' : over ? 'text-warn-700' : 'text-ink-700'
+  const body = (
+    <span className={cn('inline-flex items-center gap-1 whitespace-nowrap font-semibold', tone)}>
+      {over ? <AlertCircle className="h-4 w-4 shrink-0" aria-hidden /> : null}
+      {days} days
+    </span>
   )
+  if (!over) return body
+  return <Tooltip content={`Past the ${threshold}-day threshold for this stage.`}>{body}</Tooltip>
 }
 
 /** A yes/no regulatory marker, compact enough for a table cell. */
@@ -520,11 +499,11 @@ export function FilingDot({ present, label }: { present: boolean; label: string 
     <Tooltip content={present ? `${label} on file` : `No ${label}`}>
       <span
         className={cn(
-          'inline-flex items-center gap-1 rounded border px-1.5 py-px text-[10px] font-semibold',
-          present ? 'border-ok-200 bg-ok-50 text-ok-600' : 'border-paper-300 bg-paper-100 text-ink-400',
+          'inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-semibold',
+          present ? 'border-ok-200 bg-ok-50 text-ok-700' : 'border-paper-300 bg-paper-100 text-ink-500',
         )}
       >
-        {present ? <Check className="h-2.5 w-2.5" /> : <CircleDot className="h-2.5 w-2.5" />}
+        {present ? <Check className="h-3 w-3" aria-hidden /> : <CircleDot className="h-3 w-3" aria-hidden />}
         {label}
       </span>
     </Tooltip>

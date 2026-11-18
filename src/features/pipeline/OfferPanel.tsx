@@ -70,7 +70,7 @@ export function OfferPanel({ engagement }: { engagement: Engagement }) {
     <Panel>
       <PanelHeader
         title="Offers"
-        subtitle="Newest first. A revision supersedes the previous version and does not move the stage."
+        subtitle="Newest first; a revision supersedes the last"
         actions={
           <>
             <Badge tone="neutral">{offers.length}</Badge>
@@ -155,16 +155,16 @@ function OfferRow({ offer }: { offer: Offer }) {
   const awaitingAnswer = offer.status === 'SENT' || offer.status === 'DRAFT'
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5">
-      <span className="w-10 shrink-0 font-mono text-2xs text-ink-400">v{offer.versionNo}</span>
+      <span className="w-10 shrink-0 font-mono text-sm text-ink-400">v{offer.versionNo}</span>
       <span className="text-sm font-semibold tabular text-ink-900">
         {fmtMoney(offer.offeredPrice, offer.currency)}
-        <span className="text-2xs font-normal text-ink-400">/{offer.perUom}</span>
+        <span className="text-sm font-normal text-ink-400">/{offer.perUom}</span>
       </span>
       <Badge tone="outline">{offer.incoterm}</Badge>
-      <span className="text-xs text-ink-600">MOQ {fmtQty(offer.moqQty, offer.moqUom)}</span>
-      <span className="text-xs tabular text-ink-500">offered {fmtDate(offer.offerDate)}</span>
+      <span className="text-sm text-ink-600">MOQ {fmtQty(offer.moqQty, offer.moqUom)}</span>
+      <span className="text-sm tabular text-ink-500">offered {fmtDate(offer.offerDate)}</span>
       <Tooltip content={expired ? 'The validity date has passed.' : 'Still within its validity.'}>
-        <span className={expired ? 'text-xs tabular text-warn-600' : 'text-xs tabular text-ink-500'}>
+        <span className={expired ? 'text-sm tabular text-warn-600' : 'text-sm tabular text-ink-500'}>
           valid to {fmtDate(offer.validUntil)}
         </span>
       </Tooltip>
@@ -204,7 +204,7 @@ function OfferRow({ offer }: { offer: Offer }) {
         ) : null}
       </span>
       {offer.remarks ? (
-        <p className="w-full text-xs italic leading-relaxed text-ink-500">“{offer.remarks}”</p>
+        <p className="w-full text-sm leading-relaxed text-ink-500">“{offer.remarks}”</p>
       ) : null}
     </li>
   )

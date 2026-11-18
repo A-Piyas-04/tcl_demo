@@ -137,13 +137,13 @@ function SubTabs({ tabs }: { tabs: SectionTab[] }) {
             to={t.to}
             aria-current={on ? 'page' : undefined}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs transition-colors',
+              'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-sm transition-colors',
               on ? 'bg-ink-900 font-medium text-paper-50' : 'text-ink-500 hover:bg-paper-200 hover:text-ink-800',
             )}
           >
             {t.label}
             {typeof t.count === 'number' ? (
-              <span className={cn('tabular text-2xs', on ? 'text-paper-300' : 'text-ink-400')}>{t.count}</span>
+              <span className={cn('tabular text-sm', on ? 'text-paper-300' : 'text-ink-400')}>{t.count}</span>
             ) : null}
           </Link>
         )

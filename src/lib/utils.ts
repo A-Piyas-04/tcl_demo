@@ -7,37 +7,40 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // ------------------------------------------------------------------ dates
-// NFR-US-07: one unambiguous format throughout, DD-MMM-YYYY.
+// One format everywhere: DD MMM YYYY. Relative age is only ever a suffix.
+
+/** The placeholder for an absent value. Used by every formatter and cell. */
+export const EMPTY = '—'
 
 export function fmtDate(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) return EMPTY
   try {
-    return format(parseISO(value.length > 10 ? value.slice(0, 10) : value), 'dd-MMM-yyyy')
+    return format(parseISO(value.length > 10 ? value.slice(0, 10) : value), 'dd MMM yyyy')
   } catch {
     return value
   }
 }
 
 export function fmtDateTime(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) return EMPTY
   try {
-    return format(parseISO(value), 'dd-MMM-yyyy HH:mm')
+    return format(parseISO(value), 'dd MMM yyyy HH:mm')
   } catch {
     return value
   }
 }
 
 export function fmtMonth(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) return EMPTY
   try {
-    return format(parseISO(value.slice(0, 10)), 'MMMM yyyy')
+    return format(parseISO(value.slice(0, 10)), 'MMM yyyy')
   } catch {
     return value
   }
 }
 
 export function fmtAgo(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) return EMPTY
   try {
     return `${formatDistanceToNowStrict(parseISO(value))} ago`
   } catch {
@@ -55,17 +58,25 @@ export function addMonthsIso(iso: string, months: number): string {
 
 // ----------------------------------------------------------------- money
 
+/**
+ * The threshold below which nothing is ever abbreviated. It exists so that a
+ * tile can never read "189k" while the row beneath it reads "7,553": either
+ * every figure in a group is abbreviated, or none is.
+ */
+export const COMPACT_FROM = 1_000_000
+
 export function fmtMoney(
   amount: number | null | undefined,
   currency = 'USD',
   opts: { compact?: boolean; decimals?: number } = {},
 ): string {
-  if (amount == null) return '—'
-  if (opts.compact && Math.abs(amount) >= 1000) {
+  if (amount == null) return EMPTY
+  // `compact` is a request, not an instruction: under the threshold the full
+  // figure is returned, so a summary tile stays consistent with its list.
+  if (opts.compact && Math.abs(amount) >= COMPACT_FROM) {
     const units = [
       { v: 1e9, s: 'bn' },
       { v: 1e6, s: 'm' },
-      { v: 1e3, s: 'k' },
     ]
     for (const u of units) {
       if (Math.abs(amount) >= u.v) {
@@ -98,20 +109,33 @@ export function fmtMoneyTotals(
   return totals.map((t) => fmtMoney(t.amount, t.currency, opts)).join(' + ')
 }
 
+/** Quantities read "600 kg" and "0.5 kg": one space, lower-case unit, always. */
 export function fmtQty(qty: number | null | undefined, uom?: string | null): string {
-  if (qty == null) return '—'
+  if (qty == null) return EMPTY
   const n = qty.toLocaleString('en-US', { maximumFractionDigits: 4 })
-  return uom ? `${n} ${uom}` : n
+  return uom ? `${n} ${uom.toLowerCase()}` : n
 }
 
 export function fmtNumber(n: number | null | undefined): string {
-  if (n == null) return '—'
+  if (n == null) return EMPTY
   return n.toLocaleString('en-US')
 }
 
 export function fmtPct(n: number | null | undefined, decimals = 1): string {
-  if (n == null) return '—'
+  if (n == null) return EMPTY
   return `${n.toFixed(decimals)}%`
+}
+
+/**
+ * Severity for an age in days, so "41 days open" is not the same grey as
+ * "3 days open". Returns a text class; callers pair it with a word or icon so
+ * the signal never rests on colour alone.
+ */
+export function ageTone(days: number | null | undefined, warnAt: number, dangerAt = warnAt * 2): string {
+  if (days == null) return 'text-ink-500'
+  if (days >= dangerAt) return 'text-danger-600'
+  if (days >= warnAt) return 'text-warn-600'
+  return 'text-ink-700'
 }
 
 // ------------------------------------------------------------------ misc

@@ -31,7 +31,7 @@ export function WorkflowConfig() {
     <div className="space-y-4">
       <PageHeading
         title="Stage configuration"
-        subtitle="The stages an engagement moves through, how long it may sit in each, and which moves are allowed."
+        subtitle="Stages, ageing thresholds and permitted moves"
         meta={
           <>
             <Badge tone="neutral">{pluralise(STAGE_CONFIG.length, 'stage')}</Badge>
@@ -50,13 +50,13 @@ export function WorkflowConfig() {
       <Panel>
         <PanelHeader
           title="Stages"
-          subtitle="The ageing threshold is the number of days before an engagement sitting in this stage is flagged as stale."
+          subtitle="Days before a stalled engagement is flagged"
           icon={<GitBranch className="h-4 w-4" />}
         />
         <div className="scroll-slim overflow-x-auto">
           <table className="w-full min-w-[40rem] border-collapse text-sm">
             <thead>
-              <tr className="bg-paper-100/60 text-2xs uppercase tracking-wide text-ink-500">
+              <tr className="bg-paper-100/60 text-sm text-ink-500">
                 <th className="w-16 px-3 py-2 text-left font-medium">Order</th>
                 <th className="px-3 py-2 text-left font-medium">Stage</th>
                 <th className="w-36 px-3 py-2 text-right font-medium">Ageing threshold</th>
@@ -69,11 +69,11 @@ export function WorkflowConfig() {
                 .sort((a, b) => a.displayOrder - b.displayOrder)
                 .map((s) => (
                   <tr key={s.stage} className="hover:bg-paper-50">
-                    <td className="px-3 py-2 tabular text-xs text-ink-400">{s.displayOrder}</td>
+                    <td className="px-3 py-2 tabular text-sm text-ink-400">{s.displayOrder}</td>
                     <td className="px-3 py-2">
                       <StageBadge stage={s.stage} />
                     </td>
-                    <td className="px-3 py-2 text-right tabular text-xs text-ink-700">
+                    <td className="px-3 py-2 text-right tabular text-sm text-ink-700">
                       {s.ageingThresholdDays > 0 ? `${s.ageingThresholdDays} days` : 'Not aged'}
                     </td>
                     <td className="px-3 py-2 text-center">
@@ -92,20 +92,20 @@ export function WorkflowConfig() {
       <Panel>
         <PanelHeader
           title="Allowed transitions"
-          subtitle="Rows are the stage moved from, columns the stage moved to. Anything not ticked is refused."
+          subtitle="From-stage in rows, to-stage in columns"
           icon={<GitBranch className="h-4 w-4" />}
         />
         <div className="scroll-slim overflow-x-auto">
           <table className="border-collapse text-sm">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 border-b border-r border-paper-200 bg-white px-3 py-2 text-left text-2xs font-medium uppercase tracking-wide text-ink-500">
+                <th className="sticky left-0 z-10 border-b border-r border-paper-200 bg-white px-3 py-2 text-left text-sm font-medium text-ink-500">
                   From \ to
                 </th>
                 {ORDERED.map((to) => (
                   <th
                     key={to}
-                    className="h-28 border-b border-paper-200 bg-paper-100/60 px-1 align-bottom text-2xs font-medium text-ink-600"
+                    className="h-28 border-b border-paper-200 bg-paper-100/60 px-1 align-bottom text-sm font-medium text-ink-600"
                   >
                     <span className="flex h-24 items-end justify-center">
                       <span className="whitespace-nowrap [writing-mode:vertical-rl] [transform:rotate(180deg)]">
@@ -135,7 +135,7 @@ export function WorkflowConfig() {
             </tbody>
           </table>
         </div>
-        <div className="flex flex-wrap items-center gap-4 border-t border-paper-200 bg-paper-50 px-3 py-2 text-2xs text-ink-500">
+        <div className="flex flex-wrap items-center gap-4 border-t border-paper-200 bg-paper-50 px-3 py-2 text-sm text-ink-500">
           <span className="flex items-center gap-1.5">
             <Mark on /> Allowed
           </span>
@@ -153,7 +153,7 @@ export function WorkflowConfig() {
 
       <Panel>
         <PanelHeader title="Two rules the matrix cannot show" />
-        <ul className="ml-4 list-disc space-y-2 p-3.5 pl-7 text-xs leading-relaxed text-ink-600">
+        <ul className="ml-4 list-disc space-y-2 p-3.5 pl-7 text-sm leading-relaxed text-ink-600">
           <li>
             An engagement on hold resumes only to the stage it was paused from. The matrix shows every stage as
             reachable from On hold because any of them can be the paused stage, but on a given record only one of them

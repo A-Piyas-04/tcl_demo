@@ -174,7 +174,7 @@ export function ManufacturerDetail() {
             <ShieldAlert className="h-4 w-4" />
             Blacklisted{profile.blacklistedOn ? ` on ${fmtDate(profile.blacklistedOn)}` : ''}
           </p>
-          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-ink-700">
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-ink-700">
             {profile.blacklistReason ?? 'No reason was recorded.'} No product of this manufacturer can be taken into
             the portfolio while it stays blacklisted.
           </p>
@@ -184,28 +184,28 @@ export function ManufacturerDetail() {
       {/* summary as four bounded cells, not one wide band */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Products made</p>
+          <p className="text-sm font-semibold text-ink-500">Products made</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{data?.sources.length ?? '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">{portfolioCount} represented by TCL</p>
+          <p className="mt-0.5 text-sm text-ink-500">{portfolioCount} represented by TCL</p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Clients engaged</p>
+          <p className="text-sm font-semibold text-ink-500">Clients engaged</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{clientCount || '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             {(data?.engagements ?? []).filter((e) => e.stage === 'COMMERCIAL').length} in commercial supply
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Open indents</p>
+          <p className="text-sm font-semibold text-ink-500">Open indents</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{openIndents.length || '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">{pluralise(data?.indents.length ?? 0, 'indent')} in all</p>
+          <p className="mt-0.5 text-sm text-ink-500">{pluralise(data?.indents.length ?? 0, 'indent')} in all</p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Commission earned</p>
+          <p className="text-sm font-semibold text-ink-500">Commission earned</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">
             {commissionEarned > 0 ? fmtMoney(commissionEarned, commissionCurrency, { compact: true }) : '—'}
           </p>
-          <p className="mt-0.5 text-xs text-ink-500">On business routed through this source</p>
+          <p className="mt-0.5 text-sm text-ink-500">On business routed through this source</p>
         </Panel>
       </div>
 
@@ -290,7 +290,7 @@ export function ManufacturerDetail() {
                   <Field label="Relationship owner">{userName(db, profile.ownerUserId)}</Field>
                 </FieldGrid>
                 <div className="mt-4 border-t border-paper-200 pt-3.5">
-                  <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Commission basis</p>
+                  <p className="text-sm font-medium text-ink-500">Commission basis</p>
                   <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-800">
                     {profile.commissionBasisNote ?? 'Not agreed yet. Each indent will need its own figure.'}
                   </p>
@@ -321,7 +321,7 @@ export function ManufacturerDetail() {
                 ) : null}
                 {company.notes ? (
                   <div className="mt-4 border-t border-paper-200 pt-3.5">
-                    <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Notes</p>
+                    <p className="text-sm font-medium text-ink-500">Notes</p>
                     <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-700">{company.notes}</p>
                   </div>
                 ) : null}
@@ -408,12 +408,12 @@ function ProductsTab({
       value: (r) => r.priceTiers[0]?.price ?? null,
       cell: (r) => {
         const tier = r.priceTiers[0]
-        if (!tier) return <span className="text-xs text-warn-600">No valid price</span>
+        if (!tier) return <span className="text-sm text-warn-600">No valid price</span>
         return (
           <Tooltip content={`Valid to ${fmtDate(r.earliestPriceExpiry)}`}>
             <span className="text-sm tabular text-ink-900">
               {fmtMoney(tier.price, tier.currency, { decimals: 0 })}
-              <span className="text-2xs text-ink-400">
+              <span className="text-sm text-ink-400">
                 /{tier.perUom} {tier.incoterm}
               </span>
             </span>
@@ -427,7 +427,7 @@ function ProductsTab({
       align: 'right',
       optional: true,
       value: (r) => r.mp.moqQty,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtQty(r.mp.moqQty, r.mp.moqUom)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtQty(r.mp.moqQty, r.mp.moqUom)}</span>,
     },
     {
       key: 'clients',
@@ -437,7 +437,7 @@ function ProductsTab({
       width: '6rem',
       value: (r) => r.engagementCount,
       cell: (r) => (
-        <span className="text-xs tabular text-ink-700">
+        <span className="text-sm tabular text-ink-700">
           {r.engagementCount || '—'}
           {r.commercialCount > 0 ? <span className="text-ok-600"> ({r.commercialCount})</span> : null}
         </span>
@@ -501,7 +501,7 @@ function ProductsTab({
         <Panel>
           <PanelHeader
             title="Known, not represented"
-            subtitle="Market intelligence. These cannot be offered until TCL takes them into the portfolio."
+            subtitle="Not offerable until taken into the portfolio"
             actions={<Badge tone="outline">{known.length}</Badge>}
           />
           <SourceTable rows={known} columns={columns} pageSize={8} dense empty="Nothing here" />
@@ -533,7 +533,6 @@ function SourceTable({
       pageSize={pageSize}
       dense={dense}
       onRowClick={(r) => navigate(`/sources/${r.mp.id}`)}
-      rowTone={(r) => (r.mp.status === 'DISCONTINUED' ? 'text-ink-500 opacity-70' : undefined)}
       empty={<EmptyState title={empty} compact />}
     />
   )
@@ -617,7 +616,7 @@ function ClientsTab({
                     className="flex w-full items-center gap-3 rounded border border-transparent px-2 py-1.5 text-left transition-colors hover:border-paper-300 hover:bg-paper-100"
                   >
                     <span className="min-w-0 flex-1 truncate text-sm text-ink-800">{r.product.genericName}</span>
-                    <span className="hidden font-mono text-2xs text-ink-500 sm:inline">
+ <span className="hidden text-sm text-ink-500 sm:inline">
                       {r.mp.grade} · {r.mp.pharmacopoeia}
                     </span>
                     <StageBadge stage={r.stage} size="sm" />
@@ -678,7 +677,7 @@ function SitesTab({
       <Panel>
         <PanelHeader
           title="Sites and plant certificates"
-          subtitle="A GMP or WHO-GMP certificate covers the plant, not the product, so it reaches every source made there."
+          subtitle="Plant certificates reach every source made there"
           icon={<FileBadge className="h-4 w-4" />}
         />
         <ul className="divide-y divide-paper-200">
@@ -692,11 +691,11 @@ function SitesTab({
                   {site.isPrimary ? <Badge tone="accent">Primary</Badge> : null}
                   {!site.isActive ? <Badge tone="warn">Inactive</Badge> : null}
                 </div>
-                <p className="mt-0.5 text-xs text-ink-500">
+                <p className="mt-0.5 text-sm text-ink-500">
                   {[site.addressLine, site.city, countryName(site.countryCode)].filter(Boolean).join(', ')}
                 </p>
                 {certs.length === 0 ? (
-                  <p className="mt-2 text-xs text-warn-600">No certificate is on file for this plant.</p>
+                  <p className="mt-2 text-sm text-warn-600">No certificate is on file for this plant.</p>
                 ) : (
                   <ul className="mt-2 space-y-1">
                     {certs.map((c) => (
@@ -705,18 +704,18 @@ function SitesTab({
                         className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-paper-200 bg-paper-50/60 px-2.5 py-1.5"
                       >
                         <FileText className="h-3.5 w-3.5 shrink-0 text-ink-400" />
-                        <span className="min-w-0 flex-1 truncate text-xs text-ink-800">
+                        <span className="min-w-0 flex-1 truncate text-sm text-ink-800">
                           {documentTypeName(c.document.typeCode)}
                           {c.document.referenceNumber ? (
-                            <span className="ml-1.5 font-mono text-2xs text-ink-500">
+                            <span className="ml-1.5 font-mono text-sm text-ink-500">
                               {c.document.referenceNumber}
                             </span>
                           ) : null}
                         </span>
                         {c.document.issuingAuthority ? (
-                          <span className="text-2xs text-ink-500">{c.document.issuingAuthority}</span>
+                          <span className="text-sm text-ink-500">{c.document.issuingAuthority}</span>
                         ) : null}
-                        <span className="text-2xs tabular text-ink-500">
+                        <span className="text-sm tabular text-ink-500">
                           expires {fmtDate(c.document.expiresOn)}
                         </span>
                         <ExpiryBadge row={c} />
@@ -739,7 +738,7 @@ function SitesTab({
                 <FileText className="h-4 w-4 shrink-0 text-ink-400" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-ink-900">{d.document.title}</span>
-                  <span className="block truncate text-xs text-ink-500">
+                  <span className="block truncate text-sm text-ink-500">
                     {documentTypeName(d.document.typeCode)} · uploaded {fmtDate(d.document.uploadedAt)}
                   </span>
                 </span>
@@ -809,21 +808,21 @@ function ContactsTab({ loading, contacts }: { loading: boolean; contacts: Return
                 <span className="text-sm font-medium text-ink-900">{c.fullName}</span>
                 {c.isPrimary ? <Badge tone="accent">Primary</Badge> : null}
               </span>
-              <span className="block text-xs text-ink-500">
+              <span className="block text-sm text-ink-500">
                 {[c.designation, c.department].filter(Boolean).join(' · ') || 'Role not recorded'}
               </span>
             </span>
             {c.email ? (
               <a
                 href={`mailto:${c.email}`}
-                className="flex items-center gap-1.5 text-xs text-accent-700 hover:underline"
+                className="flex items-center gap-1.5 text-sm text-accent-700 hover:underline"
               >
                 <Mail className="h-3.5 w-3.5" />
                 {c.email}
               </a>
             ) : null}
             {c.phone ? (
-              <span className="flex items-center gap-1.5 text-xs tabular text-ink-600">
+              <span className="flex items-center gap-1.5 text-sm tabular text-ink-600">
                 <Phone className="h-3.5 w-3.5 text-ink-400" />
                 {c.phone}
               </span>
@@ -891,7 +890,7 @@ function OrdersTab({
                 to={`/indents/${i.id}`}
                 className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 transition-colors hover:bg-paper-100"
               >
-                <span className="w-32 shrink-0 font-mono text-xs tabular text-ink-900">{i.indentNumber}</span>
+                <span className="w-32 shrink-0 font-mono text-sm tabular text-ink-900">{i.indentNumber}</span>
                 <span className="min-w-0 flex-1 truncate text-sm text-ink-800">
                   for {companyName(db, i.clientCompanyId)}
                 </span>
@@ -918,7 +917,7 @@ function OrdersTab({
                 <span className="w-28 text-right text-sm tabular text-ink-900">
                   {fmtMoney(indentValue(db, i.id), i.currency, { decimals: 0 })}
                 </span>
-                <span className="w-24 text-right text-xs tabular text-ink-400">{fmtDate(i.orderDate)}</span>
+                <span className="w-24 text-right text-sm tabular text-ink-400">{fmtDate(i.orderDate)}</span>
               </Link>
             </li>
           ))}
@@ -948,15 +947,15 @@ function OrdersTab({
                       to={`/shipments/${s.id}`}
                       className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 transition-colors hover:bg-paper-100"
                     >
-                      <span className="w-32 shrink-0 font-mono text-xs tabular text-ink-900">{s.shipmentRef}</span>
-                      <span className="min-w-0 flex-1 truncate text-xs text-ink-600">
+                      <span className="w-32 shrink-0 font-mono text-sm tabular text-ink-900">{s.shipmentRef}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-ink-600">
                         {indent ? `${indent.indentNumber} · ` : ''}
                         {s.portOfLoading ?? '—'} to {s.portOfDischarge ?? '—'}
                       </span>
                       <Badge tone={s.status === 'HELD_AT_CUSTOMS' ? 'danger' : s.status === 'DELIVERED' ? 'ok' : 'info'}>
                         {s.status === 'HELD_AT_CUSTOMS' ? 'Held at customs' : s.status.charAt(0) + s.status.slice(1).toLowerCase().replace(/_/g, ' ')}
                       </Badge>
-                      <span className="w-24 text-right text-xs tabular text-ink-400">{fmtDate(s.eta)}</span>
+                      <span className="w-24 text-right text-sm tabular text-ink-400">{fmtDate(s.eta)}</span>
                     </Link>
                   </li>
                 )
@@ -1032,12 +1031,12 @@ function HistoryTab({
                       {c.fromStatus ? `${MANUFACTURER_STATUS_LABEL[c.fromStatus]} to ` : ''}
                       {MANUFACTURER_STATUS_LABEL[c.toStatus]}
                     </span>
-                    <span className="text-xs text-ink-400">
+                    <span className="text-sm text-ink-400">
                       {fmtDate(c.changedAt)} · {userName(db, c.changedByUserId)}
                     </span>
                   </p>
                   {c.remark ? (
-                    <p className="mt-0.5 text-xs italic leading-relaxed text-ink-500">“{c.remark}”</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-ink-500">“{c.remark}”</p>
                   ) : null}
                 </li>
               ))}
@@ -1060,14 +1059,14 @@ function HistoryTab({
                 </Badge>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-ink-800">{a.recordLabel}</span>
-                  <span className="block text-xs text-ink-500">
+                  <span className="block text-sm text-ink-500">
                     {a.tableName.replace(/_/g, ' ')}
                     {a.changedFields
                       ? ` · ${Object.keys(a.changedFields).join(', ')}`
                       : ''}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs tabular text-ink-400">
+                <span className="shrink-0 text-sm tabular text-ink-400">
                   {fmtDate(a.occurredAt)} · {userName(db, a.userId)}
                 </span>
               </li>

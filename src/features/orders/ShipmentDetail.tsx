@@ -190,7 +190,7 @@ export function ShipmentDetail() {
               <Field label="Port of discharge">{shipment.portOfDischarge ?? '—'}</Field>
             </FieldGrid>
             {shipment.remarks ? (
-              <p className="mt-3 text-xs leading-relaxed text-ink-600">{shipment.remarks}</p>
+              <p className="mt-3 text-sm leading-relaxed text-ink-600">{shipment.remarks}</p>
             ) : null}
           </div>
         </Panel>
@@ -273,15 +273,15 @@ export function ShipmentDetail() {
                       <td className="cell">
                         <Link
                           to={`/batches/${line.batchId}`}
-                          className="font-mono text-[0.8rem] font-medium text-ink-900 hover:text-accent-700"
+                          className="font-mono text-sm font-medium text-ink-900 hover:text-accent-700"
                         >
                           {batch?.batchNumber ?? '—'}
                         </Link>
-                        <span className="block text-xs text-ink-500">{product?.genericName ?? ''}</span>
+                        <span className="block text-sm text-ink-500">{product?.genericName ?? ''}</span>
                         {line.shortShelfLifeRemark ? (
                           <span className="mt-1 flex items-start gap-1.5">
                             <Badge tone="warn">Short shelf life</Badge>
-                            <span className="text-2xs italic leading-relaxed text-warn-600">
+                            <span className="text-sm leading-relaxed text-warn-600">
                               {line.shortShelfLifeRemark}
                             </span>
                           </span>
@@ -300,19 +300,19 @@ export function ShipmentDetail() {
                           <span className={months < 24 ? 'text-warn-600' : 'text-ink-700'}>{months} months</span>
                         )}
                       </td>
-                      <td className="cell text-xs text-ink-600">
+                      <td className="cell text-sm text-ink-600">
                         {indentLine ? `line ${indentLine.lineNo} · ${fmtQty(indentLine.qty, indentLine.qtyUom)}` : '—'}
                       </td>
                       <td className="cell">
                         {coa ? (
                           <Tooltip content={`${coa.title} · filed ${fmtDate(coa.uploadedAt)}`}>
-                            <span className="inline-flex items-center gap-1 text-xs text-accent-700">
+                            <span className="inline-flex items-center gap-1 text-sm text-accent-700">
                               <FileText className="h-3.5 w-3.5" />
                               on file
                             </span>
                           </Tooltip>
                         ) : (
-                          <span className="text-xs text-warn-600">missing</span>
+                          <span className="text-sm text-warn-600">missing</span>
                         )}
                       </td>
                     </tr>
@@ -378,8 +378,8 @@ export function ShipmentDetail() {
                   <span className="text-sm font-medium tabular text-ink-900">
                     {fmtQty(d.deliveredQty, d.qtyUom)}
                   </span>
-                  <span className="font-mono text-2xs text-ink-600">{batch?.batchNumber ?? ''}</span>
-                  <span className="min-w-0 flex-1 truncate text-xs text-ink-600">
+                  <span className="font-mono text-sm text-ink-600">{batch?.batchNumber ?? ''}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-ink-600">
                     to {siteName(db, d.deliverySiteId)}
                     {order && orderLine ? (
                       <>
@@ -396,7 +396,7 @@ export function ShipmentDetail() {
                       <span className="font-mono">GRN {d.grnReference}</span>
                     </Badge>
                   ) : null}
-                  <span className="text-2xs tabular text-ink-500">{fmtDate(d.deliveredOn)}</span>
+                  <span className="text-sm tabular text-ink-500">{fmtDate(d.deliveredOn)}</span>
                 </li>
               )
             })}
@@ -513,13 +513,13 @@ function ShipmentTrack({
                 </motion.span>
                 <span
                   className={[
-                    'mt-1.5 block w-full truncate text-[11px] leading-tight',
+                    'mt-1.5 block w-full truncate text-sm leading-tight',
                     isCurrent ? 'font-semibold text-ink-900' : reached ? 'text-ink-700' : 'text-ink-400',
                   ].join(' ')}
                 >
                   {SHIPMENT_STATUS_LABEL[step]}
                 </span>
-                <span className="mt-0.5 block w-full truncate text-[10px] tabular text-ink-400">
+                <span className="mt-0.5 block w-full truncate text-sm tabular text-ink-400">
                   {value ? `${label} ${fmtDate(value)}` : '—'}
                 </span>
               </li>
@@ -533,14 +533,14 @@ function ShipmentTrack({
         <div className="flex items-start gap-2 pl-[18%]">
           <span className="mt-1 block h-4 w-4 shrink-0 rounded-bl border-b-2 border-l-2 border-danger-200" aria-hidden />
           <div className="min-w-0 rounded-md border border-danger-200 bg-danger-50 px-2.5 py-2">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-danger-700">
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-danger-700">
               <ShieldAlert className="h-3.5 w-3.5" />
               Held at customs
             </p>
             {shipment.holdRemark ? (
-              <p className="mt-0.5 text-xs leading-relaxed text-danger-700">{shipment.holdRemark}</p>
+              <p className="mt-0.5 text-sm leading-relaxed text-danger-700">{shipment.holdRemark}</p>
             ) : null}
-            <p className="mt-0.5 text-2xs text-ink-500">
+            <p className="mt-0.5 text-sm text-ink-500">
               The consignment stays at arrival until it is released. Record the clearance date once it is.
             </p>
           </div>
@@ -1100,7 +1100,7 @@ function RecordDeliveryDialog({
       <form onSubmit={submit} className="space-y-3.5">
         {/* The cleared state is stated first, because everything depends on it. */}
         {cleared ? (
-          <p className="flex items-center gap-2 rounded border border-ok-200 bg-ok-50 px-2.5 py-2 text-xs text-ok-600">
+          <p className="flex items-center gap-2 rounded border border-ok-200 bg-ok-50 px-2.5 py-2 text-sm text-ok-600">
             <Check className="h-3.5 w-3.5 shrink-0" />
             Cleared customs on {fmtDate(shipment.customsClearedOn)}. A delivery dated before that is refused.
           </p>

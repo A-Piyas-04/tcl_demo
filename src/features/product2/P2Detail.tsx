@@ -177,7 +177,7 @@ export function P2Detail() {
           ) : (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs text-ink-500">
+                <p className="text-sm text-ink-500">
                   Each manufacturer is sourced separately: <span className="font-medium text-ink-700">Identified → Sample submitted → Accepted / Rejected</span>.
                 </p>
                 <WriteOnly>
@@ -285,7 +285,7 @@ export function P2Detail() {
                   return (
                     <div key={s.id} className="grid gap-4 p-4 sm:grid-cols-2">
                       <PartyBlock role="Manufacturer" party={m} extra={<SourcingStatusBadge status={sourcingStatus(data, s.id)} />} />
-                      {i ? <PartyBlock role="Intermediary supplier" party={i} /> : <div className="text-xs text-ink-400 sm:pt-5">Direct from manufacturer — no intermediary.</div>}
+                      {i ? <PartyBlock role="Intermediary supplier" party={i} /> : <div className="text-sm text-ink-400 sm:pt-5">Direct from manufacturer — no intermediary.</div>}
                     </div>
                   )
                 })}
@@ -326,10 +326,10 @@ export function P2Detail() {
 
 function SummaryTile({ label, value, sub, mono, tone }: { label: string; value: React.ReactNode; sub: string; mono?: boolean; tone?: 'ok' }) {
   return (
-    <div className={tone === 'ok' ? 'rounded-lg border border-ok-200 bg-ok-50/60 p-3 shadow-tile' : 'rounded-lg border border-paper-300 bg-white p-3 shadow-tile'}>
-      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{label}</p>
-      <p className={`mt-1 truncate font-semibold text-ink-900 ${mono ? 'font-mono text-sm tabular' : 'text-xl'}`}>{value}</p>
-      <p className="text-2xs text-ink-400">{sub}</p>
+    <div className={tone === 'ok' ? 'rounded-lg border border-ok-200 bg-ok-50/60 p-3 ' : 'rounded-lg border border-paper-300 bg-white p-3 '}>
+      <p className="text-sm font-semibold text-ink-500">{label}</p>
+ <p className={`mt-1 truncate font-semibold text-ink-900 ${mono ? 'text-sm tabular' : 'text-xl'}`}>{value}</p>
+      <p className="text-sm text-ink-400">{sub}</p>
     </div>
   )
 }
@@ -338,12 +338,12 @@ function PartyBlock({ role, party, extra }: { role: string; party: Party | undef
   if (!party) return null
   return (
     <div className="min-w-0 space-y-1">
-      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{role}</p>
+      <p className="text-sm font-semibold text-ink-500">{role}</p>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-medium text-ink-900">{party.name}</span>
         {extra}
       </div>
-      <p className="text-xs text-ink-500">
+      <p className="text-sm text-ink-500">
         {party.country}
         {party.contactName ? ` · ${party.contactName}` : ''}
         {party.email ? ` · ${party.email}` : ''}
@@ -374,23 +374,23 @@ function SourceCard({ data, source, onOrder }: { data: P2Data; source: SourcingR
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-sm font-semibold text-ink-900">{mfr}</h3>
-            <span className="text-xs text-ink-400">{data.parties.find((p) => p.id === source.manufacturerId)?.country}</span>
+            <span className="text-sm text-ink-400">{data.parties.find((p) => p.id === source.manufacturerId)?.country}</span>
             <FilingDot present={source.hasDmf} label="DMF" />
             <FilingDot present={source.hasCep} label="CEP" />
           </div>
-          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-ink-500">
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 text-sm text-ink-500">
             <span className="inline-flex items-center gap-1">
               <Truck className="h-3 w-3" />
               {source.intermediaryId ? `via ${partyName(data, source.intermediaryId)}` : 'Direct'}
             </span>
             {source.indicativePrice ? (
-              <span className="font-mono tabular">
+ <span className="tabular">
                 Indicative {fmtDecMoney(dec(source.indicativePrice), source.priceCurrency)}/{source.priceUom}
               </span>
             ) : null}
             {orderCount ? <span>{pluralise(orderCount, 'trade order')}</span> : null}
           </p>
-          {source.notes ? <p className="mt-1 text-xs italic text-ink-500">{source.notes}</p> : null}
+          {source.notes ? <p className="mt-1 text-sm text-ink-500">{source.notes}</p> : null}
         </div>
         <WriteOnly>
           <div className="flex items-center gap-1.5">
@@ -445,8 +445,8 @@ function SourceCard({ data, source, onOrder }: { data: P2Data; source: SourcingR
 
         {samples.length ? (
           <div className="scroll-slim overflow-x-auto rounded-md border border-paper-200">
-            <table className="w-full min-w-[44rem] text-left text-xs">
-              <thead className="bg-paper-50 text-2xs uppercase tracking-wider text-ink-500">
+            <table className="w-full min-w-[44rem] text-left text-sm">
+              <thead className="bg-paper-50 text-sm text-ink-500">
                 <tr>
                   <th className="px-3 py-2 font-semibold">Round</th>
                   <th className="px-3 py-2 font-semibold">Quantity</th>
@@ -462,12 +462,12 @@ function SourceCard({ data, source, onOrder }: { data: P2Data; source: SourcingR
                 {samples.map((s) => (
                   <tr key={s.id} className={s.status === 'REJECTED' ? 'bg-danger-50/40' : s.status === 'ACCEPTED' ? 'bg-ok-50/40' : undefined}>
                     <td className="px-3 py-2 font-medium text-ink-800">#{s.roundNo}</td>
-                    <td className="px-3 py-2 font-mono tabular text-ink-700">{fmtDecQty(dec(s.quantity), s.uom)}</td>
+ <td className="px-3 py-2 tabular text-ink-700">{fmtDecQty(dec(s.quantity), s.uom)}</td>
                     <td className="px-3 py-2 text-ink-700">{fmtDate(s.submittedOn)}</td>
                     <td className="px-3 py-2 text-ink-700">{partyName(data, s.submittedToClientId)}</td>
                     <td className="px-3 py-2 text-ink-500">
                       <span className="block font-mono">{s.courierRef ?? '—'}</span>
-                      {s.coaRef ? <span className="block font-mono text-2xs">CoA {s.coaRef}</span> : null}
+                      {s.coaRef ? <span className="block font-mono text-sm">CoA {s.coaRef}</span> : null}
                     </td>
                     <td className="px-3 py-2">
                       <SampleStatusBadge status={s.status} />
@@ -475,7 +475,7 @@ function SourceCard({ data, source, onOrder }: { data: P2Data; source: SourcingR
                     <td className="px-3 py-2 text-ink-700">{fmtDate(s.decidedOn)}</td>
                     <td className="max-w-[16rem] px-3 py-2 text-ink-600">
                       {s.rejectionReason ? <span className="block text-danger-700">{s.rejectionReason}</span> : null}
-                      {s.decisionRemarks ? <span className="block italic">{s.decisionRemarks}</span> : null}
+                      {s.decisionRemarks ? <span className="block ">{s.decisionRemarks}</span> : null}
                       {!s.rejectionReason && !s.decisionRemarks ? '—' : null}
                     </td>
                   </tr>
@@ -484,7 +484,7 @@ function SourceCard({ data, source, onOrder }: { data: P2Data; source: SourcingR
             </table>
           </div>
         ) : (
-          <p className="text-xs text-ink-400">No sample submitted yet.</p>
+          <p className="text-sm text-ink-400">No sample submitted yet.</p>
         )}
       </div>
 
@@ -555,8 +555,8 @@ export function OrdersTable({
       value: (b) => b.order.orderRef,
       cell: (b) => (
         <span className="min-w-0">
-          <span className="block font-mono text-xs font-medium text-ink-900">{b.order.orderRef}</span>
-          <span className="block text-2xs text-ink-400">{fmtDate(b.order.orderDate)}</span>
+          <span className="block font-mono text-sm font-medium text-ink-900">{b.order.orderRef}</span>
+          <span className="block text-sm text-ink-400">{fmtDate(b.order.orderDate)}</span>
         </span>
       ),
     },
@@ -581,7 +581,7 @@ export function OrdersTable({
       cell: (b) => (
         <span className="min-w-0">
           <span className="block truncate text-sm text-ink-800">{partyName(data, b.order.clientId)}</span>
-          <span className="block truncate text-2xs text-ink-400">
+          <span className="block truncate text-sm text-ink-400">
             from {partyName(data, data.sourcing.find((s) => s.id === b.order.sourcingId)?.manufacturerId)}
           </span>
         </span>
@@ -594,7 +594,7 @@ export function OrdersTable({
       sortable: true,
       width: '7rem',
       value: (b) => Number(b.order.quantity),
-      cell: (b) => <span className="font-mono text-xs tabular">{fmtDecQty(dec(b.order.quantity), b.order.uom)}</span>,
+ cell: (b) => <span className="text-sm tabular">{fmtDecQty(dec(b.order.quantity), b.order.uom)}</span>,
     },
     {
       key: 'fob',
@@ -603,7 +603,7 @@ export function OrdersTable({
       sortable: true,
       width: '9rem',
       value: (b) => Number(orderFinancials(b).fobValue / 10000n) / 100,
-      cell: (b) => <span className="font-mono text-xs tabular">{fmtDecMoney(orderFinancials(b).fobValue, b.order.currency, 0)}</span>,
+ cell: (b) => <span className="text-sm tabular">{fmtDecMoney(orderFinancials(b).fobValue, b.order.currency, 0)}</span>,
     },
     {
       key: 'status',
@@ -626,9 +626,9 @@ export function OrdersTable({
       cell: (b) => {
         const f = orderFinancials(b)
         return f.receivedCommission != null ? (
-          <span className="font-mono text-xs tabular text-ok-600">{fmtDecMoney(f.receivedCommission, b.order.currency)}</span>
+ <span className="text-sm tabular text-ok-600">{fmtDecMoney(f.receivedCommission, b.order.currency)}</span>
         ) : (
-          <span className="font-mono text-xs tabular text-ink-500">{fmtDecMoney(f.expectedCommission, b.order.currency)}</span>
+ <span className="text-sm tabular text-ink-500">{fmtDecMoney(f.expectedCommission, b.order.currency)}</span>
         )
       },
     },

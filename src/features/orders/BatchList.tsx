@@ -86,10 +86,10 @@ export function BatchList() {
       value: (r) => r.batch.batchNumber,
       cell: (r) => (
         <span className="block min-w-0">
-          <span className="block truncate font-mono text-[0.8rem] tabular font-medium text-ink-900">
+          <span className="block truncate font-mono text-sm tabular font-medium text-ink-900">
             {r.batch.batchNumber}
           </span>
-          <span className="block truncate text-2xs text-ink-500">made {fmtDate(r.batch.manufacturingDate)}</span>
+          <span className="block truncate text-sm text-ink-500">made {fmtDate(r.batch.manufacturingDate)}</span>
         </span>
       ),
     },
@@ -124,14 +124,14 @@ export function BatchList() {
       value: (r) => r.clientNames.join('; '),
       cell: (r) =>
         r.clientNames.length === 0 ? (
-          <span className="text-xs text-ink-400">none yet</span>
+          <span className="text-sm text-ink-400">none yet</span>
         ) : r.clientNames.length === 1 ? (
-          <span className="truncate text-xs text-ink-700">{r.clientNames[0]}</span>
+          <span className="truncate text-sm text-ink-700">{r.clientNames[0]}</span>
         ) : (
           <Tooltip content={r.clientNames.join(', ')}>
             <span className="flex items-center gap-1.5">
               <Badge tone="accent">{r.clientNames.length} clients</Badge>
-              <span className="truncate text-xs text-ink-600">{r.clientNames[0]} and others</span>
+              <span className="truncate text-sm text-ink-600">{r.clientNames[0]} and others</span>
             </span>
           </Tooltip>
         ),
@@ -151,6 +151,7 @@ export function BatchList() {
     },
     {
       key: 'expiry',
+      align: 'right',
       header: 'Expiry',
       sortable: true,
       width: '10rem',
@@ -164,7 +165,7 @@ export function BatchList() {
           ) : (
             <Badge tone="ok">Valid</Badge>
           )}
-          <span className="truncate text-2xs tabular text-ink-500">{fmtDate(r.batch.expiryDate)}</span>
+          <span className="truncate text-sm tabular text-ink-500">{fmtDate(r.batch.expiryDate)}</span>
         </span>
       ),
     },
@@ -174,7 +175,7 @@ export function BatchList() {
       align: 'right',
       optional: true,
       value: (r) => r.batch.retestDate,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.batch.retestDate)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.batch.retestDate)}</span>,
     },
   ]
 
@@ -194,10 +195,9 @@ export function BatchList() {
       <div>
         <PageHeading
           title="Shipments"
-          subtitle="Batches: each manufacturer batch is recorded once against its source, then reused by every shipment that carries it. One batch may serve several clients."
+          subtitle="One batch may serve several clients"
           meta={
             <>
-              <Badge tone="neutral">{pluralise(db.batches.length, 'batch', 'batches')}</Badge>
               <Badge tone="warn">
                 {batchRows(db).filter((r) => r.state === 'expiring' || r.state === 'expired').length} expiring or expired
               </Badge>
@@ -256,9 +256,8 @@ export function BatchList() {
           exportName="batches"
           exportFilters={queryString}
           onExport={(count) => void logExport('batch list', queryString, count)}
-          rowTone={(r) => (r.state === 'expired' ? 'bg-danger-50/40' : r.state === 'expiring' ? 'bg-warn-50/30' : undefined)}
           toolbar={
-            <span className="flex flex-wrap items-center gap-2.5 text-xs text-ink-500">
+            <span className="flex flex-wrap items-center gap-2.5 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'batch', 'batches') : '…'}
             </span>

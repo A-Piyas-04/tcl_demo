@@ -33,17 +33,17 @@ export function FormRow({
 }) {
   return (
     <div className={cn('min-w-0 space-y-1', className)}>
-      <label htmlFor={htmlFor} className="flex items-baseline gap-1 text-xs font-medium text-ink-700">
+      <label htmlFor={htmlFor} className="flex items-baseline gap-1 text-sm font-medium text-ink-700">
         {label}
         {required ? <span className="text-danger-600">*</span> : null}
       </label>
       {children}
       {error ? (
-        <p role="alert" className="text-xs text-danger-700">
+        <p role="alert" className="text-sm text-danger-700">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-xs leading-relaxed text-ink-400">{hint}</p>
+        <p className="text-sm leading-relaxed text-ink-400">{hint}</p>
       ) : null}
     </div>
   )
@@ -77,8 +77,8 @@ export function FormSection({
   return (
     <section className="space-y-3">
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-600">{title}</h3>
-        {description ? <p className="mt-0.5 text-xs text-ink-400">{description}</p> : null}
+        <h3 className="text-sm font-semibold text-ink-600">{title}</h3>
+        {description ? <p className="mt-0.5 text-sm text-ink-400">{description}</p> : null}
       </div>
       {children}
     </section>
@@ -140,11 +140,11 @@ export function NumberInput({
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         aria-invalid={invalid || undefined}
-        className={cn(CONTROL, 'h-8 font-mono tabular', suffix && 'pr-11', invalid && 'border-danger-500', className)}
+ className={cn(CONTROL, 'h-8 tabular', suffix && 'pr-11', invalid && 'border-danger-500', className)}
         {...props}
       />
       {suffix ? (
-        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-ink-400">
+        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm font-medium text-ink-400">
           {suffix}
         </span>
       ) : null}
@@ -161,7 +161,7 @@ export function DateInput({
     <input
       type="date"
       aria-invalid={invalid || undefined}
-      className={cn(CONTROL, 'h-8 font-mono tabular', invalid && 'border-danger-500', className)}
+ className={cn(CONTROL, 'h-8 tabular', invalid && 'border-danger-500', className)}
       {...props}
     />
   )
@@ -287,7 +287,7 @@ function SelectItem({
     >
       <div className="min-w-0 flex-1">
         <SelectPrimitive.ItemText>{label}</SelectPrimitive.ItemText>
-        {description ? <p className="truncate text-2xs text-ink-400">{description}</p> : null}
+        {description ? <p className="truncate text-sm text-ink-400">{description}</p> : null}
       </div>
       <SelectPrimitive.ItemIndicator className="absolute right-2 top-1.5">
         <Check className="h-3.5 w-3.5 text-accent-600" />
@@ -364,7 +364,7 @@ export function Combobox({
           </div>
           <div className="scroll-slim max-h-64 overflow-y-auto p-1">
             {filtered.length === 0 ? (
-              <p className="px-2 py-4 text-center text-xs text-ink-400">{emptyMessage}</p>
+              <p className="px-2 py-4 text-center text-sm text-ink-400">{emptyMessage}</p>
             ) : (
               filtered.map((o) => (
                 <button
@@ -384,7 +384,7 @@ export function Combobox({
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{o.label}</span>
-                    {o.description ? <span className="block truncate text-2xs text-ink-400">{o.description}</span> : null}
+                    {o.description ? <span className="block truncate text-sm text-ink-400">{o.description}</span> : null}
                   </span>
                   {o.value === value ? <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-600" /> : null}
                 </button>
@@ -424,7 +424,7 @@ export function Switch({
         disabled && 'cursor-not-allowed opacity-50',
       )}
     >
-      <SwitchPrimitive.Thumb className="block h-3.5 w-3.5 translate-x-[2px] rounded-full bg-white shadow-tile transition-transform duration-200 data-[state=checked]:translate-x-[16px]" />
+      <SwitchPrimitive.Thumb className="block h-3.5 w-3.5 translate-x-[2px] rounded-full bg-white transition-transform duration-200 data-[state=checked]:translate-x-[16px]" />
     </SwitchPrimitive.Root>
   )
   if (!label) return body
@@ -433,7 +433,7 @@ export function Switch({
       {body}
       <span className="min-w-0">
         <span className="block text-sm text-ink-800">{label}</span>
-        {description ? <span className="block text-xs text-ink-400">{description}</span> : null}
+        {description ? <span className="block text-sm text-ink-400">{description}</span> : null}
       </span>
     </label>
   )
@@ -532,7 +532,7 @@ export function RadioCards<T extends string>({
                 {o.icon}
                 {o.label}
               </span>
-              {o.description ? <span className="mt-0.5 block text-xs leading-relaxed text-ink-500">{o.description}</span> : null}
+              {o.description ? <span className="mt-0.5 block text-sm leading-relaxed text-ink-500">{o.description}</span> : null}
             </span>
           </button>
         )
@@ -559,7 +559,7 @@ export function SegmentedControl<T extends string>({
     <div
       className={cn(
         'inline-flex items-center gap-0.5 rounded-md border border-paper-300 bg-paper-200/70 p-0.5',
-        size === 'sm' ? 'text-xs' : 'text-sm',
+        size === 'sm' ? 'text-sm' : 'text-sm',
       )}
     >
       {options.map((o) => (
@@ -570,7 +570,7 @@ export function SegmentedControl<T extends string>({
           className={cn(
             'rounded px-2.5 font-medium transition-all duration-150',
             size === 'sm' ? 'h-6' : 'h-7',
-            o.value === value ? 'bg-white text-ink-900 shadow-tile' : 'text-ink-500 hover:text-ink-800',
+            o.value === value ? 'bg-white text-ink-900 ' : 'text-ink-500 hover:text-ink-800',
           )}
         >
           {o.label}
@@ -613,7 +613,7 @@ export function TagInput({
         <button
           type="button"
           onClick={add}
-          className="h-8 shrink-0 rounded border border-paper-300 bg-white px-2.5 text-xs font-medium text-ink-700 transition-colors hover:bg-paper-100"
+          className="h-8 shrink-0 rounded border border-paper-300 bg-white px-2.5 text-sm font-medium text-ink-700 transition-colors hover:bg-paper-100"
         >
           Add
         </button>
@@ -623,7 +623,7 @@ export function TagInput({
           {values.map((v) => (
             <span
               key={v}
-              className="inline-flex items-center gap-1 rounded border border-paper-300 bg-paper-100 px-1.5 py-0.5 text-2xs text-ink-700"
+              className="inline-flex items-center gap-1 rounded border border-paper-300 bg-paper-100 px-1.5 py-0.5 text-sm text-ink-700"
             >
               {v}
               <button

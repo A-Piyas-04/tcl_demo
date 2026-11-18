@@ -224,7 +224,7 @@ export function ManufacturerProductForm() {
 
       <form onSubmit={submit} className="space-y-4">
         <Panel>
-          <PanelHeader title="What is made" subtitle="The identity of the source (FR-M4-01)" />
+          <PanelHeader title="What is made" subtitle="The identity of the source" />
           <div className="space-y-4 p-4">
             <FormRow label="Product" required hint="Only products already in the catalogue can be linked.">
               <Combobox
@@ -322,7 +322,7 @@ export function ManufacturerProductForm() {
         ) : null}
 
         <Panel>
-          <PanelHeader title="Commercial terms" subtitle="Order size, lead time, packing and capacity (FR-M4-03)" />
+          <PanelHeader title="Commercial terms" subtitle="Order size, lead time, packing and capacity" />
           <div className="space-y-4 p-4">
             <FormGrid cols={3}>
               <FormRow label="Minimum order quantity">
@@ -364,7 +364,7 @@ export function ManufacturerProductForm() {
             <Panel>
               <PanelHeader
                 title="First regulatory filing"
-                subtitle="Optional. More filings can be added on the source, one per market (FR-M4-04)."
+                subtitle="Optional. More filings can be added on the source, one per market."
               />
               <div className="space-y-3.5 p-4">
                 <Checkbox
@@ -407,7 +407,7 @@ export function ManufacturerProductForm() {
             <Panel>
               <PanelHeader
                 title="TCL portfolio"
-                subtitle="Leave this off to keep the source as market intelligence (UC-03 alternate 5a)"
+                subtitle="Leave this off to keep the source as market intelligence"
               />
               <div className="space-y-3.5 p-4">
                 <Checkbox
@@ -442,7 +442,7 @@ export function ManufacturerProductForm() {
             <Panel>
               <PanelHeader
                 title="First price"
-                subtitle="Optional. Without a price the source is marked price pending and cannot be offered (UC-03 alternate 6a)."
+                subtitle="Optional. Without a price the source cannot be offered."
               />
               <div className="space-y-3.5 p-4">
                 <Checkbox checked={withPrice} onChange={setWithPrice} label="Record a price now" />
@@ -480,7 +480,7 @@ export function ManufacturerProductForm() {
                       <Input type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} mono />
                     </FormRow>
                     {withPrice && (price == null || !validTo) ? (
-                      <p className="text-xs text-ink-500">
+                      <p className="text-sm text-ink-500">
                         <Badge tone="outline">Skipped</Badge> The price needs an amount and an end date, otherwise it is
                         left out and the source is saved as price pending.
                       </p>
@@ -504,7 +504,7 @@ export function ManufacturerProductForm() {
         {error ? <InlineError>{error}</InlineError> : null}
 
         <div className="flex items-center justify-between gap-3 pb-6">
-          <p className="text-xs text-ink-400">
+          <p className="text-sm text-ink-400">
             {editing ? 'Changes are written to the audit log.' : 'The source, filing, portfolio entry and price are saved together.'}
           </p>
           <div className="flex items-center gap-2">

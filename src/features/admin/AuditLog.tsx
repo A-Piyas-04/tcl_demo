@@ -138,6 +138,7 @@ export function AuditLog() {
 
   const whenColumn = <T extends { id: string; occurredAt: string }>(): Column<T> => ({
     key: 'when',
+    align: 'right',
     header: 'When',
     pinned: true,
     sortable: true,
@@ -145,7 +146,7 @@ export function AuditLog() {
     value: (r) => r.occurredAt,
     cell: (r) => (
       <span className="flex items-center gap-2">
-        <span className="tabular text-xs text-ink-700">{fmtDateTime(r.occurredAt)}</span>
+        <span className="tabular text-sm text-ink-700">{fmtDateTime(r.occurredAt)}</span>
         {isRecent(r.occurredAt) ? <Badge tone="accent">New</Badge> : null}
       </span>
     ),
@@ -159,7 +160,7 @@ export function AuditLog() {
       sortable: true,
       width: '10rem',
       value: (r) => userName(db, r.userId),
-      cell: (r) => <span className="truncate text-xs text-ink-700">{userName(db, r.userId)}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-700">{userName(db, r.userId)}</span>,
     },
     {
       key: 'action',
@@ -179,7 +180,7 @@ export function AuditLog() {
       sortable: true,
       width: '10rem',
       value: (r) => r.tableName,
-      cell: (r) => <span className="font-mono text-xs text-ink-600">{r.tableName}</span>,
+      cell: (r) => <span className="font-mono text-sm text-ink-600">{r.tableName}</span>,
     },
     {
       key: 'record',
@@ -195,18 +196,18 @@ export function AuditLog() {
       cell: (r) => {
         const entries = Object.entries(r.changedFields ?? {})
         if (entries.length === 0) {
-          return <span className="text-xs text-ink-400">{r.action === 'INSERT' ? 'New record' : '—'}</span>
+          return <span className="text-sm text-ink-400">{r.action === 'INSERT' ? 'New record' : '—'}</span>
         }
         return (
           <span className="flex flex-col gap-0.5">
             {entries.slice(0, 3).map(([field, change]) => (
-              <span key={field} className="text-2xs leading-snug text-ink-600">
+              <span key={field} className="text-sm leading-snug text-ink-600">
                 <span className="font-medium text-ink-700">{field}</span>: {display(change.old)}{' '}
                 <span className="text-ink-400">→</span> {display(change.new)}
               </span>
             ))}
             {entries.length > 3 ? (
-              <span className="text-2xs text-ink-400">and {entries.length - 3} more</span>
+              <span className="text-sm text-ink-400">and {entries.length - 3} more</span>
             ) : null}
           </span>
         )
@@ -230,7 +231,7 @@ export function AuditLog() {
       sortable: true,
       width: '10rem',
       value: (r) => userName(db, r.userId),
-      cell: (r) => <span className="truncate text-xs text-ink-700">{userName(db, r.userId)}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-700">{userName(db, r.userId)}</span>,
     },
     {
       key: 'detail',
@@ -246,7 +247,7 @@ export function AuditLog() {
       width: '6rem',
       value: (r) => r.rowCount,
       cell: (r) => (
-        <span className="tabular text-xs text-ink-600">{r.rowCount == null ? '—' : fmtNumber(r.rowCount)}</span>
+        <span className="tabular text-sm text-ink-600">{r.rowCount == null ? '—' : fmtNumber(r.rowCount)}</span>
       ),
     },
   ]
@@ -261,8 +262,6 @@ export function AuditLog() {
         subtitle="What changed, who changed it, and which accountable reads happened."
         meta={
           <>
-            <Badge tone="neutral">{pluralise(db.audit.length, 'data change')}</Badge>
-            <Badge tone="neutral">{pluralise(db.security.length, 'security entry', 'security entries')}</Badge>
             <Badge tone="outline">Read-only for both roles</Badge>
           </>
         }
@@ -331,7 +330,7 @@ export function AuditLog() {
                 aria-label="From date"
                 onChange={(e) => setValue('from', e.target.value)}
               />
-              <span className="text-xs text-ink-400">to</span>
+              <span className="text-sm text-ink-400">to</span>
               <DateInput value={values.to} aria-label="To date" onChange={(e) => setValue('to', e.target.value)} />
             </div>
             {filtersOn ? (
@@ -359,9 +358,8 @@ export function AuditLog() {
               exportName="audit-data-changes"
               exportFilters={queryString}
               onExport={(count) => void logExport('audit log: data changes', queryString, count)}
-              rowTone={(r) => (isRecent(r.occurredAt) ? 'bg-accent-50/40' : undefined)}
               toolbar={
-                <span className="flex items-center gap-2 text-xs text-ink-500">
+                <span className="flex items-center gap-2 text-sm text-ink-500">
                   <History className="h-3.5 w-3.5" />
                   {pluralise(auditRows.length, 'entry', 'entries')}
                   <span className="text-ink-400">Immutable, retained for ten years</span>
@@ -408,9 +406,8 @@ export function AuditLog() {
               exportName="audit-security"
               exportFilters={queryString}
               onExport={(count) => void logExport('audit log: security and access', queryString, count)}
-              rowTone={(r) => (isRecent(r.occurredAt) ? 'bg-accent-50/40' : undefined)}
               toolbar={
-                <span className="flex items-center gap-2 text-xs text-ink-500">
+                <span className="flex items-center gap-2 text-sm text-ink-500">
                   <ShieldAlert className="h-3.5 w-3.5" />
                   {pluralise(securityRows.length, 'entry', 'entries')}
                   <span className="text-ink-400">Retained for one year</span>

@@ -64,36 +64,36 @@ export function RoleAdmin() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Panel className="p-3.5">
-          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+          <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-500">
             Full Access
             <HelpTip>Every permission code. Held by {pluralise(counts.fullAccess, 'active user')}.</HelpTip>
           </p>
-          <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-accent-800">
+          <p className="mt-2 text-2xl font-semibold leading-none text-accent-800">
             {READ_ONLY_PERMISSIONS.length + WRITE_PERMISSIONS.length}
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+          <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-500">
             View Only
             <HelpTip>The read and export codes, and nothing else. Held by {pluralise(counts.viewer, 'active user')}.</HelpTip>
           </p>
-          <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-ink-900">
+          <p className="mt-2 text-2xl font-semibold leading-none text-ink-900">
             {READ_ONLY_PERMISSIONS.length}
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+          <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-500">
             Modules covered
             <HelpTip>The module is read from the code prefix, so a new permission groups itself.</HelpTip>
           </p>
-          <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-ink-900">{MODULE_ORDER.length}</p>
+          <p className="mt-2 text-2xl font-semibold leading-none text-ink-900">{MODULE_ORDER.length}</p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+          <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-500">
             Editable here
             <HelpTip>Read-only in v1. Both roles can read this page.</HelpTip>
           </p>
-          <p className="mt-2 text-3xl font-semibold leading-none tracking-tight text-ink-900">0</p>
+          <p className="mt-2 text-2xl font-semibold leading-none text-ink-900">0</p>
         </Panel>
       </div>
 
@@ -133,7 +133,7 @@ export function RoleAdmin() {
           <div className="scroll-slim overflow-x-auto">
             <table className="w-full min-w-[34rem] border-collapse text-sm">
               <thead>
-                <tr className="bg-paper-100/60 text-2xs uppercase tracking-wide text-ink-500">
+                <tr className="bg-paper-100/60 text-sm text-ink-500">
                   <th className="px-3 py-2 text-left font-medium">Permission</th>
                   <th className="px-3 py-2 text-left font-medium">Code</th>
                   <th className="w-28 px-3 py-2 text-center font-medium">Full Access</th>
@@ -145,7 +145,7 @@ export function RoleAdmin() {
                   <tr>
                     <th
                       colSpan={4}
-                      className="border-y border-paper-200 bg-paper-50 px-3 py-1.5 text-left text-2xs font-semibold uppercase tracking-wide text-ink-600"
+                      className="border-y border-paper-200 bg-paper-50 px-3 py-1.5 text-left text-sm font-semibold text-ink-600"
                     >
                       {group.module}
                       <span className="ml-2 font-normal normal-case tracking-normal text-ink-400">
@@ -156,7 +156,7 @@ export function RoleAdmin() {
                   {group.items.map((item) => (
                     <tr key={item.code} className="hover:bg-paper-50">
                       <td className="px-3 py-2 text-ink-800">{permissionAction(item.code)}</td>
-                      <td className="px-3 py-2 font-mono text-xs text-ink-500">{item.code}</td>
+                      <td className="px-3 py-2 font-mono text-sm text-ink-500">{item.code}</td>
                       <td className="px-3 py-2 text-center">
                         <Tick held />
                       </td>

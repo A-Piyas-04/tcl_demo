@@ -18,7 +18,7 @@ import { useCanWrite } from '@/data/store'
 // ------------------------------------------------------------------ hover help
 
 const TIP_CLASS =
-  'z-50 max-w-xs rounded border border-ink-800 bg-ink-900 px-2 py-1 text-xs leading-relaxed text-paper-100 shadow-pop data-[state=delayed-open]:animate-fade-up'
+  'z-50 max-w-xs rounded border border-ink-800 bg-ink-900 px-2 py-1 text-sm leading-relaxed text-paper-100 shadow-pop data-[state=delayed-open]:animate-fade-up'
 
 /**
  * An explanation the screen does not have to say out loud. Hover or focus the
@@ -61,12 +61,12 @@ export function HelpTip({
 }
 
 /**
- * The single rule that keeps the screens quiet: a short caption is data worth
- * reading in place, a sentence is an explanation and belongs on hover. Applied
- * by every heading, tile and empty state, so no page has to decide for itself.
+ * Subtitles render in place. They used to be routed to a hover tooltip above a
+ * certain length, which is what put an ⓘ mark beside almost every heading,
+ * tile and empty state in the product. A label that needs an explanation is a
+ * label that needs rewriting, so `tip` is now always null and the ⓘ marks are
+ * gone. `HelpTip` remains for the rare case a section genuinely earns one.
  */
-const CAPTION_MAX = 34
-
 export function splitBlurb(node: React.ReactNode): {
   caption: React.ReactNode | null
   tip: React.ReactNode | null
@@ -76,9 +76,7 @@ export function splitBlurb(node: React.ReactNode): {
   }
   if (typeof node === 'string') {
     const text = node.trim()
-    if (!text) return { caption: null, tip: null }
-    const isSentence = text.length > CAPTION_MAX || /[.!?](\s|$)/.test(text)
-    return isSentence ? { caption: null, tip: text } : { caption: text, tip: null }
+    return { caption: text || null, tip: null }
   }
   return { caption: node, tip: null }
 }
@@ -112,13 +110,13 @@ export function PanelHeader({
         {icon ? <span className="shrink-0 text-ink-500">{icon}</span> : null}
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-1">
-            <h2 className="truncate text-sm font-semibold text-ink-900">{title}</h2>
+            <h2 className="truncate-end text-lg font-semibold text-ink-900">{title}</h2>
             <HelpTip>{tip}</HelpTip>
           </div>
-          {caption ? <p className="truncate text-xs text-ink-500">{caption}</p> : null}
+          {caption ? <p className="truncate-end text-sm text-ink-500">{caption}</p> : null}
         </div>
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-1.5">{actions}</div> : null}
+      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
     </div>
   )
 }
@@ -128,21 +126,28 @@ export function PanelHeader({
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'subtle'
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
+/**
+ * One filled button exists: `primary`. Everything else is outlined or text, so
+ * a view can only ever have one obvious action.
+ *
+ * `danger` is deliberately NOT filled — an irreversible action is outlined with
+ * danger text and confirmed, rather than presented as the brightest thing on
+ * the screen. An Accept/Reject pair is `primary` + `secondary`.
+ */
 const BUTTON_VARIANT: Record<ButtonVariant, string> = {
-  primary:
-    'bg-accent-600 text-white shadow-tile hover:bg-accent-700 active:bg-accent-800 disabled:bg-accent-600/50',
-  secondary:
-    'bg-white text-ink-800 border border-paper-300 shadow-tile hover:border-paper-400 hover:bg-paper-50 active:bg-paper-100',
-  ghost: 'text-ink-700 hover:bg-paper-200/80 active:bg-paper-300/70',
-  subtle: 'bg-paper-200 text-ink-800 hover:bg-paper-300 active:bg-paper-400/70',
-  danger: 'bg-danger-600 text-white shadow-tile hover:bg-danger-700 active:bg-danger-700',
+  primary: 'bg-accent-600 text-white hover:bg-accent-700 active:bg-accent-800 disabled:bg-accent-600/50',
+  secondary: 'bg-white text-ink-800 border border-ink-400 hover:bg-paper-100 active:bg-paper-200',
+  ghost: 'text-ink-700 hover:bg-paper-200 active:bg-paper-300',
+  subtle: 'bg-paper-200 text-ink-800 hover:bg-paper-300 active:bg-paper-400',
+  danger: 'bg-white text-danger-700 border border-danger-500 hover:bg-danger-50 active:bg-danger-100',
 }
 
+/** Every size clears the 36px pointer target; `.hit` raises it to 44px on touch. */
 const BUTTON_SIZE: Record<ButtonSize, string> = {
-  sm: 'h-7 px-2.5 text-xs gap-1.5 rounded',
-  md: 'h-8 px-3 text-sm gap-2 rounded-md',
-  lg: 'h-10 px-4 text-base gap-2 rounded-md',
-  icon: 'h-8 w-8 justify-center rounded-md',
+  sm: 'h-9 px-3 text-base gap-1.5 rounded',
+  md: 'h-9 px-4 text-base gap-2 rounded',
+  lg: 'h-11 px-4 text-base gap-2 rounded',
+  icon: 'h-9 w-9 justify-center rounded',
 }
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -221,15 +226,22 @@ type BadgeTone = 'neutral' | 'accent' | 'ok' | 'warn' | 'danger' | 'info' | 'out
 
 const BADGE_TONE: Record<BadgeTone, string> = {
   neutral: 'bg-paper-200 text-ink-700 border-paper-300',
-  accent: 'bg-accent-50 text-accent-800 border-accent-200',
-  ok: 'bg-ok-50 text-ok-600 border-ok-200',
-  warn: 'bg-warn-50 text-warn-600 border-warn-200',
+  accent: 'bg-accent-50 text-accent-700 border-accent-200',
+  ok: 'bg-ok-50 text-ok-700 border-ok-200',
+  warn: 'bg-warn-50 text-warn-700 border-warn-200',
   danger: 'bg-danger-50 text-danger-700 border-danger-200',
-  info: 'bg-[#eef4fb] text-[#1f4f79] border-[#cfe0f0]',
+  info: 'bg-info-50 text-info-700 border-info-200',
   outline: 'bg-transparent text-ink-600 border-paper-400',
 }
 
-/** Forwards its ref so a Badge can be a tooltip or popover trigger. */
+/**
+ * A badge is a STATE THAT CHANGES — a stage, an order status, an expiry
+ * warning. A fixed attribute of a record (pharmacopoeia, therapeutic area,
+ * grade, kind) is not a state and must use `Quiet` below instead.
+ *
+ * One size, one radius, one style. 12px is the only place in the product where
+ * text is allowed below 13px.
+ */
 export const Badge = React.forwardRef<
   HTMLSpanElement,
   { tone?: BadgeTone; dot?: string } & React.HTMLAttributes<HTMLSpanElement>
@@ -238,17 +250,61 @@ export const Badge = React.forwardRef<
     <span
       ref={ref}
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded border px-1.5 py-0.5 text-2xs font-medium',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded border px-2 py-0.5 text-xs font-semibold',
         BADGE_TONE[tone],
         className,
       )}
       {...props}
     >
-      {dot ? <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dot)} /> : null}
+      {dot ? <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dot)} aria-hidden /> : null}
       {children}
     </span>
   )
 })
+
+/**
+ * A static attribute of a record: pharmacopoeial grade, therapeutic area,
+ * category, kind. Plain text, not a coloured pill — nothing here changes over
+ * time, so nothing here earns a status colour.
+ */
+export function Quiet({ children, className }: { children: React.ReactNode; className?: string }) {
+  if (children == null || children === '') return null
+  return <span className={cn('whitespace-nowrap text-sm text-ink-500', className)}>{children}</span>
+}
+
+/**
+ * Severity carried by a dot plus a word, never by colour alone.
+ */
+export function SeverityDot({
+  tone,
+  label,
+  className,
+}: {
+  tone: 'ok' | 'warn' | 'danger' | 'info' | 'neutral'
+  label: string
+  className?: string
+}) {
+  const dot = {
+    ok: 'bg-ok-600',
+    warn: 'bg-warn-600',
+    danger: 'bg-danger-600',
+    info: 'bg-info-600',
+    neutral: 'bg-ink-400',
+  }[tone]
+  const text = {
+    ok: 'text-ok-700',
+    warn: 'text-warn-700',
+    danger: 'text-danger-700',
+    info: 'text-info-700',
+    neutral: 'text-ink-600',
+  }[tone]
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap text-base', text, className)}>
+      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', dot)} aria-hidden />
+      {label}
+    </span>
+  )
+}
 
 // -------------------------------------------------------------- skeletons
 
@@ -325,16 +381,16 @@ export function EmptyState({
       )}
     >
       {icon ? (
-        <div className="grid h-10 w-10 place-items-center rounded-full border border-paper-300 bg-white text-ink-400 shadow-tile">
+        <div className="grid h-10 w-10 place-items-center rounded-full border border-paper-300 bg-white text-ink-400 ">
           {icon}
         </div>
       ) : null}
       <div className="max-w-sm space-y-1">
-        <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-800">
+        <p className="inline-flex items-center gap-1 text-base font-semibold text-ink-800">
           {title}
           <HelpTip>{tip}</HelpTip>
         </p>
-        {caption ? <p className="text-xs leading-relaxed text-ink-500">{caption}</p> : null}
+        {caption ? <p className="text-sm leading-relaxed text-ink-500">{caption}</p> : null}
       </div>
       {action || secondary ? (
         <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
@@ -350,7 +406,7 @@ export function EmptyState({
 
 export function Kbd({ children }: { children: React.ReactNode }) {
   return (
-    <kbd className="rounded border border-paper-400 bg-paper-50 px-1 py-0.5 font-mono text-[10px] font-medium text-ink-600 shadow-[0_1px_0_theme(colors.paper.400)]">
+    <kbd className="rounded border border-paper-400 bg-paper-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-ink-600">
       {children}
     </kbd>
   )
@@ -360,23 +416,15 @@ export const Avatar = React.forwardRef<
   HTMLSpanElement,
   { name: string; size?: 'xs' | 'sm' | 'md'; className?: string }
 >(function Avatar({ name, size = 'md', className }, ref) {
-  const palette = [
-    'bg-accent-100 text-accent-800',
-    'bg-[#e8f1f9] text-[#1f4f79]',
-    'bg-[#f0ecfa] text-[#573f8f]',
-    'bg-[#fdf3e3] text-[#8a5a1a]',
-    'bg-[#e7f6f1] text-[#0f6153]',
-  ]
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0
-  const sizes = { xs: 'h-5 w-5 text-[9px]', sm: 'h-6 w-6 text-[10px]', md: 'h-7 w-7 text-[11px]' }
+  // One treatment, not a palette of five. An avatar identifies a person; the
+  // initials do that. A hue per person would be colour carrying no meaning.
+  const sizes = { xs: 'h-6 w-6 text-sm', sm: 'h-7 w-7 text-sm', md: 'h-8 w-8 text-sm' }
   return (
     <span
       ref={ref}
       title={name}
       className={cn(
-        'inline-grid shrink-0 place-items-center rounded-full font-semibold uppercase',
-        palette[h % palette.length],
+        'inline-grid shrink-0 place-items-center rounded-full bg-paper-200 font-semibold uppercase text-ink-600',
         sizes[size],
         className,
       )}
@@ -390,7 +438,7 @@ export const Avatar = React.forwardRef<
 export function Meter({
   value,
   max,
-  tone = 'bg-accent-500',
+  tone = 'bg-accent-600',
   className,
 }: {
   value: number
@@ -400,7 +448,7 @@ export function Meter({
 }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0
   return (
-    <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-paper-300/70', className)}>
+    <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-paper-300', className)}>
       <motion.div
         className={cn('h-full rounded-full', tone)}
         initial={{ width: 0 }}
@@ -428,12 +476,13 @@ export function Field({
 }) {
   return (
     <div className={cn('min-w-0', className)}>
-      <dt className="text-2xs font-medium uppercase tracking-wide text-ink-500">{label}</dt>
+      <dt className="text-sm text-ink-500">{label}</dt>
       <dd
         className={cn(
-          'mt-0.5 text-ink-800',
-          wrap ? 'text-xs leading-snug text-ink-700' : 'truncate text-sm',
-          mono && 'font-mono tabular text-[0.8rem]',
+          'mt-1 text-base text-ink-900',
+          wrap ? 'leading-snug' : 'truncate-end',
+          // `mono` is for codes only: CAS, AWB, document and record references.
+          mono && 'font-mono',
         )}
       >
         {children}
@@ -466,7 +515,7 @@ export function RuleHint({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           onClick={(e) => e.preventDefault()}
-          className="inline-flex w-fit items-center gap-1 rounded border border-accent-200 bg-accent-50/70 px-1.5 py-0.5 text-2xs font-medium text-accent-800 transition-colors hover:bg-accent-100"
+          className="inline-flex w-fit items-center gap-1 rounded border border-accent-200 bg-accent-50/70 px-1.5 py-0.5 text-sm font-medium text-accent-800 transition-colors hover:bg-accent-100"
         >
           <Info className="h-3 w-3" aria-hidden />
           Rule
@@ -505,7 +554,7 @@ export function NoteTip({
           type="button"
           onClick={(e) => e.preventDefault()}
           className={cn(
-            'inline-flex w-fit items-center gap-1 rounded border px-1.5 py-0.5 text-2xs font-medium transition-colors',
+            'inline-flex w-fit items-center gap-1 rounded border px-1.5 py-0.5 text-sm font-medium transition-colors',
             tone === 'accent'
               ? 'border-accent-200 bg-accent-50/70 text-accent-800 hover:bg-accent-100'
               : 'border-paper-300 bg-paper-50 text-ink-500 hover:bg-paper-200 hover:text-ink-700',
@@ -530,7 +579,7 @@ export function NoteTip({
 export function InlineError({ children }: { children: React.ReactNode }) {
   if (!children) return null
   return (
-    <p role="alert" className="flex items-start gap-1.5 rounded border border-danger-200 bg-danger-50 px-2 py-1.5 text-xs leading-relaxed text-danger-700">
+    <p role="alert" className="flex items-start gap-2 rounded border-l-2 border-danger-500 bg-danger-50 px-3 py-2 text-base leading-relaxed text-danger-700">
       {children}
     </p>
   )
@@ -539,7 +588,7 @@ export function InlineError({ children }: { children: React.ReactNode }) {
 export function InlineWarning({ children }: { children: React.ReactNode }) {
   if (!children) return null
   return (
-    <p className="flex items-start gap-1.5 rounded border border-warn-200 bg-warn-50 px-2 py-1.5 text-xs leading-relaxed text-warn-600">
+    <p className="flex items-start gap-2 rounded border-l-2 border-warn-500 bg-warn-50 px-3 py-2 text-base leading-relaxed text-warn-700">
       {children}
     </p>
   )
@@ -562,11 +611,11 @@ export function PageHeading({
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-1.5">
-          <h1 className="min-w-0 text-xl font-semibold tracking-tight text-ink-900">{title}</h1>
+          <h1 className="min-w-0 text-2xl font-semibold text-ink-900">{title}</h1>
           <HelpTip side="bottom">{tip}</HelpTip>
         </div>
-        {caption ? <p className="mt-0.5 text-sm text-ink-500">{caption}</p> : null}
-        {meta ? <div className="mt-1.5 flex flex-wrap items-center gap-2">{meta}</div> : null}
+        {caption ? <p className="mt-1 text-base text-ink-500">{caption}</p> : null}
+        {meta ? <div className="mt-2 flex flex-wrap items-center gap-2">{meta}</div> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
@@ -606,13 +655,13 @@ export function SectionTabs({ tabs, className }: { tabs: SectionTab[]; className
             to={t.to}
             aria-current={on ? 'page' : undefined}
             className={cn(
-              'relative whitespace-nowrap px-3 pb-2 pt-1 text-sm transition-colors',
-              on ? 'font-medium text-ink-900' : 'text-ink-500 hover:text-ink-800',
+              'relative flex h-10 items-center whitespace-nowrap px-3 text-base transition-colors',
+              on ? 'font-semibold text-ink-900' : 'text-ink-500 hover:text-ink-900',
             )}
           >
             {t.label}
             {typeof t.count === 'number' ? <Count value={t.count} active={on} /> : null}
-            {on ? <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent-500" /> : null}
+            {on ? <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent-600" aria-hidden /> : null}
           </Link>
         )
       })}
@@ -629,8 +678,8 @@ export function Count({ value, active }: { value: number; active?: boolean }) {
   return (
     <span
       className={cn(
-        'ml-1.5 rounded px-1 py-px text-[10px] font-semibold tabular',
-        active ? 'bg-accent-100 text-accent-800' : 'bg-paper-200 text-ink-500',
+        'ml-1.5 rounded px-1.5 py-px text-xs font-semibold',
+        active ? 'bg-accent-100 text-accent-700' : 'bg-paper-200 text-ink-600',
       )}
     >
       {value}

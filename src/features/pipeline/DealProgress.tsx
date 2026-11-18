@@ -26,7 +26,7 @@ export function TradeSteps({ steps }: { steps: DealProgressData['steps'] }) {
               />
               <span
                 className={cn(
-                  'block truncate text-[10px] leading-tight',
+                  'block truncate text-sm leading-tight',
                   s.state === 'todo' ? 'text-ink-400' : 'text-ink-700',
                 )}
               >
@@ -87,15 +87,15 @@ export function NextStepCard({
 
   return (
     <div className={cn('flex flex-col gap-2 rounded-md border p-3.5', tone.box, className)}>
-      <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-ink-500">
         {tone.icon}
         {tone.label}
       </p>
       <p className="text-sm font-semibold text-ink-900">{step.title}</p>
-      <p className="text-xs leading-relaxed text-ink-600">{step.detail}</p>
+      <p className="text-sm leading-relaxed text-ink-600">{step.detail}</p>
       {blockedReason ? (
         <div className="space-y-1.5">
-          <p className="text-xs leading-relaxed text-warn-600">{blockedReason.text}</p>
+          <p className="text-sm leading-relaxed text-warn-600">{blockedReason.text}</p>
           <LinkButton to={blockedReason.href} variant="secondary" size="sm">
             {blockedReason.label}
           </LinkButton>

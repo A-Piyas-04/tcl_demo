@@ -183,7 +183,7 @@ export function ReferenceData() {
         sortable: true,
         width: '10rem',
         value: (r) => r.code ?? '',
-        cell: (r) => <span className="font-mono text-xs font-medium text-ink-800">{r.code}</span>,
+        cell: (r) => <span className="font-mono text-sm font-medium text-ink-800">{r.code}</span>,
       })
     }
     if (set.headers.name) {
@@ -202,7 +202,7 @@ export function ReferenceData() {
         header: set.headers.detail,
         sortable: true,
         value: (r) => r.detail ?? '',
-        cell: (r) => <span className="text-xs text-ink-600">{r.detail}</span>,
+        cell: (r) => <span className="text-sm text-ink-600">{r.detail}</span>,
       })
     }
     if (set.headers.extra) {
@@ -211,7 +211,7 @@ export function ReferenceData() {
         header: set.headers.extra,
         align: 'right',
         value: (r) => r.extra ?? '',
-        cell: (r) => <span className="text-xs tabular text-ink-600">{r.extra}</span>,
+        cell: (r) => <span className="text-sm tabular text-ink-600">{r.extra}</span>,
       })
     }
     return out
@@ -221,7 +221,7 @@ export function ReferenceData() {
     <div className="space-y-4">
       <PageHeading
         title="Reference data"
-        subtitle="The lists every other screen chooses from, kept in one place so a change lands everywhere at once."
+        subtitle="Lists every screen chooses from"
         meta={<Badge tone="neutral">{pluralise(REFERENCE_SETS.length, 'set')}</Badge>}
       />
 
@@ -262,7 +262,7 @@ export function ReferenceData() {
                     }
                   >
                     <span className="min-w-0 truncate">{s.label}</span>
-                    <span className="shrink-0 text-2xs tabular text-ink-400">{s.rows().length}</span>
+                    <span className="shrink-0 text-sm tabular text-ink-400">{s.rows().length}</span>
                   </Link>
                 )
               })}

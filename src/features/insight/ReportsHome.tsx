@@ -117,7 +117,7 @@ export function ReportsHome() {
       <div>
         <PageHeading
           title="Reports"
-          subtitle="Look back across the business. Each report answers one question; every export is open to both roles and is logged."
+          subtitle="Each report answers one question"
         />
         <SectionNav section="reports" />
       </div>
@@ -131,9 +131,9 @@ export function ReportsHome() {
                 {loading ? (
                   <Skeleton className="h-7 w-24" />
                 ) : (
-                  <p className="text-2xl font-semibold leading-none tracking-tight tabular text-ink-900">{card.figure}</p>
+                  <p className="text-2xl font-semibold leading-none tabular text-ink-900">{card.figure}</p>
                 )}
-                <p className="mt-1 text-2xs text-ink-500">{card.figureLabel}</p>
+                <p className="mt-1 text-sm text-ink-500">{card.figureLabel}</p>
               </div>
               <LinkButton to={card.to} variant="secondary" size="sm" className="self-start">
                 Open report

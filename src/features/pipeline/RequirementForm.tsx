@@ -244,7 +244,7 @@ export function RequirementForm() {
             </FormGrid>
 
             {clientWarning ? (
-              <p className="flex items-start gap-1.5 rounded border border-warn-200 bg-warn-50 px-2 py-1.5 text-xs leading-relaxed text-warn-600">
+              <p className="flex items-start gap-1.5 rounded border border-warn-200 bg-warn-50 px-2 py-1.5 text-sm leading-relaxed text-warn-600">
                 {clientWarning}
               </p>
             ) : null}
@@ -322,8 +322,8 @@ export function RequirementForm() {
                   {REQUIREMENT_KIND_LABEL[duplicate.kind]}
                 </span>
                 <Badge tone="info">{REQUIREMENT_STATUS_LABEL[duplicate.status]}</Badge>
-                <span className="text-xs text-ink-500">recorded {fmtDate(duplicate.enquiryDate)}</span>
-                <span className="text-xs tabular text-ink-500">
+                <span className="text-sm text-ink-500">recorded {fmtDate(duplicate.enquiryDate)}</span>
+                <span className="text-sm tabular text-ink-500">
                   {fmtQty(duplicate.estAnnualQty, duplicate.qtyUom)}
                 </span>
               </div>
@@ -497,7 +497,7 @@ export function RequirementForm() {
         {error ? <InlineError>{error}</InlineError> : null}
 
         <div className="flex items-center justify-between gap-3 pb-6">
-          <p className="text-xs text-ink-400">
+          <p className="text-sm text-ink-400">
             {editing ? 'Changes are written to the audit log.' : 'The enquiry is written to the audit log.'}
           </p>
           <div className="flex items-center gap-2">

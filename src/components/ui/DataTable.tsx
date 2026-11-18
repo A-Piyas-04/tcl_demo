@@ -7,7 +7,6 @@
  */
 
 import * as React from 'react'
-import { motion } from 'framer-motion'
 import {
   ArrowDown,
   ArrowUp,
@@ -31,7 +30,13 @@ export interface Column<T> {
   /** the value used for sorting and CSV export */
   value?: (row: T) => string | number | null
   width?: string
-  align?: 'left' | 'right' | 'center'
+  /**
+   * Text reads left, figures and dates read right. There is no `center`:
+   * a centred column never lines up with its own header or its neighbours.
+   */
+  align?: 'left' | 'right'
+  /** a floor so a name column never collapses to nothing on a narrow screen */
+  minWidth?: string
   sortable?: boolean
   /** hidden until the user turns it on */
   optional?: boolean
@@ -167,7 +172,7 @@ export function DataTable<T>({
                       icon={
                         <span
                           className={cn(
-                            'grid h-3.5 w-3.5 place-items-center rounded-sm border text-[9px]',
+                            'grid h-3.5 w-3.5 place-items-center rounded-sm border text-sm',
                             hidden.includes(c.key) ? 'border-paper-400' : 'border-accent-600 bg-accent-600 text-white',
                           )}
                         >
@@ -221,14 +226,29 @@ export function DataTable<T>({
                 {visible.map((c) => (
                   <th
                     key={c.key}
-                    style={c.width ? { width: c.width } : undefined}
+                    scope="col"
+                    style={{
+                      ...(c.width ? { width: c.width } : null),
+                      minWidth: c.minWidth ?? (c.align === 'right' ? '5.5rem' : '7rem'),
+                    }}
+                    // the header takes the column's alignment, always
                     className={cn(
                       'th',
                       c.align === 'right' && 'text-right',
-                      c.align === 'center' && 'text-center',
-                      c.sortable && 'cursor-pointer transition-colors hover:text-ink-800',
+                      c.sortable && 'cursor-pointer transition-colors hover:text-ink-900',
                     )}
                     onClick={c.sortable ? () => toggleSort(c.key) : undefined}
+                    onKeyDown={
+                      c.sortable
+                        ? (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              toggleSort(c.key)
+                            }
+                          }
+                        : undefined
+                    }
+                    tabIndex={c.sortable ? 0 : undefined}
                     aria-sort={sortKey === c.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
                   >
                     <span
@@ -255,20 +275,28 @@ export function DataTable<T>({
               </tr>
             </thead>
             <tbody>
-              {pageRows.map((row, i) => {
+              {pageRows.map((row) => {
                 const key = rowKey(row)
                 const isSelected = selectedKey === key
                 return (
-                  <motion.tr
+                  <tr
                     key={key}
-                    initial={{ opacity: 0, y: 3 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.18, delay: Math.min(i * 0.012, 0.18), ease: 'easeOut' }}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    onKeyDown={
+                      onRowClick
+                        ? (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              onRowClick(row)
+                            }
+                          }
+                        : undefined
+                    }
+                    tabIndex={onRowClick ? 0 : undefined}
                     className={cn(
                       'group border-b border-paper-200 transition-colors last:border-0',
                       onRowClick && 'cursor-pointer',
-                      isSelected ? 'bg-accent-50/70' : 'hover:bg-paper-100/80',
+                      isSelected ? 'bg-accent-50' : 'hover:bg-paper-100',
                       rowTone?.(row),
                     )}
                   >
@@ -289,16 +317,15 @@ export function DataTable<T>({
                         key={c.key}
                         className={cn(
                           'cell',
-                          dense && 'py-1.5',
+                          dense && 'h-10',
                           c.align === 'right' && 'text-right',
-                          c.align === 'center' && 'text-center',
                           c.className,
                         )}
                       >
                         {c.cell(row)}
                       </td>
                     ))}
-                  </motion.tr>
+                  </tr>
                 )
               })}
             </tbody>
@@ -307,7 +334,7 @@ export function DataTable<T>({
       )}
 
       {!loading && sorted.length > pageSize ? (
-        <div className="flex items-center justify-between gap-3 border-t border-paper-200 px-3 py-2 text-xs text-ink-500">
+        <div className="flex items-center justify-between gap-3 border-t border-paper-200 px-3 py-2 text-sm text-ink-500">
           <span className="tabular">
             {current * pageSize + 1}–{Math.min((current + 1) * pageSize, sorted.length)} of{' '}
             {sorted.length.toLocaleString('en-US')}
@@ -341,7 +368,11 @@ export function DataTable<T>({
   )
 }
 
-/** Primary cell: a name with an optional second line. */
+/**
+ * Primary cell: a name, and a 13px second line only where it aids scanning.
+ * Long values lose their END to an ellipsis and carry the full text as a
+ * title, so the first word — the part you scan by — is always readable.
+ */
 export function NameCell({
   title,
   subtitle,
@@ -353,17 +384,51 @@ export function NameCell({
   badge?: React.ReactNode
   mono?: boolean
 }) {
+  const asText = (v: React.ReactNode) => (typeof v === 'string' || typeof v === 'number' ? String(v) : undefined)
   return (
     <div className="flex min-w-0 items-center gap-2">
       <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className={cn('truncate font-medium text-ink-900', mono && 'font-mono text-[0.8rem] tabular')}>
+        <div className="flex items-center gap-2">
+          <span
+            title={asText(title)}
+            className={cn('truncate-end font-semibold text-ink-900', mono && 'font-mono')}
+          >
             {title}
           </span>
           {badge}
         </div>
-        {subtitle ? <div className="truncate text-xs text-ink-500">{subtitle}</div> : null}
+        {subtitle ? (
+          <div title={asText(subtitle)} className="truncate-end text-sm text-ink-500">
+            {subtitle}
+          </div>
+        ) : null}
       </div>
     </div>
   )
+}
+
+/**
+ * Wraps controls that live inside a clickable row, so pressing one does not
+ * also open the record behind it.
+ */
+export function RowActions({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn('flex items-center justify-end gap-1', className)}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      {children}
+    </div>
+  )
+}
+
+/** The one way an absent value is written, everywhere in the product. */
+export function Empty() {
+  return <span className="text-ink-400">—</span>
+}
+
+/** A figure cell: right-aligned, never monospaced, never . */
+export function NumCell({ children, tone }: { children: React.ReactNode; tone?: string }) {
+  return <span className={cn('whitespace-nowrap', tone ?? 'text-ink-900')}>{children}</span>
 }

@@ -197,17 +197,23 @@ export const STAGE_LABEL: Record<EngagementStage, string> = {
 }
 
 /** Tailwind classes per stage: text, background, border, and a solid dot. */
+const PIPELINE_CHIP = 'text-accent-700 bg-accent-50 border-accent-200'
+
 export const STAGE_STYLE: Record<EngagementStage, { chip: string; dot: string; bar: string }> = {
-  IDENTIFIED: { chip: 'text-[#4b5563] bg-[#eef0f3] border-[#d8dce2]', dot: 'bg-[#7c8694]', bar: 'bg-[#7c8694]' },
-  OFFERED: { chip: 'text-[#1f4f79] bg-[#e8f1f9] border-[#c6ddef]', dot: 'bg-[#2f6fa8]', bar: 'bg-[#2f6fa8]' },
-  SAMPLE_REQUESTED: { chip: 'text-[#573f8f] bg-[#f0ecfa] border-[#dad0f1]', dot: 'bg-[#7a57c4]', bar: 'bg-[#7a57c4]' },
-  SAMPLE_SENT: { chip: 'text-[#573f8f] bg-[#f0ecfa] border-[#dad0f1]', dot: 'bg-[#9b7fd4]', bar: 'bg-[#9b7fd4]' },
-  UNDER_EVALUATION: { chip: 'text-[#8a5a1a] bg-[#fdf3e3] border-[#f0ddbd]', dot: 'bg-[#b4762a]', bar: 'bg-[#b4762a]' },
-  APPROVED: { chip: 'text-[#0f6153] bg-[#e7f6f1] border-[#bfe5da]', dot: 'bg-[#15806a]', bar: 'bg-[#15806a]' },
-  COMMERCIAL: { chip: 'text-[#0a5240] bg-[#e2f4ec] border-[#b4e0cd]', dot: 'bg-[#0c6b4f]', bar: 'bg-[#0c6b4f]' },
-  ON_HOLD: { chip: 'text-[#7a5210] bg-[#fdf6e8] border-[#f0e0b9]', dot: 'bg-[#9a6714]', bar: 'bg-[#9a6714]' },
-  REJECTED: { chip: 'text-[#8d2d27] bg-[#fdeeed] border-[#f3cdca]', dot: 'bg-[#b23a34]', bar: 'bg-[#b23a34]' },
-  DISCONTINUED: { chip: 'text-[#56504a] bg-[#f3f1ee] border-[#ded9d2]', dot: 'bg-[#6b6257]', bar: 'bg-[#6b6257]' },
+  // The seven pipeline stages are one ordered dimension, so they are one hue
+  // in deepening steps — not seven unrelated colours. The chip is identical
+  // throughout because the label, not the colour, says which stage it is.
+  // Only the three exits differ, and those are genuine semantics.
+  IDENTIFIED: { chip: PIPELINE_CHIP, dot: 'bg-accent-300', bar: 'bg-accent-300' },
+  OFFERED: { chip: PIPELINE_CHIP, dot: 'bg-accent-400', bar: 'bg-accent-400' },
+  SAMPLE_REQUESTED: { chip: PIPELINE_CHIP, dot: 'bg-accent-500', bar: 'bg-accent-500' },
+  SAMPLE_SENT: { chip: PIPELINE_CHIP, dot: 'bg-accent-600', bar: 'bg-accent-600' },
+  UNDER_EVALUATION: { chip: PIPELINE_CHIP, dot: 'bg-accent-700', bar: 'bg-accent-700' },
+  APPROVED: { chip: PIPELINE_CHIP, dot: 'bg-accent-800', bar: 'bg-accent-800' },
+  COMMERCIAL: { chip: PIPELINE_CHIP, dot: 'bg-accent-900', bar: 'bg-accent-900' },
+  ON_HOLD: { chip: 'text-warn-700 bg-warn-50 border-warn-200', dot: 'bg-warn-600', bar: 'bg-warn-600' },
+  REJECTED: { chip: 'text-danger-700 bg-danger-50 border-danger-200', dot: 'bg-danger-600', bar: 'bg-danger-600' },
+  DISCONTINUED: { chip: 'text-ink-600 bg-paper-200 border-paper-300', dot: 'bg-ink-400', bar: 'bg-ink-400' },
 }
 
 export const CLIENT_STATUS_LABEL: Record<ClientStatus, string> = {

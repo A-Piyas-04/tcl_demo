@@ -167,7 +167,7 @@ export function P2List() {
       sortable: true,
       width: '9.5rem',
       value: (r) => r.api.therapeuticArea,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.api.therapeuticArea}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.api.therapeuticArea}</span>,
     },
     {
       key: 'sourcing',
@@ -185,13 +185,13 @@ export function P2List() {
       cell: (r) =>
         r.sourceCount ? (
           <span className="min-w-0">
-            <span className="block truncate text-xs text-ink-700">{r.manufacturers.join(', ')}</span>
-            <span className="text-2xs text-ink-400">
+            <span className="block truncate text-sm text-ink-700">{r.manufacturers.join(', ')}</span>
+            <span className="text-sm text-ink-400">
               {r.acceptedCount} of {r.sourceCount} approved
             </span>
           </span>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -221,7 +221,7 @@ export function P2List() {
             <span className="text-ink-400"> open / {r.orderCount}</span>
           </span>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -230,7 +230,7 @@ export function P2List() {
       align: 'right',
       width: '9rem',
       value: (r) => r.expected,
-      cell: (r) => <span className="font-mono text-xs tabular text-ink-700">{r.expected}</span>,
+ cell: (r) => <span className="text-sm tabular text-ink-700">{r.expected}</span>,
     },
   ]
 
@@ -254,7 +254,7 @@ export function P2List() {
                 </MenuTrigger>
                 <MenuContent align="end">
                   <MenuItem icon={<RefreshCw className="h-3.5 w-3.5" />} onSelect={() => setConfirmReset(true)}>
-                    Reset Product 2.0 demo data
+                    Reset data
                   </MenuItem>
                 </MenuContent>
               </Menu>
@@ -345,7 +345,7 @@ export function P2List() {
                 placeholder="Any therapeutic area"
                 options={THERAPEUTIC_AREAS.map((t) => ({ value: t, label: t }))}
               />
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-600">
+              <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-600">
                 <input
                   type="checkbox"
                   checked={values.archived === '1'}
@@ -365,7 +365,7 @@ export function P2List() {
           onRowClick={(r) => navigate(`/product-2/${r.api.id}`)}
           exportName="product-2-apis"
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {pluralise(rows.length, 'API')}
               {activeCount ? <Badge tone="accent">{activeCount} filters</Badge> : null}
@@ -398,14 +398,14 @@ export function P2List() {
       <ConfirmDialog
         open={confirmReset}
         onOpenChange={setConfirmReset}
-        title="Reset Product 2.0 data?"
-        recordName="every Product 2.0 record"
+        title="Reset data?"
+        recordName="every molecule record"
         consequence="All changes made in this browser are discarded and the demonstration data is restored. The rest of the application is not affected."
         confirmLabel="Reset data"
         loading={resetting}
         onConfirm={async () => {
           setResetting(true)
-          await runAction(resetP2Data, { success: 'Product 2.0 demo data restored.' })
+          await runAction(resetP2Data, { success: 'Data restored.' })
           setResetting(false)
           setConfirmReset(false)
         }}

@@ -218,7 +218,7 @@ export function ClientDetail() {
             This client record is inactive
             <HelpTip>
               Deactivated rather than deleted, so every engagement, order and document below remains readable, but
-              nothing on this page can be changed. Reactivation is not part of this prototype.
+              nothing on this page can be changed.
             </HelpTip>
           </p>
         </Panel>
@@ -227,30 +227,30 @@ export function ClientDetail() {
       {/* summary as four bounded cells, not one wide band */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Products taken</p>
+          <p className="text-sm font-semibold text-ink-500">Products taken</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{loading ? '—' : productCount || '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             across {pluralise(new Set(engagements.map((e) => e.mp.id)).size, 'source')}
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">In commercial supply</p>
+          <p className="text-sm font-semibold text-ink-500">In commercial supply</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{loading ? '—' : commercialCount || '—'}</p>
           <Meter value={commercialCount} max={Math.max(1, engagements.length)} className="mt-2" />
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Open requirements</p>
+          <p className="text-sm font-semibold text-ink-500">Open requirements</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{loading ? '—' : openRequirements || '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             {pluralise(data?.requirements.length ?? 0, 'enquiry')} in total
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Commission earned</p>
+          <p className="text-sm font-semibold text-ink-500">Commission earned</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">
             {loading ? '—' : fmtMoney(commissionEarned, commissionCurrency, { compact: true, decimals: 0 })}
           </p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             on {pluralise(data?.indents.length ?? 0, 'indent')} raised for this client
           </p>
         </Panel>
@@ -300,7 +300,7 @@ export function ClientDetail() {
             )}
           </Field>
         </FieldGrid>
-        {client.notes ? <p className="mt-3 text-xs leading-relaxed text-ink-600">{client.notes}</p> : null}
+        {client.notes ? <p className="mt-3 text-sm leading-relaxed text-ink-600">{client.notes}</p> : null}
       </Panel>
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -547,21 +547,21 @@ function ProductsTab({
                         >
                           {r.manufacturer.displayName}
                         </Link>
-                        <span className="hidden font-mono text-2xs text-ink-500 sm:inline">
+ <span className="hidden text-sm text-ink-500 sm:inline">
                           {r.mp.grade} · {r.mp.pharmacopoeia}
                         </span>
                         <StageBadge stage={r.stage} size="sm" />
                         <AgeingFlag days={r.daysInStage} threshold={60} />
-                        <span className="w-24 text-right text-2xs tabular text-ink-500">
+                        <span className="w-24 text-right text-sm tabular text-ink-500">
                           {r.lastActivityAt ? fmtDate(r.lastActivityAt) : 'No activity'}
                         </span>
                         <span className="flex w-28 items-center justify-end gap-1.5">
                           <Avatar name={r.ownerName} size="xs" />
-                          <span className="truncate text-2xs text-ink-500">{r.ownerName}</span>
+                          <span className="truncate text-sm text-ink-500">{r.ownerName}</span>
                         </span>
                         <Link
                           to={`/engagements/${r.engagement.id}/peers`}
-                          className="shrink-0 text-2xs font-medium text-accent-700 underline"
+                          className="shrink-0 text-sm font-medium text-accent-700 underline"
                         >
                           Other clients taking this
                         </Link>
@@ -667,20 +667,20 @@ function RequirementsTab({
                 >
                   {r.product.genericName}
                 </Link>
-                <span className="block text-2xs text-ink-500">asked {fmtDate(r.requirement.enquiryDate)}</span>
+                <span className="block text-sm text-ink-500">asked {fmtDate(r.requirement.enquiryDate)}</span>
               </td>
               <td className="cell">
                 <Badge tone={r.requirement.kind === 'NEW_DEVELOPMENT' ? 'info' : 'accent'}>
                   {REQUIREMENT_KIND_LABEL[r.requirement.kind]}
                 </Badge>
               </td>
-              <td className="cell font-mono text-xs text-ink-600">
+ <td className="cell text-sm text-ink-600">
                 {r.requirement.requiredPharmacopoeia ?? 'Any'}
               </td>
               <td className="cell text-right tabular text-ink-800">
                 {fmtQty(r.requirement.estAnnualQty, r.requirement.qtyUom)}
                 {r.requirement.qtyIsIndicative ? (
-                  <span className="ml-1 text-2xs text-ink-400">indicative</span>
+                  <span className="ml-1 text-sm text-ink-400">indicative</span>
                 ) : null}
               </td>
               <td className="cell text-right tabular text-ink-800">
@@ -751,7 +751,7 @@ function SitesTab({
       <Panel>
         <PanelHeader
           title="Sites"
-          subtitle="A client calls a head office a corporate office and a plant a factory. Deliveries may only go to a site of the ordering client."
+          subtitle="Deliveries may only go to a site of the ordering client"
           actions={
             readOnly ? null : (
               <WriteButton
@@ -790,7 +790,7 @@ function SitesTab({
                     {s.isPrimary ? <Badge tone="outline">Primary</Badge> : null}
                     {!s.isActive ? <Badge tone="neutral">Inactive</Badge> : null}
                   </span>
-                  <span className="block truncate text-xs text-ink-500">
+                  <span className="block truncate text-sm text-ink-500">
                     {[s.addressLine, s.city, s.countryCode].filter(Boolean).join(', ')}
                   </span>
                 </span>
@@ -812,7 +812,7 @@ function SitesTab({
           </ul>
         )}
         {sites.length > 0 && deliverable.length === 0 ? (
-          <p className="border-t border-paper-200 px-4 py-2.5 text-xs text-warn-600">
+          <p className="border-t border-paper-200 px-4 py-2.5 text-sm text-warn-600">
             None of these sites is marked as a delivery destination, so an order for this client has nowhere to go.
             Mark the factory or warehouse that receives goods.
           </p>
@@ -1006,7 +1006,7 @@ function ContactsTab({
           <div className="divide-y divide-paper-200">
             {[...byDepartment, ...(other.length ? [{ dept: 'Other', people: other }] : [])].map((group) => (
               <div key={group.dept} className="px-4 py-3">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{group.dept}</p>
+                <p className="text-sm font-semibold text-ink-500">{group.dept}</p>
                 <ul className="mt-1.5 space-y-1">
                   {group.people.map((c) => (
                     <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -1016,19 +1016,19 @@ function ContactsTab({
                           <span className="truncate text-sm font-medium text-ink-900">{c.fullName}</span>
                           {c.isPrimary ? <Badge tone="accent">Primary</Badge> : null}
                         </span>
-                        <span className="block truncate text-xs text-ink-500">{c.designation ?? '—'}</span>
+                        <span className="block truncate text-sm text-ink-500">{c.designation ?? '—'}</span>
                       </span>
                       {c.email ? (
                         <a
                           href={`mailto:${c.email}`}
-                          className="flex items-center gap-1 text-xs text-ink-600 hover:text-accent-700"
+                          className="flex items-center gap-1 text-sm text-ink-600 hover:text-accent-700"
                         >
                           <Mail className="h-3 w-3" />
                           <span className="truncate">{c.email}</span>
                         </a>
                       ) : null}
                       {c.phone ? (
-                        <span className="flex items-center gap-1 text-xs tabular text-ink-600">
+                        <span className="flex items-center gap-1 text-sm tabular text-ink-600">
                           <Phone className="h-3 w-3" />
                           {c.phone}
                         </span>
@@ -1263,7 +1263,7 @@ function OrdersTab({
                         <Badge tone={o.status === 'COMPLETED' ? 'ok' : o.status === 'CANCELLED' ? 'neutral' : 'outline'}>
                           {ORDER_STATUS_LABEL[o.status]}
                         </Badge>
-                        <span className="text-2xs tabular text-ink-500">{fmtDate(o.orderDate)}</span>
+                        <span className="text-sm tabular text-ink-500">{fmtDate(o.orderDate)}</span>
                       </span>
                     </div>
                     <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-5">
@@ -1275,13 +1275,13 @@ function OrdersTab({
                         ['Delivered', delivered],
                       ].map(([label, value]) => (
                         <div key={String(label)}>
-                          <dt className="text-2xs uppercase tracking-wide text-ink-500">{label}</dt>
-                          <dd className="text-xs tabular text-ink-800">{fmtQty(value as number, uom)}</dd>
+                          <dt className="text-sm text-ink-500">{label}</dt>
+                          <dd className="text-sm tabular text-ink-800">{fmtQty(value as number, uom)}</dd>
                         </div>
                       ))}
                     </dl>
                     <Meter value={delivered} max={Math.max(1, ordered)} className="mt-2" />
-                    <p className="mt-1 text-2xs text-ink-500">
+                    <p className="mt-1 text-sm text-ink-500">
                       {pluralise(own.length, 'line')} ·{' '}
                       {ordered > 0 ? `${Math.round((delivered / ordered) * 100)}% delivered` : 'nothing shipped yet'}
                     </p>
@@ -1311,18 +1311,18 @@ function OrdersTab({
                   <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
                     <Link
                       to={`/indents/${i.id}`}
-                      className="min-w-0 flex-1 truncate font-mono text-xs font-medium text-ink-900 hover:text-accent-700"
+                      className="min-w-0 flex-1 truncate font-mono text-sm font-medium text-ink-900 hover:text-accent-700"
                     >
                       {i.indentNumber}
                     </Link>
-                    <span className="flex items-center gap-1 text-xs text-ink-600">
+                    <span className="flex items-center gap-1 text-sm text-ink-600">
                       <Building2 className="h-3 w-3 text-ink-400" />
                       <span className="truncate">
                         {commissions.find((c) => c.indent.id === i.id)?.manufacturerName ?? '—'}
                       </span>
                     </span>
                     <Badge tone={i.status === 'COMPLETED' ? 'ok' : 'outline'}>{ORDER_STATUS_LABEL[i.status]}</Badge>
-                    <span className="text-2xs tabular text-ink-500">{fmtDate(i.orderDate)}</span>
+                    <span className="text-sm tabular text-ink-500">{fmtDate(i.orderDate)}</span>
                   </li>
                 ))}
             </ul>
@@ -1339,24 +1339,24 @@ function OrdersTab({
             </NoteTip>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded border border-paper-300 bg-paper-50 p-2.5">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Earned</p>
+                <p className="text-sm font-semibold text-ink-500">Earned</p>
                 <p className="mt-0.5 text-lg font-semibold tabular text-ink-900">
                   {fmtMoney(earned, currency, { decimals: 0 })}
                 </p>
               </div>
               <div className="rounded border border-paper-300 bg-paper-50 p-2.5">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Received</p>
+                <p className="text-sm font-semibold text-ink-500">Received</p>
                 <p className="mt-0.5 text-lg font-semibold tabular text-ink-900">
                   {fmtMoney(received, currency, { decimals: 0 })}
                 </p>
               </div>
             </div>
             {commissions.length === 0 ? (
-              <p className="text-xs text-ink-500">No commission recorded against this client yet.</p>
+              <p className="text-sm text-ink-500">No commission recorded against this client yet.</p>
             ) : (
               <ul className="space-y-1">
                 {commissions.map((c) => (
-                  <li key={c.commission.id} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
+                  <li key={c.commission.id} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm">
                     <Receipt className="h-3 w-3 shrink-0 text-ink-400" />
                     <Link
                       to={`/indents/${c.indent.id}`}
@@ -1425,13 +1425,13 @@ function DocumentsTab({
             <FileText className="h-4 w-4 shrink-0 text-ink-400" />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm text-ink-900">{d.document.title}</span>
-              <span className="block truncate text-xs text-ink-500">
+              <span className="block truncate text-sm text-ink-500">
                 {documentTypeName(d.document.typeCode)} · uploaded {fmtDate(d.document.uploadedAt)}
                 {d.document.referenceNumber ? ` · ${d.document.referenceNumber}` : ''}
               </span>
             </span>
             {d.parentHref ? (
-              <Link to={d.parentHref} className="hidden truncate text-xs text-accent-700 underline sm:block">
+              <Link to={d.parentHref} className="hidden truncate text-sm text-accent-700 underline sm:block">
                 {d.parentLabel}
               </Link>
             ) : null}
@@ -1521,17 +1521,17 @@ function ActivityTab({
                     {engagement && product ? (
                       <button
                         onClick={() => navigate(`/engagements/${engagement.id}`)}
-                        className="text-2xs text-accent-700 underline"
+                        className="text-sm text-accent-700 underline"
                       >
                         {product.genericName}
                       </button>
                     ) : null}
-                    <span className="text-2xs tabular text-ink-400">{fmtDateTime(a.occurredAt)}</span>
-                    <span className="text-2xs text-ink-500">{userName(db, a.createdByUserId)}</span>
+                    <span className="text-sm tabular text-ink-400">{fmtDateTime(a.occurredAt)}</span>
+                    <span className="text-sm text-ink-500">{userName(db, a.createdByUserId)}</span>
                   </div>
-                  {a.body ? <p className="mt-0.5 text-xs leading-relaxed text-ink-600">{a.body}</p> : null}
+                  {a.body ? <p className="mt-0.5 text-sm leading-relaxed text-ink-600">{a.body}</p> : null}
                   {a.followUpDate ? (
-                    <p className="mt-0.5 text-2xs text-ink-500">
+                    <p className="mt-0.5 text-sm text-ink-500">
                       Follow up {fmtDate(a.followUpDate)}
                       {a.isCompleted ? ' · done' : ''}
                     </p>

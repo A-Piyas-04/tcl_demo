@@ -169,7 +169,7 @@ export function EngagementDetail() {
             <StageBadge stage={engagement.stage} />
             <Tooltip content={`Ageing threshold for this stage is ${stageConfig(engagement.stage).ageingThresholdDays} days.`}>
               <span className="inline-flex items-center gap-1">
-                <span className="text-xs text-ink-500">in stage</span>
+                <span className="text-sm text-ink-500">in stage</span>
                 <AgeingFlag days={daysInStage} threshold={stageConfig(engagement.stage).ageingThresholdDays} />
               </span>
             </Tooltip>
@@ -201,7 +201,7 @@ export function EngagementDetail() {
                   ))
                 )}
                 <MenuSeparator />
-                <p className="max-w-[15rem] px-2 py-1 text-2xs text-ink-400">
+                <p className="max-w-[15rem] px-2 py-1 text-sm text-ink-400">
                   Offers and samples move the stage when recorded.
                 </p>
               </MenuContent>
@@ -214,11 +214,11 @@ export function EngagementDetail() {
         <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0 space-y-4">
             <div className="space-y-1.5">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Sourcing</p>
+              <p className="text-sm font-semibold text-ink-500">Sourcing</p>
               <StageRail stage={engagement.stage} history={history} stageBeforeHold={engagement.stageBeforeHold} />
             </div>
             <div className="space-y-1.5">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Trade</p>
+              <p className="text-sm font-semibold text-ink-500">Trade</p>
               <TradeSteps steps={deal.steps} />
             </div>
             <div className="grid gap-x-5 gap-y-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -246,11 +246,11 @@ export function EngagementDetail() {
           <Tab value="overview">Overview</Tab>
           <Tab value="work">
             Offers &amp; samples
-            <span className="ml-1.5 text-2xs text-ink-400">{offerCount + sampleCount}</span>
+            <span className="ml-1.5 text-sm text-ink-400">{offerCount + sampleCount}</span>
           </Tab>
           <Tab value="trade">
             Orders &amp; shipments
-            <span className="ml-1.5 text-2xs text-ink-400">{deal.orders.length}</span>
+            <span className="ml-1.5 text-sm text-ink-400">{deal.orders.length}</span>
           </Tab>
           <Tab value="documents">Documents</Tab>
           <Tab value="history">History</Tab>
@@ -306,14 +306,14 @@ export function EngagementDetail() {
                   <Field label="Country">{client ? countryName(client.countryCode) : '—'}</Field>
                 </FieldGrid>
                 {approval.siblingApproved > 0 ? (
-                  <p className="flex items-center gap-1 text-xs text-ink-500">
+                  <p className="flex items-center gap-1 text-sm text-ink-500">
                     {pluralise(approval.siblingApproved, 'other approved source')} for this molecule
                     <HelpTip>Dual sourcing is normal and regulator-encouraged.</HelpTip>
                   </p>
                 ) : null}
                 <LinkButton to={`/engagements/${id}/peers`} variant="ghost" size="sm">
                   Other clients taking this molecule
-                  <span className="ml-1 text-2xs text-ink-400">{peers}</span>
+                  <span className="ml-1 text-sm text-ink-400">{peers}</span>
                 </LinkButton>
               </div>
             </Panel>
@@ -329,7 +329,7 @@ export function EngagementDetail() {
                         className="flex items-center justify-between gap-2 text-sm text-ink-800 hover:text-accent-700"
                       >
                         <span className="truncate">Enquiry of {fmtDate(r.enquiryDate)}</span>
-                        <span className="shrink-0 text-xs tabular text-ink-500">{fmtQty(r.estAnnualQty, r.qtyUom)}/yr</span>
+                        <span className="shrink-0 text-sm tabular text-ink-500">{fmtQty(r.estAnnualQty, r.qtyUom)}/yr</span>
                       </Link>
                     </li>
                   ))}
@@ -451,14 +451,14 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
             return (
               <li key={o.id} className="px-4 py-2.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link to={`/client-orders/${o.id}`} className="font-mono text-xs font-medium text-accent-700 hover:underline">
+                  <Link to={`/client-orders/${o.id}`} className="font-mono text-sm font-medium text-accent-700 hover:underline">
                     {o.coNumber}
                   </Link>
                   <OrderStatusBadge status={o.status} />
-                  <span className="ml-auto text-xs text-ink-500">{fmtDate(o.orderDate)}</span>
+                  <span className="ml-auto text-sm text-ink-500">{fmtDate(o.orderDate)}</span>
                 </div>
                 {lines.map((l) => (
-                  <p key={l.lineId} className="mt-1 text-xs tabular text-ink-600">
+                  <p key={l.lineId} className="mt-1 text-sm tabular text-ink-600">
                     {fmtQty(l.orderedQty, l.uom)} ordered · {fmtQty(l.shippedQty, l.uom)} shipped ·{' '}
                     {fmtQty(l.deliveredQty, l.uom)} delivered
                   </p>
@@ -482,7 +482,7 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
               const commission = commissions.find((c) => c.indentId === i.id)
               return (
                 <li key={i.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-                  <Link to={`/indents/${i.id}`} className="font-mono text-xs font-medium text-accent-700 hover:underline">
+                  <Link to={`/indents/${i.id}`} className="font-mono text-sm font-medium text-accent-700 hover:underline">
                     {i.indentNumber}
                   </Link>
                   <OrderStatusBadge status={i.status} />
@@ -490,7 +490,7 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
                     {lc === 'none' ? 'No LC yet' : lc === 'expired' ? 'LC expired' : lc === 'expiring' ? 'LC expiring' : 'LC on file'}
                   </Badge>
                   {commission ? (
-                    <span className="ml-auto flex items-center gap-1.5 text-xs text-ink-500">
+                    <span className="ml-auto flex items-center gap-1.5 text-sm text-ink-500">
                       Commission
                       <CommissionStatusBadge status={commission.status} />
                       {commission.amount != null ? (
@@ -515,14 +515,14 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
           <ul className="divide-y divide-paper-200">
             {shipments.map((s) => (
               <li key={s.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
-                <Link to={`/shipments/${s.id}`} className="font-mono text-xs font-medium text-accent-700 hover:underline">
+                <Link to={`/shipments/${s.id}`} className="font-mono text-sm font-medium text-accent-700 hover:underline">
                   {s.shipmentRef}
                 </Link>
                 <ShipmentStatusBadge status={s.status} />
-                <span className="text-xs text-ink-500">
+                <span className="text-sm text-ink-500">
                   {db.indents.find((i) => i.id === s.indentId)?.indentNumber ?? ''}
                 </span>
-                <span className="ml-auto text-xs tabular text-ink-500">
+                <span className="ml-auto text-sm tabular text-ink-500">
                   {s.actualArrivalDate ? `arrived ${fmtDate(s.actualArrivalDate)}` : s.eta ? `ETA ${fmtDate(s.eta)}` : ''}
                 </span>
               </li>

@@ -115,10 +115,10 @@ export function ShipmentList() {
       value: (r) => r.shipment.shipmentRef,
       cell: (r) => (
         <span className="block min-w-0">
-          <span className="block truncate font-mono text-[0.8rem] tabular font-medium text-ink-900">
+          <span className="block truncate font-mono text-sm tabular font-medium text-ink-900">
             {r.shipment.shipmentRef}
           </span>
-          <span className="block truncate text-2xs text-ink-500">{r.indent?.indentNumber ?? 'indent missing'}</span>
+          <span className="block truncate text-sm text-ink-500">{r.indent?.indentNumber ?? 'indent missing'}</span>
         </span>
       ),
     },
@@ -142,14 +142,14 @@ export function ShipmentList() {
       header: 'BL or AWB',
       width: '8.5rem',
       value: (r) => r.shipment.blAwbNumber,
-      cell: (r) => <span className="font-mono text-2xs text-ink-600">{r.shipment.blAwbNumber ?? '—'}</span>,
+      cell: (r) => <span className="font-mono text-sm text-ink-600">{r.shipment.blAwbNumber ?? '—'}</span>,
     },
     {
       key: 'ports',
       header: 'Ports',
       value: (r) => `${r.shipment.portOfLoading ?? ''} ${r.shipment.portOfDischarge ?? ''}`,
       cell: (r) => (
-        <span className="block min-w-0 text-xs text-ink-600">
+        <span className="block min-w-0 text-sm text-ink-600">
           <span className="block truncate">{r.shipment.portOfLoading ?? '—'}</span>
           <span className="block truncate text-ink-500">to {r.shipment.portOfDischarge ?? '—'}</span>
         </span>
@@ -162,7 +162,7 @@ export function ShipmentList() {
       sortable: true,
       width: '7rem',
       value: (r) => r.shipment.etd,
-      cell: (r) => <span className="text-xs tabular text-ink-600">{fmtDate(r.shipment.etd)}</span>,
+      cell: (r) => <span className="text-sm tabular text-ink-600">{fmtDate(r.shipment.etd)}</span>,
     },
     {
       key: 'eta',
@@ -174,10 +174,10 @@ export function ShipmentList() {
       cell: (r) =>
         r.overdue ? (
           <Tooltip content="The ETA has passed and no arrival has been recorded. Chase the forwarder.">
-            <span className="text-xs font-medium tabular text-warn-600">{fmtDate(r.shipment.eta)}</span>
+            <span className="text-sm font-medium tabular text-warn-600">{fmtDate(r.shipment.eta)}</span>
           </Tooltip>
         ) : (
-          <span className="text-xs tabular text-ink-600">{fmtDate(r.shipment.eta)}</span>
+          <span className="text-sm tabular text-ink-600">{fmtDate(r.shipment.eta)}</span>
         ),
     },
     {
@@ -188,7 +188,7 @@ export function ShipmentList() {
       width: '7rem',
       value: (r) => r.shipment.actualArrivalDate,
       cell: (r) => (
-        <span className="text-xs tabular text-ink-600">{fmtDate(r.shipment.actualArrivalDate)}</span>
+        <span className="text-sm tabular text-ink-600">{fmtDate(r.shipment.actualArrivalDate)}</span>
       ),
     },
     {
@@ -199,7 +199,7 @@ export function ShipmentList() {
       width: '7rem',
       value: (r) => r.shipment.customsClearedOn,
       cell: (r) => (
-        <span className="text-xs tabular text-ink-600">{fmtDate(r.shipment.customsClearedOn)}</span>
+        <span className="text-sm tabular text-ink-600">{fmtDate(r.shipment.customsClearedOn)}</span>
       ),
     },
     {
@@ -213,7 +213,7 @@ export function ShipmentList() {
           <ShipmentStatusBadge status={r.shipment.status} />
           {r.shipment.status === 'HELD_AT_CUSTOMS' && r.shipment.holdRemark ? (
             <Tooltip content={r.shipment.holdRemark}>
-              <span className="truncate text-2xs text-danger-700">why it is held</span>
+              <span className="truncate text-sm text-danger-700">why it is held</span>
             </Tooltip>
           ) : null}
         </span>
@@ -231,7 +231,7 @@ export function ShipmentList() {
           <span className="tabular text-sm text-ink-800">{r.batchCount}</span>
         ) : (
           <Tooltip content="No batch recorded yet, so nothing counts as shipped against the indent line.">
-            <span className="text-xs text-warn-600">none</span>
+            <span className="text-sm text-warn-600">none</span>
           </Tooltip>
         ),
     },
@@ -249,14 +249,14 @@ export function ShipmentList() {
       header: 'C&F agent',
       optional: true,
       value: (r) => r.shipment.cnfAgentName,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.shipment.cnfAgentName ?? '—'}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.shipment.cnfAgentName ?? '—'}</span>,
     },
     {
       key: 'forwarder',
       header: 'Forwarder',
       optional: true,
       value: (r) => r.shipment.forwarderName,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.shipment.forwarderName ?? '—'}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.shipment.forwarderName ?? '—'}</span>,
     },
   ]
 
@@ -270,10 +270,9 @@ export function ShipmentList() {
       <div>
         <PageHeading
           title="Shipments"
-          subtitle="What the manufacturers have despatched against each indent, and where it has reached. A shipment is added from its indent once the manufacturer confirms despatch."
+          subtitle="What has been despatched, and where it has reached"
           meta={
             <>
-              <Badge tone="neutral">{pluralise(db.shipments.length, 'shipment')}</Badge>
               {held > 0 ? (
                 <Badge tone="danger">
                   <ShieldAlert className="h-3 w-3" />
@@ -352,23 +351,10 @@ export function ShipmentList() {
           exportName="shipments"
           exportFilters={queryString}
           onExport={(count) => void logExport('shipment list', queryString, count)}
-          rowTone={(r) =>
-            r.shipment.status === 'HELD_AT_CUSTOMS'
-              ? 'bg-danger-50/50'
-              : r.overdue
-                ? 'bg-warn-50/40'
-                : undefined
-          }
           toolbar={
-            <span className="flex flex-wrap items-center gap-2.5 text-xs text-ink-500">
+            <span className="flex flex-wrap items-center gap-2.5 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'shipment') : '…'}
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm border border-danger-200 bg-danger-50" /> held at customs
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-sm border border-warn-200 bg-warn-50" /> past ETA
-              </span>
             </span>
           }
           empty={

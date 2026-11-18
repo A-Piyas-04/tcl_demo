@@ -218,17 +218,17 @@ export function ProductForm() {
               </p>
               {dup.near.length > 0 ? (
                 <div className="space-y-1">
-                  <p className="text-xs text-ink-600">Similar names:</p>
+                  <p className="text-sm text-ink-600">Similar names:</p>
                   <ul className="flex flex-wrap gap-1.5">
                     {dup.near.map((n) => (
                       <li key={n.id}>
                         <button
                           type="button"
                           onClick={() => navigate(`/products/${n.id}`)}
-                          className="rounded border border-paper-300 bg-white px-2 py-1 text-xs text-ink-800 transition-colors hover:border-accent-400"
+                          className="rounded border border-paper-300 bg-white px-2 py-1 text-sm text-ink-800 transition-colors hover:border-accent-400"
                         >
                           {n.name}
-                          <span className="ml-1.5 text-2xs text-ink-400">{Math.round(n.score * 100)}% alike</span>
+                          <span className="ml-1.5 text-sm text-ink-400">{Math.round(n.score * 100)}% alike</span>
                         </button>
                       </li>
                     ))}
@@ -236,7 +236,7 @@ export function ProductForm() {
                 </div>
               ) : null}
               {dup.sameCas ? (
-                <p className="text-xs text-ink-700">
+                <p className="text-sm text-ink-700">
                   CAS {casNumber} is already recorded against{' '}
                   <button
                     type="button"
@@ -253,7 +253,7 @@ export function ProductForm() {
                 onChange={setAcknowledged}
                 label="I have checked these and this is genuinely a different product"
               />
-              <p className="text-2xs text-ink-500">
+              <p className="text-sm text-ink-500">
                 The new record will be tagged for duplicate review either way.
               </p>
             </div>
@@ -281,8 +281,8 @@ export function ProductForm() {
                       onClick={() => setTherapeutic((prev) => (on ? prev.filter((x) => x !== t) : [...prev, t]))}
                       className={
                         on
-                          ? 'rounded border border-accent-500 bg-accent-50 px-2 py-1 text-xs font-medium text-accent-800'
-                          : 'rounded border border-paper-300 bg-white px-2 py-1 text-xs text-ink-600 transition-colors hover:border-paper-400'
+                          ? 'rounded border border-accent-500 bg-accent-50 px-2 py-1 text-sm font-medium text-accent-800'
+                          : 'rounded border border-paper-300 bg-white px-2 py-1 text-sm text-ink-600 transition-colors hover:border-paper-400'
                       }
                     >
                       {on ? <Check className="mr-1 inline h-3 w-3" /> : null}
@@ -310,7 +310,7 @@ export function ProductForm() {
         {error ? <InlineError>{error}</InlineError> : null}
 
         <div className="flex items-center justify-between gap-3 pb-6">
-          <p className="text-xs text-ink-400">
+          <p className="text-sm text-ink-400">
             {editing ? 'Changes are written to the audit log.' : 'Creation is written to the audit log.'}
           </p>
           <div className="flex items-center gap-2">

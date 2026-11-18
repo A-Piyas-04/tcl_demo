@@ -63,7 +63,7 @@ export function NotPermitted({ what }: { what?: string }) {
           action={<LinkButton to="/" variant="secondary" size="sm">Back to the dashboard</LinkButton>}
           secondary={
             <Button variant="ghost" size="sm" onClick={() => setRole('FULL_ACCESS')}>
-              Switch this demonstration to Full Access
+              Switch to Full Access
             </Button>
           }
         />

@@ -228,12 +228,12 @@ export function IndentDetail() {
                       </td>
                       <td className="cell">
                         <span className="text-ink-800">{mp?.grade ?? '—'}</span>
-                        <span className="ml-1.5 font-mono text-2xs text-ink-500">{mp?.pharmacopoeia}</span>
+ <span className="ml-1.5 text-sm text-ink-500">{mp?.pharmacopoeia}</span>
                       </td>
                       <td className="cell text-right tabular">{fmtQty(line.qty, line.qtyUom)}</td>
                       <td className="cell text-right tabular">
                         {fmtMoney(line.unitPrice, indent.currency)}
-                        <span className="text-2xs text-ink-400">/{line.priceUom}</span>
+                        <span className="text-sm text-ink-400">/{line.priceUom}</span>
                       </td>
                       <td className="cell text-right font-medium tabular text-ink-900">
                         {fmtMoney(line.qty * line.unitPrice, indent.currency, { decimals: 0 })}
@@ -242,7 +242,7 @@ export function IndentDetail() {
                         {order && orderLine ? (
                           <Link
                             to={`/client-orders/${order.id}`}
-                            className="font-mono text-2xs text-accent-700 hover:underline"
+                            className="font-mono text-sm text-accent-700 hover:underline"
                           >
                             {order.coNumber} line {orderLine.lineNo}
                           </Link>
@@ -386,16 +386,16 @@ export function IndentDetail() {
                     to={`/shipments/${s.id}`}
                     className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3 transition-colors hover:bg-paper-100"
                   >
-                    <span className="font-mono text-[0.8rem] tabular font-medium text-ink-900">{s.shipmentRef}</span>
+                    <span className="font-mono text-sm tabular font-medium text-ink-900">{s.shipmentRef}</span>
                     <Badge tone="outline">{SHIPMENT_MODE_LABEL[s.mode]}</Badge>
-                    <span className="min-w-0 flex-1 truncate text-xs text-ink-600">
+                    <span className="min-w-0 flex-1 truncate text-sm text-ink-600">
                       {s.portOfLoading ?? '—'} to {s.portOfDischarge ?? '—'}
                       {s.blAwbNumber ? ` · ${s.blAwbNumber}` : ''}
                     </span>
-                    <span className="text-2xs tabular text-ink-500">
+                    <span className="text-sm tabular text-ink-500">
                       ETD {fmtDate(s.etd)} · ETA {fmtDate(s.eta)}
                     </span>
-                    <span className="text-2xs text-ink-500">{pluralise(batchCount, 'batch', 'batches')}</span>
+                    <span className="text-sm text-ink-500">{pluralise(batchCount, 'batch', 'batches')}</span>
                     <ShipmentStatusBadge status={s.status} />
                   </Link>
                 </li>
@@ -496,7 +496,7 @@ function CommissionPanel({
           <Field label="Received">
             {fmtMoney(commission.receivedAmount, commission.currency)}
             {commission.receivedOn ? (
-              <span className="ml-1.5 text-2xs text-ink-500">on {fmtDate(commission.receivedOn)}</span>
+              <span className="ml-1.5 text-sm text-ink-500">on {fmtDate(commission.receivedOn)}</span>
             ) : null}
           </Field>
           <Field label="Outstanding">
@@ -514,9 +514,9 @@ function CommissionPanel({
           </IndentingNote>
         ) : null}
         {commission.remarks ? (
-          <p className="text-xs italic leading-relaxed text-ink-500">{commission.remarks}</p>
+          <p className="text-sm leading-relaxed text-ink-500">{commission.remarks}</p>
         ) : null}
-        <p className="text-2xs text-ink-400">
+        <p className="text-sm text-ink-400">
           Commission is TCL's only revenue on {indent.indentNumber}. The goods are invoiced by the manufacturer to the
           client.
         </p>

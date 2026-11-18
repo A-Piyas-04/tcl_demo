@@ -208,7 +208,7 @@ export function PipelineReport() {
             <span className="text-sm tabular text-ink-800">{fmtMoney(r.value, 'USD', { compact: true, decimals: 0 })}</span>
           </Tooltip>
         ) : (
-          <span className="text-xs text-ink-400">No firm figure</span>
+          <span className="text-sm text-ink-400">No firm figure</span>
         ),
     },
     {
@@ -218,7 +218,7 @@ export function PipelineReport() {
       sortable: true,
       width: '7.5rem',
       value: (r) => r.commercial,
-      cell: (r) => (r.commercial > 0 ? <Badge tone="ok">{r.commercial}</Badge> : <span className="text-xs text-ink-400">—</span>),
+      cell: (r) => (r.commercial > 0 ? <Badge tone="ok">{r.commercial}</Badge> : <span className="text-sm text-ink-400">—</span>),
     },
     {
       key: 'ageing',
@@ -227,7 +227,7 @@ export function PipelineReport() {
       sortable: true,
       width: '8.5rem',
       value: (r) => r.ageing,
-      cell: (r) => (r.ageing > 0 ? <Badge tone="warn">{r.ageing}</Badge> : <span className="text-xs text-ink-400">—</span>),
+      cell: (r) => (r.ageing > 0 ? <Badge tone="warn">{r.ageing}</Badge> : <span className="text-sm text-ink-400">—</span>),
     },
   ]
 
@@ -347,7 +347,7 @@ export function PipelineReport() {
 
       <Panel>
         <div className="flex flex-wrap items-center gap-2 border-b border-paper-200 p-3">
-          <span className="text-2xs font-medium uppercase tracking-wide text-ink-500">Group by</span>
+          <span className="text-sm font-medium text-ink-500">Group by</span>
           <SegmentedControl
             value={grouping}
             onChange={setGrouping}

@@ -152,7 +152,7 @@ export function SourceDetail() {
           <>
             <Badge tone="neutral">{mp.grade}</Badge>
             <Badge tone="outline">
-              <span className="font-mono">{mp.pharmacopoeia}</span>
+ <span className="">{mp.pharmacopoeia}</span>
             </Badge>
             <Badge tone={mp.status === 'ACTIVE' ? 'ok' : mp.status === 'IN_DEVELOPMENT' ? 'info' : 'neutral'}>
               {MP_STATUS_LABEL[mp.status]}
@@ -177,33 +177,33 @@ export function SourceDetail() {
       {/* four bounded cells rather than one wide strip */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Valid price tiers</p>
+          <p className="text-sm font-semibold text-ink-500">Valid price tiers</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{validPrices.length || '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             {pluralise(data?.prices.length ?? 0, 'price row')} in the history
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Regulatory filings</p>
+          <p className="text-sm font-semibold text-ink-500">Regulatory filings</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{data?.filings.length ?? '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             {data?.filings.map((f) => f.kind).join(', ') || 'None on file'}
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Clients engaged</p>
+          <p className="text-sm font-semibold text-ink-500">Clients engaged</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">{data?.engagements.length || '—'}</p>
-          <p className="mt-0.5 text-xs text-ink-500">
+          <p className="mt-0.5 text-sm text-ink-500">
             {(data?.engagements ?? []).filter((e) => e.stage === 'COMMERCIAL').length} in commercial supply
           </p>
         </Panel>
         <Panel className="p-3.5">
-          <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Lead time</p>
+          <p className="text-sm font-semibold text-ink-500">Lead time</p>
           <p className="mt-1 text-2xl font-semibold tabular text-ink-900">
             {mp.leadTimeDays ? `${mp.leadTimeDays}` : '—'}
-            {mp.leadTimeDays ? <span className="ml-1 text-xs font-medium text-ink-400">days</span> : null}
+            {mp.leadTimeDays ? <span className="ml-1 text-sm font-medium text-ink-400">days</span> : null}
           </p>
-          <p className="mt-0.5 text-xs text-ink-500">MOQ {fmtQty(mp.moqQty, mp.moqUom)}</p>
+          <p className="mt-0.5 text-sm text-ink-500">MOQ {fmtQty(mp.moqQty, mp.moqUom)}</p>
         </Panel>
       </div>
 
@@ -254,14 +254,14 @@ export function SourceDetail() {
             <Field label="Source status">{MP_STATUS_LABEL[mp.status]}</Field>
           </FieldGrid>
           <div className="mt-4 border-t border-paper-200 pt-3.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Packing</p>
+            <p className="text-sm font-medium text-ink-500">Packing</p>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-800">
               {mp.packingDetails ?? 'Not recorded.'}
             </p>
           </div>
           {mp.remarks ? (
             <div className="mt-4 border-t border-paper-200 pt-3.5">
-              <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Remarks</p>
+              <p className="text-sm font-medium text-ink-500">Remarks</p>
               <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-700">{mp.remarks}</p>
             </div>
           ) : null}
@@ -292,7 +292,7 @@ export function SourceDetail() {
                 <FileText className="h-4 w-4 shrink-0 text-ink-400" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-ink-900">{d.document.title}</span>
-                  <span className="block truncate text-xs text-ink-500">
+                  <span className="block truncate text-sm text-ink-500">
                     {documentTypeName(d.document.typeCode)}
                     {d.document.entityType === 'COMPANY_SITE' ? ' · inherited from the plant' : ''}
                     {d.document.expiresOn ? ` · expires ${fmtDate(d.document.expiresOn)}` : ''}
@@ -352,16 +352,16 @@ function PortfolioPanel({
     <Panel>
       <PanelHeader
         title="TCL portfolio"
-        subtitle="Only a represented source can be offered to a client. Everything else is market intelligence."
+        subtitle="Only a represented source can be offered"
       />
       <div className="flex flex-wrap items-start justify-between gap-4 p-4">
         <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <PortfolioBadge inPortfolio={inPortfolio} offerable={inPortfolio && hasValidPrice} />
             {representation ? <Badge tone="neutral">{REPRESENTATION_LABEL[representation]}</Badge> : null}
-            {startedOn ? <span className="text-xs text-ink-500">since {fmtDate(startedOn)}</span> : null}
+            {startedOn ? <span className="text-sm text-ink-500">since {fmtDate(startedOn)}</span> : null}
           </div>
-          <p className="max-w-xl text-xs leading-relaxed text-ink-500">
+          <p className="max-w-xl text-sm leading-relaxed text-ink-500">
             {inPortfolio
               ? hasValidPrice
                 ? 'Represented with a currently valid price, so an offer can be made today.'
@@ -412,7 +412,7 @@ function FilingsPanel({
     <Panel>
       <PanelHeader
         title="Regulatory filings"
-        subtitle="One row per filing. A single source can hold a US DMF, an EU ASMF and a CEP at the same time, each with its own authority and number."
+        subtitle="One row per filing, each with its own authority"
         icon={<ScrollText className="h-4 w-4" />}
         actions={
           <WriteButton variant="secondary" size="sm" icon={<Plus className="h-3.5 w-3.5" />} onClick={onAdd}>
@@ -442,7 +442,7 @@ function FilingsPanel({
             <li key={f.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
               <Badge tone={f.kind === 'CEP' ? 'accent' : 'info'}>{FILING_LABEL[f.kind]}</Badge>
               <span className="font-mono text-sm tabular text-ink-900">{f.referenceNumber}</span>
-              <span className="min-w-0 flex-1 truncate text-xs text-ink-500">
+              <span className="min-w-0 flex-1 truncate text-sm text-ink-500">
                 {f.authority}
                 {f.remarks ? ` · ${f.remarks}` : ''}
               </span>
@@ -623,7 +623,7 @@ function PricesPanel({
       <Panel className="lg:col-span-2">
         <PanelHeader
           title="Price history"
-          subtitle="Every row ever recorded. Prices are never overwritten: a new price supersedes the old one by end-dating it."
+          subtitle="A new price end-dates the one before it"
           icon={<Banknote className="h-4 w-4" />}
           actions={
             <WriteButton variant="secondary" size="sm" icon={<Plus className="h-3.5 w-3.5" />} onClick={onAdd}>
@@ -674,9 +674,9 @@ function PricesPanel({
                     >
                       <td className="cell font-medium tabular text-ink-900">
                         {fmtMoney(p.price, p.currency)}
-                        <span className="text-2xs text-ink-400">/{p.perUom}</span>
+                        <span className="text-sm text-ink-400">/{p.perUom}</span>
                       </td>
-                      <td className="cell font-mono text-xs">{p.incoterm}</td>
+ <td className="cell text-sm">{p.incoterm}</td>
                       <td className="cell text-right tabular">{fmtQty(p.minQty, p.perUom)}</td>
                       <td className="cell text-right tabular">{fmtDate(p.validFrom)}</td>
                       <td className="cell text-right tabular">{fmtDate(p.validTo)}</td>
@@ -721,7 +721,7 @@ function PricesPanel({
         <PanelHeader title="Price over time" subtitle={`Each row at its start date, per ${uom}`} />
         <div className="p-3.5">
           {series.length < 2 ? (
-            <p className="py-10 text-center text-xs text-ink-400">
+            <p className="py-10 text-center text-sm text-ink-400">
               A trend needs at least two price rows. There {series.length === 1 ? 'is one' : 'are none'} so far.
             </p>
           ) : (
@@ -998,7 +998,7 @@ function ClientsPanel({ loading, rows }: { loading: boolean; rows: EngagementRow
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-900">
                     {r.client.displayName}
                   </span>
-                  <span className="text-xs text-ink-500">{r.ownerName}</span>
+                  <span className="text-sm text-ink-500">{r.ownerName}</span>
                   <StageBadge stage={r.stage} size="sm" />
                   <AgeingFlag days={r.daysInStage} threshold={60} />
                 </Link>

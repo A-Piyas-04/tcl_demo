@@ -146,7 +146,7 @@ export function StatusChangeDialog({
         ) : null}
 
         {company.manufacturer?.blacklistedOn && !blacklisting ? (
-          <p className="text-xs text-ink-500">
+          <p className="text-sm text-ink-500">
             Previously blacklisted on {company.manufacturer.blacklistedOn}. <Badge tone="outline">History kept</Badge>
           </p>
         ) : null}

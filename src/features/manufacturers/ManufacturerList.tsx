@@ -129,7 +129,7 @@ export function ManufacturerList() {
             r.company.possibleDuplicate ? (
               <Badge tone="warn">Check duplicate</Badge>
             ) : !r.hasContact ? (
-              <Tooltip content="No contact person is recorded, so the record is incomplete (UC-01 alternate 6a).">
+              <Tooltip content="No contact person is recorded, so the record is incomplete.">
                 <Badge tone="outline">Incomplete</Badge>
               </Tooltip>
             ) : undefined
@@ -181,7 +181,7 @@ export function ManufacturerList() {
         r.commercialCount > 0 ? (
           <Badge tone="ok">{r.commercialCount} supplying</Badge>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -194,7 +194,7 @@ export function ManufacturerList() {
         r.representation ? (
           <Badge tone="neutral">{REPRESENTATION_LABEL[r.representation]}</Badge>
         ) : (
-          <span className="text-xs text-ink-400">None agreed</span>
+          <span className="text-sm text-ink-400">None agreed</span>
         ),
     },
     {
@@ -205,10 +205,10 @@ export function ManufacturerList() {
       width: '8.5rem',
       value: (r) => r.agreementExpiresOn,
       cell: (r) => {
-        if (!r.agreementExpiresOn) return <span className="text-xs text-ink-400">—</span>
+        if (!r.agreementExpiresOn) return <span className="text-sm text-ink-400">—</span>
         const lapsed = r.agreementExpiresOn < todayIso()
         return (
-          <span className={lapsed ? 'text-xs tabular text-warn-600' : 'text-xs tabular text-ink-600'}>
+          <span className={lapsed ? 'text-sm tabular text-warn-600' : 'text-sm tabular text-ink-600'}>
             {fmtDate(r.agreementExpiresOn)}
           </span>
         )
@@ -219,7 +219,7 @@ export function ManufacturerList() {
       header: 'Country',
       optional: true,
       value: (r) => countryName(r.company.countryCode),
-      cell: (r) => <span className="text-xs text-ink-600">{countryName(r.company.countryCode)}</span>,
+      cell: (r) => <span className="text-sm text-ink-600">{countryName(r.company.countryCode)}</span>,
     },
   ]
 
@@ -230,7 +230,7 @@ export function ManufacturerList() {
       <div>
       <PageHeading
         title="Manufacturers"
-        subtitle="Every supplier TCL knows, what it makes, and which clients take it."
+        subtitle="Who TCL buys from, and what they make"
         meta={
           <>
             <Badge tone="neutral">
@@ -328,13 +328,8 @@ export function ManufacturerList() {
           exportName="manufacturers"
           exportFilters={queryString}
           onExport={(count) => void logExport('manufacturer list', queryString, count)}
-          rowTone={(r) =>
-            r.status === 'BLACKLISTED' || r.status === 'INACTIVE' || !r.company.isActive
-              ? 'bg-paper-100/50 text-ink-500 opacity-70'
-              : undefined
-          }
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'manufacturer') : '…'}
               {filtersOn ? <Badge tone="accent">{activeCount} filters</Badge> : null}

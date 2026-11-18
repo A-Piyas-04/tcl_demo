@@ -71,7 +71,7 @@ export function AdminHome() {
     <div className="space-y-5">
       <PageHeading
         title="Administration"
-        subtitle="Users, the two roles, the reference data every screen reads from, and the logs that record what happened."
+        subtitle="Users, roles, reference data and logs"
         meta={
           <>
             <Badge tone="neutral">{pluralise(figures.activeUsers, 'active user')}</Badge>
@@ -248,7 +248,7 @@ export function AdminHome() {
                 {figures.failedSignIns.slice(0, 4).map((s) => (
                   <li key={s.id} className="min-w-0">
                     <p className="truncate text-sm text-ink-800">{s.detail}</p>
-                    <p className="text-2xs text-ink-400">{fmtDateTime(s.occurredAt)}</p>
+                    <p className="text-sm text-ink-400">{fmtDateTime(s.occurredAt)}</p>
                   </li>
                 ))}
               </ul>

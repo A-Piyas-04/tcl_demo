@@ -119,10 +119,10 @@ export function IndentList() {
       value: (r) => r.indent.indentNumber,
       cell: (r) => (
         <span className="block min-w-0">
-          <span className="block truncate font-mono text-[0.8rem] tabular font-medium text-ink-900">
+          <span className="block truncate font-mono text-sm tabular font-medium text-ink-900">
             {r.indent.indentNumber}
           </span>
-          <span className="block truncate text-2xs text-ink-500">{fmtDate(r.indent.orderDate)}</span>
+          <span className="block truncate text-sm text-ink-500">{fmtDate(r.indent.orderDate)}</span>
         </span>
       ),
     },
@@ -146,7 +146,7 @@ export function IndentList() {
       width: '9rem',
       value: (r) => ordersForIndent(db, r.indent.id).map((id) => db.clientOrders.find((o) => o.id === id)?.coNumber).join(', '),
       cell: (r) => (
-        <span className="font-mono text-2xs text-ink-600">
+        <span className="font-mono text-sm text-ink-600">
           {ordersForIndent(db, r.indent.id)
             .map((id) => db.clientOrders.find((o) => o.id === id)?.coNumber ?? '—')
             .join(', ') || '—'}
@@ -183,8 +183,8 @@ export function IndentList() {
         const tone = r.lc.state === 'expired' ? 'text-danger-700' : r.lc.state === 'expiring' ? 'text-warn-600' : 'text-ink-700'
         return (
           <span className="block min-w-0">
-            <span className="block truncate font-mono text-2xs text-ink-700">{r.indent.lcNumber}</span>
-            <span className={`block truncate text-2xs ${tone}`}>
+            <span className="block truncate font-mono text-sm text-ink-700">{r.indent.lcNumber}</span>
+            <span className={`block truncate text-sm ${tone}`}>
               {r.indent.lcExpiryDate
                 ? r.lc.state === 'expired'
                   ? `expired ${fmtDate(r.indent.lcExpiryDate)}`
@@ -214,7 +214,7 @@ export function IndentList() {
         r.shipmentCount > 0 ? (
           <span className="tabular text-sm text-ink-800">{r.shipmentCount}</span>
         ) : (
-          <span className="text-xs text-ink-400">none yet</span>
+          <span className="text-sm text-ink-400">none yet</span>
         ),
     },
     {
@@ -226,14 +226,14 @@ export function IndentList() {
         r.commission ? (
           <span className="flex min-w-0 flex-col gap-0.5">
             <CommissionStatusBadge status={r.commission.status} />
-            <span className="truncate text-2xs tabular text-ink-500">
+            <span className="truncate text-sm tabular text-ink-500">
               {r.commission.amount != null
                 ? fmtMoney(r.commission.amount, r.commission.currency, { decimals: 0 })
                 : 'figure to be decided'}
             </span>
           </span>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -241,14 +241,14 @@ export function IndentList() {
       header: 'Proforma invoice',
       optional: true,
       value: (r) => r.indent.proformaInvoiceRef,
-      cell: (r) => <span className="font-mono text-2xs text-ink-600">{r.indent.proformaInvoiceRef ?? '—'}</span>,
+      cell: (r) => <span className="font-mono text-sm text-ink-600">{r.indent.proformaInvoiceRef ?? '—'}</span>,
     },
     {
       key: 'bank',
       header: 'Issuing bank',
       optional: true,
       value: (r) => r.indent.lcBank,
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.indent.lcBank ?? '—'}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.indent.lcBank ?? '—'}</span>,
     },
   ]
 
@@ -265,7 +265,6 @@ export function IndentList() {
           subtitle="Indents are the orders TCL places on a manufacturer on a client's behalf, one per manufacturer per client order. The client pays the manufacturer, usually by letter of credit; TCL earns commission."
           meta={
             <>
-              <Badge tone="neutral">{pluralise(db.indents.length, 'indent')}</Badge>
               {expiringCount > 0 ? <Badge tone="warn">{expiringCount} with an LC expiring or expired</Badge> : null}
             </>
           }
@@ -331,7 +330,7 @@ export function IndentList() {
                   onChange={(e) => setValue('from', e.target.value)}
                   aria-label="Raised on or after"
                 />
-                <span className="text-xs text-ink-400">to</span>
+                <span className="text-sm text-ink-400">to</span>
                 <DateInput
                   value={values.to}
                   onChange={(e) => setValue('to', e.target.value)}
@@ -351,11 +350,8 @@ export function IndentList() {
           exportName="indents"
           exportFilters={queryString}
           onExport={(count) => void logExport('indent list', queryString, count)}
-          rowTone={(r) =>
-            r.lc.state === 'expired' ? 'bg-danger-50/40' : r.lc.state === 'expiring' ? 'bg-warn-50/40' : undefined
-          }
           toolbar={
-            <span className="flex flex-wrap items-center gap-2.5 text-xs text-ink-500">
+            <span className="flex flex-wrap items-center gap-2.5 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'indent') : '…'}
               {rows ? (

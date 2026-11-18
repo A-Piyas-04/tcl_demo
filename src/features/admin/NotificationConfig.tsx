@@ -135,7 +135,7 @@ export function NotificationConfig() {
                 <p className="text-sm tabular text-ink-800">{settings.overshipmentTolerancePct}%</p>
               )}
             </FormRow>
-            <p className="flex items-center gap-1 text-xs text-ink-500">
+            <p className="flex items-center gap-1 text-sm text-ink-500">
               An indent for 1,000 KG accepts up to{' '}
               {fmtNumber(Math.round(1000 * (1 + settings.overshipmentTolerancePct / 100)))} KG.
               <HelpTip>
@@ -168,7 +168,7 @@ export function NotificationConfig() {
                 <p className="text-sm tabular text-ink-800">{settings.minShelfLifeMonths} months</p>
               )}
             </FormRow>
-            <p className="flex items-center gap-1 text-xs text-ink-500">
+            <p className="flex items-center gap-1 text-sm text-ink-500">
               Currently {settings.minShelfLifeMonths} months.
               <HelpTip>
                 {settings.minShelfLifeMonths === DEFAULT_SETTINGS.minShelfLifeMonths
@@ -185,14 +185,14 @@ export function NotificationConfig() {
         <div className="grid gap-3 p-3.5 sm:grid-cols-2 lg:grid-cols-3">
           {READ_ONLY_SETTINGS.map((s) => (
             <div key={s.key} className="rounded-md border border-paper-300 bg-white p-3">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">{s.label}</p>
+              <p className="text-sm font-semibold text-ink-500">{s.label}</p>
               <p className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-2xl font-semibold leading-none tracking-tight text-ink-900">
+                <span className="text-2xl font-semibold leading-none text-ink-900">
                   {fmtNumber(settings[s.key])}
                 </span>
-                <span className="text-xs font-medium text-ink-400">{s.unit}</span>
+                <span className="text-sm font-medium text-ink-400">{s.unit}</span>
               </p>
-              <p className="mt-2 text-xs leading-relaxed text-ink-500">{s.description}</p>
+              <p className="mt-2 text-sm leading-relaxed text-ink-500">{s.description}</p>
             </div>
           ))}
         </div>

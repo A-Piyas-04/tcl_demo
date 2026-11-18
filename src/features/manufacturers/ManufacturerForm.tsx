@@ -301,13 +301,13 @@ export function ManufacturerForm() {
                 <ShieldAlert className="h-4 w-4" />
                 {dup.exact!.name} is blacklisted
               </p>
-              <p className="text-xs leading-relaxed text-ink-700">
+              <p className="text-sm leading-relaxed text-ink-700">
                 {dup.exact!.blacklistReason ?? 'No reason was recorded.'}
                 {blacklistedMatch?.manufacturer?.blacklistedOn
                   ? ` Applied on ${fmtDate(blacklistedMatch.manufacturer.blacklistedOn)}.`
                   : ''}
               </p>
-              <p className="flex items-center gap-1 text-xs text-ink-600">
+              <p className="flex items-center gap-1 text-sm text-ink-600">
                 This record cannot be created.
                 <HelpTip>
                   If the decision has changed, reinstate the existing manufacturer by changing its status, which needs a
@@ -335,7 +335,7 @@ export function ManufacturerForm() {
                 <AlertTriangle className="h-4 w-4" />
                 This looks like a manufacturer already in the register
               </p>
-              <p className="text-xs text-ink-600">
+              <p className="text-sm text-ink-600">
                 Suffixes such as Ltd, Pvt and GmbH are ignored when names are compared, so these are closer than they
                 look:
               </p>
@@ -345,10 +345,10 @@ export function ManufacturerForm() {
                     <button
                       type="button"
                       onClick={() => navigate(`/manufacturers/${n.id}`)}
-                      className="rounded border border-paper-300 bg-white px-2 py-1 text-xs text-ink-800 transition-colors hover:border-accent-400"
+                      className="rounded border border-paper-300 bg-white px-2 py-1 text-sm text-ink-800 transition-colors hover:border-accent-400"
                     >
                       {n.name}
-                      <span className="ml-1.5 text-2xs text-ink-400">{Math.round(n.score * 100)}% alike</span>
+                      <span className="ml-1.5 text-sm text-ink-400">{Math.round(n.score * 100)}% alike</span>
                     </button>
                   </li>
                 ))}
@@ -358,13 +358,13 @@ export function ManufacturerForm() {
                 onChange={setAcknowledged}
                 label="I have checked these and this is a genuinely different company"
               />
-              <p className="text-2xs text-ink-500">The new record is tagged for duplicate review either way.</p>
+              <p className="text-sm text-ink-500">The new record is tagged for duplicate review either way.</p>
             </div>
           </Panel>
         ) : null}
 
         <Panel>
-          <PanelHeader title="Relationship" subtitle="Where this supplier stands with TCL today (FR-M2-02)" />
+          <PanelHeader title="Relationship" subtitle="Where this supplier stands with TCL today" />
           <div className="space-y-4 p-4">
             <FormRow label="Relationship status" required>
               <RadioCards
@@ -391,7 +391,7 @@ export function ManufacturerForm() {
         <Panel>
           <PanelHeader
             title="Agency terms"
-            subtitle="TCL indents on the manufacturer for a named client, so the commission is receivable from the client (FR-M2-05)"
+            subtitle="TCL indents on the manufacturer for a named client, so the commission is receivable from the client"
           />
           <div className="space-y-4 p-4">
             <FormGrid>
@@ -462,7 +462,7 @@ export function ManufacturerForm() {
             <Panel>
               <PanelHeader
                 title="First site"
-                subtitle="Optional. With no site entered, the head office can be added later, and a plant is needed before a source can name where it is made."
+                subtitle="Optional. A plant is needed before a source names where it is made."
               />
               <div className="space-y-4 p-4">
                 <FormGrid>
@@ -500,7 +500,7 @@ export function ManufacturerForm() {
             <Panel>
               <PanelHeader
                 title="First contact"
-                subtitle="Optional. A manufacturer saved without a contact is flagged as incomplete on the register."
+                subtitle="Optional. Saved without one, the record is flagged incomplete."
               />
               <div className="space-y-4 p-4">
                 <FormGrid>
@@ -531,7 +531,7 @@ export function ManufacturerForm() {
                   </FormRow>
                 </FormGrid>
                 {!contactName.trim() ? (
-                  <p className="text-xs text-ink-500">
+                  <p className="text-sm text-ink-500">
                     <Badge tone="outline">Incomplete</Badge> will show against this manufacturer until a contact is
                     named.
                   </p>
@@ -564,7 +564,7 @@ export function ManufacturerForm() {
         {error ? <InlineError>{error}</InlineError> : null}
 
         <div className="flex items-center justify-between gap-3 pb-6">
-          <p className="text-xs text-ink-400">
+          <p className="text-sm text-ink-400">
             {editing ? 'Changes are written to the audit log.' : 'The manufacturer, site and contact are saved together.'}
           </p>
           <div className="flex items-center gap-2">

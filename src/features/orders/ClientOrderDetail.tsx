@@ -67,7 +67,7 @@ function LineOrigin({ lineId }: { lineId: string }) {
   if (!engagementId) return null
   const requirementId = db.requirementEngagements.find((l) => l.engagementId === engagementId)?.requirementId
   return (
-    <span className="mt-0.5 flex flex-wrap gap-x-2 text-2xs">
+    <span className="mt-0.5 flex flex-wrap gap-x-2 text-sm">
       <Link to={`/engagements/${engagementId}`} className="text-accent-700 hover:underline">
         Engagement
       </Link>
@@ -205,7 +205,7 @@ export function ClientOrderDetail() {
             <Field label="Payment terms">{paymentTermLabel(order.paymentTermCode)}</Field>
             <Field label="Delivery site">{order.deliverySiteId ? siteName(db, order.deliverySiteId) : 'Not set'}</Field>
           </FieldGrid>
-          {order.remarks ? <p className="mt-3 text-xs leading-relaxed text-ink-600">{order.remarks}</p> : null}
+          {order.remarks ? <p className="mt-3 text-sm leading-relaxed text-ink-600">{order.remarks}</p> : null}
         </div>
       </Panel>
 
@@ -247,7 +247,7 @@ export function ClientOrderDetail() {
                   {group.length > 1 ? (
                     <tr className="bg-accent-50/40">
                       <td className="px-3 py-1.5" colSpan={9}>
-                        <span className="flex items-center gap-2 text-xs font-semibold text-accent-900">
+                        <span className="flex items-center gap-2 text-sm font-semibold text-accent-900">
                           <Split className="h-3.5 w-3.5" />
                           {group[0]!.productName}
                           <Badge tone="accent">Split sourced across {group.length} manufacturers</Badge>
@@ -265,12 +265,12 @@ export function ClientOrderDetail() {
                         >
                           {line.productName}
                         </Link>
-                        <span className="block text-xs text-ink-500">{line.sourceName}</span>
+                        <span className="block text-sm text-ink-500">{line.sourceName}</span>
                         <LineOrigin lineId={line.lineId} />
                         {line.overrideReason ? (
                           <span className="mt-1 flex items-start gap-1.5">
                             <Badge tone="warn">Override</Badge>
-                            <span className="text-2xs italic leading-relaxed text-warn-600">
+                            <span className="text-sm leading-relaxed text-warn-600">
                               {line.overrideReason}
                             </span>
                           </span>
@@ -337,7 +337,7 @@ export function ClientOrderDetail() {
                     to={`/indents/${indent.id}`}
                     className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded transition-colors hover:text-accent-700"
                   >
-                    <span className="font-mono text-[0.8rem] tabular font-medium text-ink-900">
+                    <span className="font-mono text-sm tabular font-medium text-ink-900">
                       {indent.indentNumber}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm text-ink-800">
@@ -352,15 +352,15 @@ export function ClientOrderDetail() {
                   </Link>
                   <div className="mt-2 grid gap-2 border-l-2 border-paper-200 pl-3 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">Shipments</p>
+                      <p className="text-sm font-semibold text-ink-500">Shipments</p>
                       {shipments.length === 0 ? (
-                        <p className="text-xs text-ink-400">None yet. Added on the indent when the manufacturer despatches.</p>
+                        <p className="text-sm text-ink-400">None yet. Added on the indent when the manufacturer despatches.</p>
                       ) : (
                         shipments.map((s) => (
                           <Link
                             key={s.id}
                             to={`/shipments/${s.id}`}
-                            className="flex items-center gap-2 text-xs text-ink-700 hover:text-accent-700"
+                            className="flex items-center gap-2 text-sm text-ink-700 hover:text-accent-700"
                           >
                             <span className="font-mono">{s.shipmentRef}</span>
                             <ShipmentStatusBadge status={s.status} />
@@ -372,9 +372,9 @@ export function ClientOrderDetail() {
                       )}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-2xs font-semibold uppercase tracking-wider text-ink-500">TCL commission</p>
+                      <p className="text-sm font-semibold text-ink-500">TCL commission</p>
                       {commission ? (
-                        <p className="flex flex-wrap items-center gap-2 text-xs text-ink-700">
+                        <p className="flex flex-wrap items-center gap-2 text-sm text-ink-700">
                           <CommissionStatusBadge status={commission.status} />
                           {commission.amount != null
                             ? fmtMoney(commission.amount, commission.currency, { decimals: 0 })
@@ -386,7 +386,7 @@ export function ClientOrderDetail() {
                           ) : null}
                         </p>
                       ) : (
-                        <p className="text-xs text-ink-400">No commission record.</p>
+                        <p className="text-sm text-ink-400">No commission record.</p>
                       )}
                     </div>
                   </div>
@@ -526,7 +526,7 @@ function RaiseIndentDialog({
               <p className="text-sm font-semibold text-ink-900">
                 Proposed indent on {db.companies.find((c) => c.id === mfrId)?.displayName ?? '—'}
               </p>
-              <p className="text-xs text-ink-500">
+              <p className="text-sm text-ink-500">
                 for {clientName} · {pluralise(group.length, 'line')} ·{' '}
                 <span className="font-medium tabular text-ink-800">
                   {fmtMoney(total(group), currency, { decimals: 0 })}
@@ -543,11 +543,11 @@ function RaiseIndentDialog({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm text-ink-800">
                         {product?.genericName ?? 'Product'}
-                        <span className="ml-1.5 font-mono text-2xs text-ink-500">
+ <span className="ml-1.5 text-sm text-ink-500">
                           {mp?.grade} {mp?.pharmacopoeia}
                         </span>
                       </span>
-                      <span className="block text-xs text-ink-500">
+                      <span className="block text-sm text-ink-500">
                         {fmtQty(line.qty, line.qtyUom)}
                         {line.targetPrice != null
                           ? ` · client named ${fmtMoney(line.targetPrice, currency, { decimals: 0 })}/${line.qtyUom}`

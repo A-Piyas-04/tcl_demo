@@ -213,7 +213,7 @@ export function OrderDialog({
 
       {!existing ? (
         <div className="space-y-3 rounded-md border border-paper-300 bg-paper-50 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-600">Commission terms</p>
+          <p className="text-sm font-semibold text-ink-600">Commission terms</p>
           <RadioCards
             value={basis}
             onChange={setBasis}

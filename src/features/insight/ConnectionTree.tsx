@@ -424,15 +424,15 @@ const KIND_ICON: Record<NodeKind, React.ReactNode> = {
 /** The root: larger, dark, and the only node that is not clickable. */
 function RootNode({ data }: NodeProps<Node<RootData, 'root'>>) {
   return (
-    <div className="w-[236px] rounded-lg border border-ink-800 bg-ink-900 px-3.5 py-3 shadow-raised">
+    <div className="w-[236px] rounded-lg border border-ink-800 bg-ink-900 px-3.5 py-3 ">
       <Handle type="target" position={Position.Left} style={HANDLE_STYLE} isConnectable={false} />
       <Handle type="source" position={Position.Right} style={HANDLE_STYLE} isConnectable={false} />
-      <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-accent-300">
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-accent-300">
         {KIND_ICON[data.nodeKind]}
         {data.kindLabel}
       </p>
       <p className="mt-1 truncate text-sm font-semibold text-white">{data.label}</p>
-      <p className="truncate text-2xs text-paper-400">{data.sublabel}</p>
+      <p className="truncate text-sm text-paper-400">{data.sublabel}</p>
     </div>
   )
 }
@@ -440,13 +440,13 @@ function RootNode({ data }: NodeProps<Node<RootData, 'root'>>) {
 /** A leaf: a white panel with a hairline border. Clicking it re-roots the tree. */
 function LeafNode({ data }: NodeProps<Node<LeafData, 'leaf'>>) {
   return (
-    <div className="w-[196px] cursor-pointer rounded-md border border-paper-300 bg-white px-2.5 py-2 shadow-tile transition-shadow hover:border-accent-400 hover:shadow-raised">
+    <div className="w-[196px] cursor-pointer rounded-md border border-paper-300 bg-white px-2.5 py-2 transition-shadow hover:border-accent-400 hover:">
       <Handle type="target" position={Position.Left} style={HANDLE_STYLE} isConnectable={false} />
       <Handle type="source" position={Position.Right} style={HANDLE_STYLE} isConnectable={false} />
       <div className="flex items-center gap-1.5">
         <span className="shrink-0 text-ink-400">{KIND_ICON[data.nodeKind]}</span>
-        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink-900">{data.label}</span>
-        <span className="shrink-0 rounded bg-paper-200 px-1 text-[10px] font-semibold tabular text-ink-600">
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink-900">{data.label}</span>
+        <span className="shrink-0 rounded bg-paper-200 px-1 text-sm font-semibold tabular text-ink-600">
           {data.count}
         </span>
       </div>
@@ -454,9 +454,9 @@ function LeafNode({ data }: NodeProps<Node<LeafData, 'leaf'>>) {
         {data.stage ? (
           <StageBadge stage={data.stage} size="sm" />
         ) : (
-          <span className="text-[10px] text-ink-400">No engagement yet</span>
+          <span className="text-sm text-ink-400">No engagement yet</span>
         )}
-        <span className="ml-auto truncate text-[10px] text-ink-400">{data.sublabel}</span>
+        <span className="ml-auto truncate text-sm text-ink-400">{data.sublabel}</span>
       </div>
     </div>
   )
@@ -566,7 +566,7 @@ export function ConnectionTree() {
     <div className="space-y-4">
       <PageHeading
         title="Connection tree"
-        subtitle="The client, product and manufacturer triangle, read from whichever corner you start at."
+        subtitle="The client, product and manufacturer triangle"
         meta={
           <>
             <Badge tone="neutral">{pluralise(graph?.facts.length ?? 0, 'link')}</Badge>
@@ -580,7 +580,7 @@ export function ConnectionTree() {
       <Panel>
         <div className="grid gap-2.5 border-b border-paper-200 p-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Root</p>
+            <p className="text-sm font-medium text-ink-500">Root</p>
             <SegmentedControl
               value={rootKind}
               onChange={(v) => setMany({ root: v, id: '', all: '' })}
@@ -593,7 +593,7 @@ export function ConnectionTree() {
             />
           </div>
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Record</p>
+            <p className="text-sm font-medium text-ink-500">Record</p>
             <Combobox
               value={rootId}
               onChange={(v) => setMany({ id: v, all: '' })}
@@ -602,7 +602,7 @@ export function ConnectionTree() {
             />
           </div>
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Depth</p>
+            <p className="text-sm font-medium text-ink-500">Depth</p>
             <SegmentedControl
               value={depth === 2 ? '2' : '1'}
               onChange={(v) => setValue('depth', v)}
@@ -614,7 +614,7 @@ export function ConnectionTree() {
             />
           </div>
           <div className="space-y-1.5">
-            <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Stage</p>
+            <p className="text-sm font-medium text-ink-500">Stage</p>
             <Select
               value={stage}
               onChange={(v) => setValue('stage', v)}
@@ -679,7 +679,7 @@ export function ConnectionTree() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 p-3">
               <div className="space-y-1.5">
-                <p className="text-2xs font-medium uppercase tracking-wide text-ink-500">Edge colour is the stage</p>
+                <p className="text-sm font-medium text-ink-500">Edge colour is the stage</p>
                 <StageLegend stages={PIPELINE_STAGES} />
               </div>
               <div className="max-w-md space-y-1.5">
@@ -716,7 +716,7 @@ export function ConnectionTree() {
             subtitle="Supply on the left, demand on the right"
             icon={<Share2 className="h-4 w-4" />}
           />
-          <ul className="space-y-2 p-4 text-xs leading-relaxed text-ink-600">
+          <ul className="space-y-2 p-4 text-sm leading-relaxed text-ink-600">
             <li>
               <span className="font-semibold text-ink-900">Product as root.</span> Manufacturers branch left, clients
               branch right. The quickest read of a molecule's supply and demand.

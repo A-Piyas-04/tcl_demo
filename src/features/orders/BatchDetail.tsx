@@ -108,7 +108,7 @@ export function BatchDetail() {
             )}
             {mp ? (
               <Badge tone="outline">
-                {mp.grade} <span className="font-mono">{mp.pharmacopoeia}</span>
+ {mp.grade} <span className="">{mp.pharmacopoeia}</span>
               </Badge>
             ) : null}
             {clientIds.size > 1 ? (
@@ -224,20 +224,20 @@ export function BatchDetail() {
                         {shipment ? (
                           <Link
                             to={`/shipments/${shipment.id}`}
-                            className="font-mono text-[0.8rem] font-medium text-ink-900 hover:text-accent-700"
+                            className="font-mono text-sm font-medium text-ink-900 hover:text-accent-700"
                           >
                             {shipment.shipmentRef}
                           </Link>
                         ) : (
                           '—'
                         )}
-                        <span className="block text-2xs text-ink-500">
+                        <span className="block text-sm text-ink-500">
                           {shipment ? `${SHIPMENT_MODE_LABEL[shipment.mode]} · ETD ${fmtDate(shipment.etd)}` : ''}
                         </span>
                       </td>
                       <td className="cell">
                         {indent ? (
-                          <Link to={`/indents/${indent.id}`} className="font-mono text-2xs text-accent-700 hover:underline">
+                          <Link to={`/indents/${indent.id}`} className="font-mono text-sm text-accent-700 hover:underline">
                             {indent.indentNumber}
                           </Link>
                         ) : (
@@ -257,7 +257,7 @@ export function BatchDetail() {
                       <td className="cell">
                         {shipment ? <ShipmentStatusBadge status={shipment.status} /> : null}
                       </td>
-                      <td className="cell text-xs italic text-warn-600">{line.shortShelfLifeRemark ?? ''}</td>
+                      <td className="cell text-sm text-warn-600">{line.shortShelfLifeRemark ?? ''}</td>
                     </tr>
                   )
                 })}
@@ -293,7 +293,7 @@ export function BatchDetail() {
               return (
                 <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
                   <span className="text-sm font-medium tabular text-ink-900">{fmtQty(d.deliveredQty, d.qtyUom)}</span>
-                  <span className="min-w-0 flex-1 truncate text-xs text-ink-600">
+                  <span className="min-w-0 flex-1 truncate text-sm text-ink-600">
                     to {siteName(db, d.deliverySiteId)}
                     {order && orderLine ? (
                       <>
@@ -310,7 +310,7 @@ export function BatchDetail() {
                       <span className="font-mono">GRN {d.grnReference}</span>
                     </Badge>
                   ) : null}
-                  <span className="text-2xs tabular text-ink-500">{fmtDate(d.deliveredOn)}</span>
+                  <span className="text-sm tabular text-ink-500">{fmtDate(d.deliveredOn)}</span>
                 </li>
               )
             })}

@@ -412,7 +412,7 @@ export function ClientOrderForm() {
             </IndentingNote>
 
             {!clientId ? (
-              <p className="rounded border border-dashed border-paper-400 bg-paper-50/60 px-3 py-6 text-center text-xs text-ink-500">
+              <p className="rounded border border-dashed border-paper-400 bg-paper-50/60 px-3 py-6 text-center text-sm text-ink-500">
                 Choose the client first, then its approved sources can be offered.
               </p>
             ) : null}
@@ -427,7 +427,7 @@ export function ClientOrderForm() {
                       className="space-y-3 rounded-md border border-paper-300 bg-paper-50/40 p-3"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-2 text-xs font-semibold text-ink-700">
+                        <span className="flex items-center gap-2 text-sm font-semibold text-ink-700">
                           Line {index + 1}
                           {isSplit ? (
                             <Tooltip content="This molecule is taken from more than one manufacturer on this order. Normal, and regulator-encouraged.">
@@ -535,26 +535,26 @@ export function ClientOrderForm() {
                           />
                         </FormRow>
                         <div className="min-w-0 space-y-1">
-                          <p className="text-xs font-medium text-ink-700">Currently valid price</p>
+                          <p className="text-sm font-medium text-ink-700">Currently valid price</p>
                           {row.price ? (
                             <p className="text-sm text-ink-800">
                               <span className="font-medium tabular">
                                 {fmtMoney(row.price.price, row.price.currency)}
                               </span>
-                              <span className="text-2xs text-ink-500">
+                              <span className="text-sm text-ink-500">
                                 /{row.price.perUom} {row.price.incoterm}
                               </span>
-                              <span className="ml-1.5 text-2xs text-ink-400">
+                              <span className="ml-1.5 text-sm text-ink-400">
                                 valid to {fmtDate(row.price.validTo)}
                               </span>
                             </p>
                           ) : row.stale ? (
-                            <p className="text-xs text-warn-600">
+                            <p className="text-sm text-warn-600">
                               The last recorded price expired on {fmtDate(row.stale.validTo)}. The agreed price is
                               entered when the indent is raised.
                             </p>
                           ) : (
-                            <p className="text-xs text-ink-400">
+                            <p className="text-sm text-ink-400">
                               No price recorded for this source. It is entered when the indent is raised.
                             </p>
                           )}
@@ -614,7 +614,7 @@ export function ClientOrderForm() {
         {error ? <InlineError>{error}</InlineError> : null}
 
         <div className="flex items-center justify-between gap-3 pb-6">
-          <p className="text-xs text-ink-400">
+          <p className="text-sm text-ink-400">
             The order number is allocated on save and cannot be reused.
           </p>
           <div className="flex items-center gap-2">

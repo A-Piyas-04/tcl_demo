@@ -146,7 +146,7 @@ export function P2OrderDetail() {
             <WriteOnly>
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent-200 bg-accent-50/60 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-2xs font-semibold uppercase tracking-wider text-accent-800">Next step · {TRADE_STAGE_LABEL[stage!]}</p>
+                  <p className="text-sm font-semibold text-accent-800">Next step · {TRADE_STAGE_LABEL[stage!]}</p>
                   <p className="text-sm text-ink-700">{next.hint}</p>
                 </div>
                 <Button variant="primary" icon={next.icon} onClick={next.action}>
@@ -369,7 +369,7 @@ export function P2OrderDetail() {
                     muted={fin.lcAmount == null}
                   />
                   {fin.lcAmount != null && b.lc!.currency === c && fin.lcAmount !== fin.transactionTotal ? (
-                    <p className="pb-1 text-2xs text-ink-400">
+                    <p className="pb-1 text-sm text-ink-400">
                       LC is {fmtDecMoney(fin.lcAmount > fin.transactionTotal ? fin.lcAmount - fin.transactionTotal : fin.transactionTotal - fin.lcAmount, c)}{' '}
                       {fin.lcAmount > fin.transactionTotal ? 'above' : 'below'} the transaction total.
                     </p>
@@ -407,7 +407,7 @@ export function P2OrderDetail() {
                     <CalcRow label="Variance" value={fmtDecMoney(fin.variance, c, 2, true)} />
                   ) : null}
                   {b.commission?.status === 'RECEIVED' ? (
-                    <p className="pb-1 pt-1 text-2xs text-ink-500">
+                    <p className="pb-1 pt-1 text-sm text-ink-500">
                       Received {fmtDate(b.commission.receivedOn)}
                       {b.commission.receiptRef ? ` · ref ${b.commission.receiptRef}` : ''}
                     </p>
@@ -418,12 +418,12 @@ export function P2OrderDetail() {
                       </Button>
                     </WriteOnly>
                   ) : (
-                    <p className="pb-1 pt-1 text-2xs text-ink-400">Receipt can be recorded after delivery is confirmed.</p>
+                    <p className="pb-1 pt-1 text-sm text-ink-400">Receipt can be recorded after delivery is confirmed.</p>
                   )}
                 </div>
               </Panel>
 
-              <p className="text-center text-2xs text-ink-400">
+              <p className="text-center text-sm text-ink-400">
                 <Link to={`/product-2/${api.id}?tab=trade`} className="hover:text-ink-700 hover:underline">
                   All orders for {api.name}
                 </Link>
@@ -508,7 +508,7 @@ function StagePanel({
         <div className="flex min-w-0 items-center gap-2.5">
           <span
             className={cn(
-              'grid h-6 w-6 shrink-0 place-items-center rounded-full text-2xs font-semibold',
+              'grid h-6 w-6 shrink-0 place-items-center rounded-full text-sm font-semibold',
               done ? 'bg-ok-500 text-white' : 'bg-paper-200 text-ink-500',
             )}
           >
@@ -526,13 +526,13 @@ function StagePanel({
       </div>
       <div className="p-4">
         {locked ? (
-          <p className="flex items-center gap-1.5 text-xs text-ink-400">
+          <p className="flex items-center gap-1.5 text-sm text-ink-400">
             <Lock className="h-3 w-3" /> {lockedText}
           </p>
         ) : children ? (
           children
         ) : (
-          <p className="text-xs text-ink-400">Not recorded yet.</p>
+          <p className="text-sm text-ink-400">Not recorded yet.</p>
         )}
       </div>
     </Panel>
@@ -541,7 +541,7 @@ function StagePanel({
 
 function LockedNote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-3 flex items-center gap-1.5 text-2xs text-ink-400">
+    <p className="mt-3 flex items-center gap-1.5 text-sm text-ink-400">
       <Lock className="h-3 w-3" /> {children}
     </p>
   )
@@ -559,7 +559,7 @@ function ShipmentStatusStrip({ status }: { status: 'IN_PROGRESS' | 'SHIPPED' | '
       {steps.map((s, i) => (
         <div key={s.k} className="flex-1">
           <div className={cn('h-1.5 rounded-full', i <= idx ? 'bg-ok-500' : 'bg-paper-300')} />
-          <span className={cn('mt-1 block text-2xs', i <= idx ? 'font-medium text-ok-600' : 'text-ink-400')}>{s.label}</span>
+          <span className={cn('mt-1 block text-sm', i <= idx ? 'font-medium text-ok-600' : 'text-ink-400')}>{s.label}</span>
         </div>
       ))}
     </div>

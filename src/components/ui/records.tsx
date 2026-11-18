@@ -140,7 +140,7 @@ export function DocumentsPanel({
               <FileText className="h-4 w-4 shrink-0 text-ink-400" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm text-ink-900">{r.document.title}</span>
-                <span className="block truncate text-xs text-ink-500">
+                <span className="block truncate text-sm text-ink-500">
                   {r.document.typeCode}
                   {r.document.referenceNumber ? ` · ${r.document.referenceNumber}` : ''} · filed{' '}
                   {fmtDate(r.document.uploadedAt)} by {userName(db, r.document.uploadedByUserId)}
@@ -218,7 +218,7 @@ function AttachDocumentDialog({
       open={open}
       onOpenChange={onOpenChange}
       title="Attach a document"
-      description="The prototype records the document's details; no file is stored. A newer document of the same type supersedes the one it replaces, and both stay on the record."
+      description="A newer document of the same type supersedes the one it replaces. Both stay on the record."
     >
       <form onSubmit={submit} className="space-y-3.5">
         <FormGrid>
@@ -358,13 +358,13 @@ export function ActivityPanel({
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-sm font-medium text-ink-900">{a.subject}</span>
                 <Badge tone="outline">{a.kind.charAt(0) + a.kind.slice(1).toLowerCase()}</Badge>
-                <span className="text-xs text-ink-400">
+                <span className="text-sm text-ink-400">
                   {fmtDateTime(a.occurredAt)} · {userName(db, a.createdByUserId)}
                 </span>
               </div>
-              {a.body ? <p className="mt-0.5 text-xs leading-relaxed text-ink-600">{a.body}</p> : null}
+              {a.body ? <p className="mt-0.5 text-sm leading-relaxed text-ink-600">{a.body}</p> : null}
               {a.followUpDate && !a.isCompleted ? (
-                <p className="mt-1 text-2xs text-warn-600">Follow up by {fmtDate(a.followUpDate)}</p>
+                <p className="mt-1 text-sm text-warn-600">Follow up by {fmtDate(a.followUpDate)}</p>
               ) : null}
             </li>
           ))}

@@ -103,7 +103,7 @@ export function RelationshipsHome() {
         ))}
       </div>
 
-      <p className="text-xs text-ink-500">
+      <p className="text-sm text-ink-500">
         {pluralise(engagements, 'engagement')} across {pluralise(clientCount, 'client')} and{' '}
         {pluralise(manufacturerCount, 'manufacturer')}. Every view here is read-only, and every export is logged.
       </p>

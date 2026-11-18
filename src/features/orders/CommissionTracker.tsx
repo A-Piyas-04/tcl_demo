@@ -82,10 +82,10 @@ export function CommissionTracker() {
       value: (r) => r.indent.indentNumber,
       cell: (r) => (
         <span className="block min-w-0">
-          <span className="block truncate font-mono text-[0.8rem] tabular font-medium text-ink-900">
+          <span className="block truncate font-mono text-sm tabular font-medium text-ink-900">
             {r.indent.indentNumber}
           </span>
-          <span className="block truncate text-2xs text-ink-500">{fmtDate(r.indent.orderDate)}</span>
+          <span className="block truncate text-sm text-ink-500">{fmtDate(r.indent.orderDate)}</span>
         </span>
       ),
     },
@@ -97,7 +97,7 @@ export function CommissionTracker() {
       cell: (r) => (
         <span className="block min-w-0">
           <span className="block truncate text-sm text-ink-900">{r.clientName}</span>
-          <span className="block truncate text-2xs text-ink-500">on {r.manufacturerName}</span>
+          <span className="block truncate text-sm text-ink-500">on {r.manufacturerName}</span>
         </span>
       ),
     },
@@ -126,7 +126,7 @@ export function CommissionTracker() {
             <Badge tone="warn">To be decided</Badge>
           </Tooltip>
         ) : (
-          <span className="text-xs text-ink-700">{COMMISSION_BASIS_LABEL[r.commission.basis]}</span>
+          <span className="text-sm text-ink-700">{COMMISSION_BASIS_LABEL[r.commission.basis]}</span>
         ),
     },
     {
@@ -137,7 +137,7 @@ export function CommissionTracker() {
       width: '5rem',
       value: (r) => r.commission.ratePct,
       cell: (r) => (
-        <span className="tabular text-xs text-ink-700">
+        <span className="tabular text-sm text-ink-700">
           {r.commission.ratePct != null ? `${r.commission.ratePct}%` : '—'}
         </span>
       ),
@@ -155,7 +155,7 @@ export function CommissionTracker() {
             {fmtMoney(r.commission.amount, r.commission.currency)}
           </span>
         ) : (
-          <span className="text-xs text-warn-600">not agreed</span>
+          <span className="text-sm text-warn-600">not agreed</span>
         ),
     },
     {
@@ -175,9 +175,9 @@ export function CommissionTracker() {
       value: (r) => r.commission.invoicedOn,
       cell: (r) => (
         <span className="block min-w-0 text-right">
-          <span className="block text-xs tabular text-ink-600">{fmtDate(r.commission.invoicedOn)}</span>
+          <span className="block text-sm tabular text-ink-600">{fmtDate(r.commission.invoicedOn)}</span>
           {r.commission.invoiceReference ? (
-            <span className="block truncate font-mono text-2xs text-ink-400">{r.commission.invoiceReference}</span>
+            <span className="block truncate font-mono text-sm text-ink-400">{r.commission.invoiceReference}</span>
           ) : null}
         </span>
       ),
@@ -204,7 +204,7 @@ export function CommissionTracker() {
       value: (r) => r.outstanding,
       cell: (r) =>
         r.commission.amount == null ? (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ) : r.outstanding > 0 ? (
           <span className="text-sm font-medium tabular text-warn-600">
             {fmtMoney(r.outstanding, r.commission.currency)}
@@ -229,7 +229,6 @@ export function CommissionTracker() {
           subtitle="TCL's earnings on each indent, payable by the client. Agree the terms, invoice, and record what comes in. The goods are invoiced by the manufacturer to the client and never enter these figures."
           meta={
             <>
-              <Badge tone="neutral">{pluralise(db.commissions.length, 'record')}</Badge>
               {totals.tbdCount > 0 ? <Badge tone="warn">{totals.tbdCount} with terms still to be agreed</Badge> : null}
             </>
           }
@@ -316,9 +315,8 @@ export function CommissionTracker() {
           exportName="commission-book"
           exportFilters={queryString}
           onExport={(count) => void logExport('commission book', queryString, count)}
-          rowTone={(r) => (r.commission.status === 'WRITTEN_OFF' ? 'bg-paper-200/50' : undefined)}
           toolbar={
-            <span className="flex flex-wrap items-center gap-2.5 text-xs text-ink-500">
+            <span className="flex flex-wrap items-center gap-2.5 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'record') : '…'}
               {rows ? (

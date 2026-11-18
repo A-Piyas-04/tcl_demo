@@ -248,7 +248,7 @@ function CommissionActionDialog({
       description={copy.description}
     >
       <form onSubmit={submit} className="space-y-3.5">
-        <div className="rounded-md border border-paper-300 bg-paper-50/60 px-3 py-2 text-xs text-ink-600">
+        <div className="rounded-md border border-paper-300 bg-paper-50/60 px-3 py-2 text-sm text-ink-600">
           <span className="font-mono text-ink-800">{indentNumber}</span> · indent value{' '}
           {fmtMoney(value, commission.currency, { decimals: 0 })} · commission{' '}
           {commission.amount != null ? fmtMoney(commission.amount, commission.currency) : 'not agreed'} · received{' '}

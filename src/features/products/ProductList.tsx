@@ -153,14 +153,14 @@ export function ProductList() {
       header: 'Therapeutic area',
       optional: true,
       value: (r) => r.product.therapeuticCategories.join('; '),
-      cell: (r) => <span className="truncate text-xs text-ink-600">{r.product.therapeuticCategories.join(', ') || '—'}</span>,
+      cell: (r) => <span className="truncate text-sm text-ink-600">{r.product.therapeuticCategories.join(', ') || '—'}</span>,
     },
     {
       key: 'cas',
       header: 'CAS',
       optional: true,
       value: (r) => r.product.casNumber,
-      cell: (r) => <span className="font-mono text-xs tabular text-ink-600">{r.product.casNumber ?? '—'}</span>,
+      cell: (r) => <span className="font-mono text-sm tabular text-ink-600">{r.product.casNumber ?? '—'}</span>,
     },
     {
       key: 'sources',
@@ -198,7 +198,7 @@ export function ProductList() {
         r.commercialCount > 0 ? (
           <Badge tone="ok">{r.commercialCount} supplying</Badge>
         ) : (
-          <span className="text-xs text-ink-400">—</span>
+          <span className="text-sm text-ink-400">—</span>
         ),
     },
     {
@@ -222,10 +222,9 @@ export function ProductList() {
       <div>
       <PageHeading
         title="Molecule catalogue"
-        subtitle="The earlier register. Product 2.0 is the live one — this stays because orders, shipments and requirements still link to its records."
+        subtitle="The earlier register, kept for existing links"
         meta={
           <>
-            <Badge tone="neutral">{pluralise(db.products.filter((p) => p.isActive).length, 'active product')}</Badge>
             <Badge tone="accent">
               {pluralise(db.portfolio.filter((p) => p.isActive).length, 'represented source')}
             </Badge>
@@ -308,7 +307,7 @@ export function ProductList() {
                 placeholder="Any therapeutic area"
                 options={THERAPEUTIC_CATEGORIES.map((t) => ({ value: t, label: t }))}
               />
-              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-600">
+              <label className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-600">
                 <input
                   type="checkbox"
                   checked={values.archived === '1'}
@@ -331,7 +330,7 @@ export function ProductList() {
           exportFilters={queryString}
           onExport={(count) => void logExport('product list', queryString, count)}
           toolbar={
-            <span className="flex items-center gap-2 text-xs text-ink-500">
+            <span className="flex items-center gap-2 text-sm text-ink-500">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {rows ? pluralise(rows.length, 'molecule') : '…'}
               {filtersOn ? <Badge tone="accent">{activeCount} filters</Badge> : null}

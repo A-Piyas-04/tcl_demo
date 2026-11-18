@@ -97,12 +97,12 @@ export function StatCell({
   const { caption: hintCaption, tip: hintTip } = splitBlurb(hint)
   return (
     <Panel className={cn('flex min-h-[8.5rem] flex-col justify-between gap-2 p-3.5', CELL_SURFACE[tone])}>
-      <p className="inline-flex items-center gap-1 text-2xs font-semibold uppercase tracking-wider text-ink-500">
+      <p className="inline-flex items-center gap-1 text-sm font-semibold text-ink-500">
         {label}
         <HelpTip>{hintTip}</HelpTip>
       </p>
-      <p className={cn('text-2xl font-semibold leading-none tracking-tight tabular', CELL_VALUE[tone])}>{value}</p>
-      {hintCaption ? <p className="text-xs leading-relaxed text-ink-500">{hintCaption}</p> : null}
+      <p className={cn('text-2xl font-semibold leading-none tabular', CELL_VALUE[tone])}>{value}</p>
+      {hintCaption ? <p className="text-sm leading-relaxed text-ink-500">{hintCaption}</p> : null}
       {footer}
     </Panel>
   )
@@ -181,10 +181,10 @@ export function ChartTooltip({
   const heading = label == null ? '' : labelFormat ? labelFormat(String(label)) : String(label)
   return (
     <div className="rounded-md border border-paper-300 bg-white px-2.5 py-2 shadow-pop">
-      {heading ? <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-ink-500">{heading}</p> : null}
+      {heading ? <p className="mb-1 text-sm font-semibold text-ink-500">{heading}</p> : null}
       <ul className="space-y-0.5">
         {payload.map((p, i) => (
-          <li key={i} className="flex items-baseline gap-2 text-xs">
+          <li key={i} className="flex items-baseline gap-2 text-sm">
             <span className="h-2 w-2 shrink-0 rounded-sm" style={{ backgroundColor: p.color ?? CHART_MUTED }} />
             <span className="text-ink-600">{String(p.name ?? '')}</span>
             <span className="ml-auto font-semibold tabular text-ink-900">
