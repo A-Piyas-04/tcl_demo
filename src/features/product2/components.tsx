@@ -217,7 +217,7 @@ export function WorkflowTrack({
                   {s.label}
                 </span>
                 <span className="mt-0.5 block text-sm text-ink-400">
-                  {s.state === 'current' ? 'Next step' : s.date && s.state !== 'pending' ? fmtDate(s.date) : ' '}
+                  {s.state === 'current' ? 'Not recorded yet' : s.date && s.state !== 'pending' ? fmtDate(s.date) : ' '}
                 </span>
                 {s.note ? (
                   <span className={cn('mt-0.5 block text-sm leading-snug', s.state === 'rejected' ? 'text-danger-600' : 'text-ink-500')}>

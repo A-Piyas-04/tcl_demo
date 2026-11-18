@@ -21,9 +21,8 @@ import {
   firstOfferedOn,
   firstSampleOn,
   latestPrice,
-  nextStepFor,
+  recordState,
   userName,
-  type NextStep,
 } from '@/data/selectors'
 import { STAGE_LABEL, countryName, stageConfig } from '@/data/reference'
 import { manualNextStages } from '@/data/rules'
@@ -72,7 +71,7 @@ import { lcState } from '@/features/orders/shared'
 import { StageChangeDialog } from './StageDialogs'
 import { OfferDialog, OfferPanel } from './OfferPanel'
 import { SamplePanel, SampleStepDialog } from './SamplePanel'
-import { NextStepCard, TradeSteps } from './DealProgress'
+import { RecordSummary, TradeSteps } from './DealProgress'
 
 const TABS = ['overview', 'work', 'trade', 'documents', 'history'] as const
 type TabKey = (typeof TABS)[number]
@@ -120,46 +119,13 @@ export function EngagementDetail() {
   const sampleCount = db.samples.filter((s) => s.engagementId === engagement.id).length
 
   const deal = dealProgress(db, engagement)
-  const next = nextStepFor(db, engagement)
+  const summary = recordState(db, engagement)
   const approval = approvalContext(db, engagement)
   const manual = manualNextStages(engagement)
   const daysInStage = Math.max(0, Math.round((Date.now() - new Date(engagement.stageChangedAt).getTime()) / 86400000))
 
   const recordName = `${product?.genericName ?? 'This molecule'} (${manufacturer?.displayName ?? 'source'}) for ${client?.displayName ?? 'the client'}`
-
-  const runNext = (step: NextStep) => {
-    const action = step.action
-    if (!action) return
-    switch (action.kind) {
-      case 'offer':
-        setOfferOpen(true)
-        break
-      case 'sample':
-        setSampleStep({ kind: 'request' })
-        break
-      case 'dispatch':
-      case 'receipt':
-      case 'outcome':
-        setSampleStep({ kind: action.kind, roundId: action.roundId })
-        break
-      case 'approve':
-        setTarget('APPROVED')
-        break
-      case 'link':
-        break
-    }
-  }
-
-  const offerBlocked =
-    next.action?.kind === 'offer' && tiers.length === 0
-      ? {
-          text: expired
-            ? `No offer can be made: the source price expired on ${fmtDate(expired.validTo)}.`
-            : 'No offer can be made: this source has no price on record.',
-          href: `/sources/${engagement.manufacturerProductId}`,
-          label: 'Renew the source price',
-        }
-      : null
+  const orderHref = `/client-orders/new?client=${engagement.clientCompanyId}&source=${engagement.manufacturerProductId}&engagement=${engagement.id}`
 
   return (
     <div className="space-y-4">
@@ -230,7 +196,7 @@ export function EngagementDetail() {
               <Field label="First commercial supply">{fmtDate(engagement.firstCommercialOn)}</Field>
             </div>
           </div>
-          <NextStepCard step={next} onAction={() => runNext(next)} blockedReason={offerBlocked} />
+          <RecordSummary summary={summary} />
         </div>
       </Panel>
 
@@ -355,7 +321,7 @@ export function EngagementDetail() {
         </TabPanel>
 
         <TabPanel value="trade" className="pt-4">
-          <TradeTab dealData={deal} next={next} />
+          <TradeTab dealData={deal} orderHref={orderHref} />
         </TabPanel>
 
         <TabPanel value="documents" className="pt-4">
@@ -419,7 +385,7 @@ export function EngagementDetail() {
 }
 
 /** Everything ordered through this client and source, in the order it happens. */
-function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress>; next: NextStep }) {
+function TradeTab({ dealData, orderHref }: { dealData: ReturnType<typeof dealProgress>; orderHref: string }) {
   const db = useDb()
   const { orders, indents, shipments, commissions, lineStatuses } = dealData
 
@@ -430,13 +396,11 @@ function TradeTab({ dealData, next }: { dealData: ReturnType<typeof dealProgress
           title="Nothing has been ordered through this source yet"
           description="Once the client approves the source, their order is recorded here, then the indent TCL places on the manufacturer, the shipments and TCL's commission."
           action={
-            next.action?.kind === 'link' && next.action.href.includes('/client-orders/new') ? (
-              <WriteOnly>
-                <LinkButton to={next.action.href} variant="primary" size="sm">
-                  Record client order
-                </LinkButton>
-              </WriteOnly>
-            ) : undefined
+            <WriteOnly>
+              <LinkButton to={orderHref} variant="primary" size="sm">
+                Record client order
+              </LinkButton>
+            </WriteOnly>
           }
         />
       </Panel>

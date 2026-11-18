@@ -133,12 +133,14 @@ person confirming the comparison and `lcIdAtShipment` recorded. Fix product2's o
 `LcRecord` + `ProformaInvoice` per indent, FOB + freight, **one leg shipped after latest-shipment** so
 demurrage has a reason to exist, 2–4 demurrage rows.
 
-### Step 11 — Delete the judgement engine
-Delete `nextStepFor`, `requirementNextStep`, `commercialStep`, `NextAction`, `NextStep` (selectors) and
-`NextStepCard`, `runNext` (`DealProgress.tsx`, `EngagementDetail.tsx`). Keep `TradeSteps`. Replace with
-`recordState(db, e)` → `RecordSummary` (two lists: *What is recorded* / *Not recorded* as plain noun
-phrases, no tone/icon/button). product2's launcher block stays with copy changes ("Next step" → "Not
-recorded yet").
+### Step 11 — Delete the judgement engine — COMPLETE ✅
+`nextStepFor`, `requirementNextStep`, `commercialStep`, `NextAction`, `NextStep` (~300 lines) deleted
+from `selectors.ts`; `NextStepCard` and `runNext` deleted from `DealProgress.tsx`/`EngagementDetail.tsx`.
+`TradeSteps` kept. Replaced with `recordState(db, e)` → `RecordSummary`: two plain lists (**Recorded** /
+**Not recorded**) with no tone, no imperatives, no buttons. The board/requirement "Record an offer" and
+the empty-state "Record client order" link remain as neutral affordances. product2's launcher block
+kept with "Next step" → "Not recorded yet". No screen renders "Next step", "Pick sources" or
+"available to offer" any more.
 
 ### Step 12 — Dead code, tests, spec
 Delete `demoStories`, `ResolvedStory`, `DEMO_STORIES` (no UI consumer). Rewrite

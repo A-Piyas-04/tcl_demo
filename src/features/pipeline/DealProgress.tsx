@@ -1,15 +1,14 @@
 /**
  * The two halves of a deal at a glance: the trade steps that follow approval,
- * and the single next step a person should take. Both read records that
- * already exist; neither changes anything by itself.
+ * and a plain summary of what is and is not recorded. Both read records that
+ * already exist; neither changes anything, prescribes anything, or decides what
+ * should happen next.
  */
 
-import type * as React from 'react'
-import { ArrowRight, CheckCircle2, CircleDot, Clock3, Lock } from 'lucide-react'
+import { CheckCircle2, CircleDot } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { DealProgress as DealProgressData, NextStep } from '@/data/selectors'
-import { Button, LinkButton, Tooltip } from '@/components/ui'
-import { useCanWrite } from '@/data/store'
+import type { DealProgress as DealProgressData, RecordSummary as RecordSummaryData } from '@/data/selectors'
+import { Tooltip } from '@/components/ui'
 
 export function TradeSteps({ steps }: { steps: DealProgressData['steps'] }) {
   return (
@@ -40,79 +39,43 @@ export function TradeSteps({ steps }: { steps: DealProgressData['steps'] }) {
   )
 }
 
-const TONE: Record<NextStep['tone'], { box: string; icon: React.ReactNode; label: string }> = {
-  action: {
-    box: 'slab-accent bg-white',
-    icon: <CircleDot className="h-4 w-4 text-accent-700" />,
-    label: 'Next step',
-  },
-  waiting: {
-    box: 'bg-white',
-    icon: <Clock3 className="h-4 w-4 text-ink-500" />,
-    label: 'Waiting',
-  },
-  done: {
-    box: 'slab-ok bg-white',
-    icon: <CheckCircle2 className="h-4 w-4 text-ok-600" />,
-    label: 'On track',
-  },
-  closed: {
-    box: 'slab-quiet bg-white',
-    icon: <Lock className="h-4 w-4 text-ink-400" />,
-    label: 'Closed',
-  },
-}
-
-/** Links that only open an existing record are fine for a View Only session. */
-function isReadOnlyLink(step: NextStep) {
-  return step.action?.kind === 'link' && !step.action.href.includes('/new') && !step.action.href.includes('raise=1')
-}
-
-export function NextStepCard({
-  step,
-  onAction,
-  blockedReason,
-  className,
-}: {
-  step: NextStep
-  /** runs an in-page action (open a dialog); links navigate on their own */
-  onAction?: () => void
-  /** when the suggested action cannot run yet, say why and offer the fix instead */
-  blockedReason?: { text: string; href: string; label: string } | null
-  className?: string
-}) {
-  const canWrite = useCanWrite()
-  const tone = TONE[step.tone]
-  const showAction = step.action && (canWrite || isReadOnlyLink(step)) && (step.action.kind === 'link' || onAction)
-
+/**
+ * Two plain lists — what is recorded, and what is not — with no tone, no verbs
+ * and no buttons. It states facts; the person decides what, if anything, to do.
+ */
+export function RecordSummary({ summary, className }: { summary: RecordSummaryData; className?: string }) {
   return (
-    <div className={cn('flex flex-col gap-2 rounded-md border p-3.5', tone.box, className)}>
-      <p className="flex items-center gap-1.5 text-sm font-semibold text-ink-500">
-        {tone.icon}
-        {tone.label}
-      </p>
-      <p className="text-sm font-semibold text-ink-900">{step.title}</p>
-      <p className="text-sm leading-relaxed text-ink-600">{step.detail}</p>
-      {blockedReason ? (
-        <div className="space-y-1.5">
-          <p className="text-sm leading-relaxed text-warn-600">{blockedReason.text}</p>
-          <LinkButton to={blockedReason.href} variant="secondary" size="sm">
-            {blockedReason.label}
-          </LinkButton>
-        </div>
-      ) : showAction && step.action ? (
+    <div className={cn('rounded-md border bg-white p-3.5', className)}>
+      <div className="space-y-3">
         <div>
-          {step.action.kind === 'link' ? (
-            <LinkButton to={step.action.href} variant="primary" size="sm" icon={<ArrowRight className="h-3.5 w-3.5" />}>
-              {step.actionLabel ?? step.action.label}
-            </LinkButton>
+          <p className="mb-1.5 text-sm font-semibold text-ink-500">Recorded</p>
+          {summary.recorded.length ? (
+            <ul className="space-y-1">
+              {summary.recorded.map((t, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-sm text-ink-800">
+                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ok-500" />
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
           ) : (
-            <Button variant="primary" size="sm" onClick={onAction} icon={<ArrowRight className="h-3.5 w-3.5" />}>
-              {step.actionLabel}
-            </Button>
+            <p className="text-sm text-ink-400">Nothing recorded yet.</p>
           )}
         </div>
-      ) : null}
+        {summary.missing.length ? (
+          <div>
+            <p className="mb-1.5 text-sm font-semibold text-ink-500">Not recorded</p>
+            <ul className="space-y-1">
+              {summary.missing.map((t, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-sm text-ink-500">
+                  <CircleDot className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-300" />
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

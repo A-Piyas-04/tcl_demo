@@ -565,314 +565,69 @@ export function dealProgress(db: Database, e: Engagement): DealProgress {
 
 const pluralCount = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
-// -------------------------------------------------------------- next step
+// ------------------------------------------------------------ record state
 
-export type NextAction =
-  | { kind: 'offer' }
-  | { kind: 'sample' }
-  | { kind: 'dispatch'; roundId: ID }
-  | { kind: 'receipt'; roundId: ID }
-  | { kind: 'outcome'; roundId: ID }
-  | { kind: 'approve' }
-  | { kind: 'link'; href: string; label: string }
-
-export interface NextStep {
-  tone: 'action' | 'waiting' | 'done' | 'closed'
-  title: string
-  detail: string
-  action?: NextAction
-  /** the button label, when there is an action */
-  actionLabel?: string
+export interface RecordSummary {
+  recorded: string[]
+  missing: string[]
 }
 
 /**
- * What a person should do next on this engagement, worked out from the records
- * already there. It suggests; the rules still decide what is allowed.
+ * What is and is not recorded on this engagement, as plain statements of fact.
+ * It reads the same records the old next-step engine read, but it never tells
+ * anyone what to do: two lists, no tone, no verbs, no buttons. The dialogs that
+ * record each thing are reached from the stage control and the work tabs.
  */
-export function nextStepFor(db: Database, e: Engagement): NextStep {
-  const client = companyName(db, e.clientCompanyId)
+export function recordState(db: Database, e: Engagement): RecordSummary {
+  const recorded: string[] = []
+  const missing: string[] = []
   const offers = db.offers.filter((o) => o.engagementId === e.id).sort((a, b) => b.versionNo - a.versionNo)
   const rounds = db.samples.filter((s) => s.engagementId === e.id).sort((a, b) => b.roundNo - a.roundNo)
   const latestOffer = offers[0]
   const latestRound = rounds[0]
-  const orderHref = `/client-orders/new?client=${e.clientCompanyId}&source=${e.manufacturerProductId}&engagement=${e.id}`
 
-  switch (e.stage) {
-    case 'REJECTED':
-    case 'DISCONTINUED':
-      return {
-        tone: 'closed',
-        title: e.stage === 'REJECTED' ? 'Closed: rejected' : 'Closed: discontinued',
-        detail: 'Nothing further is expected. If the client reconsiders, reopen it from Change stage; it returns to Identified.',
-      }
-    case 'ON_HOLD':
-      return {
-        tone: 'waiting',
-        title: 'Paused',
-        detail: `Put on hold${e.stageBeforeHold ? ` at ${e.stageBeforeHold.toLowerCase().replace(/_/g, ' ')}` : ''}. Resume it from Change stage when the reason has passed.`,
-      }
-    case 'IDENTIFIED':
-      return {
-        tone: 'action',
-        title: 'Send the client an offer',
-        detail: `${client} has not been quoted for this source yet. Recording the offer moves the engagement to Offered.`,
-        action: { kind: 'offer' },
-        actionLabel: 'Create offer',
-      }
-    case 'OFFERED':
-      if (latestOffer?.status === 'DECLINED') {
-        return {
-          tone: 'action',
-          title: 'Offer declined: revise it or close',
-          detail: `${client} declined offer v${latestOffer.versionNo}. Send a revised offer, or reject the engagement from Change stage.`,
-          action: { kind: 'offer' },
-          actionLabel: 'Revise offer',
-        }
-      }
-      return {
-        tone: 'action',
-        title: latestOffer?.status === 'ACCEPTED' ? 'Offer accepted: request a sample' : 'Request a sample for evaluation',
-        detail:
-          latestOffer?.status === 'ACCEPTED'
-            ? `${client} accepted offer v${latestOffer.versionNo}. The next step is material for their QC to evaluate.`
-            : `Offer v${latestOffer?.versionNo ?? 1} is with ${client}. When they want to test material, request a sample round.`,
-        action: { kind: 'sample' },
-        actionLabel: 'Request a sample',
-      }
-    case 'SAMPLE_REQUESTED':
-      return latestRound && !latestRound.dispatchedOn
-        ? {
-            tone: 'action',
-            title: 'Record the sample dispatch',
-            detail: `Round ${latestRound.roundNo} was requested on ${latestRound.requestedOn}. Record the courier and tracking number once the manufacturer sends it.`,
-            action: { kind: 'dispatch', roundId: latestRound.id },
-            actionLabel: 'Record dispatch',
-          }
-        : { tone: 'waiting', title: 'Waiting for the sample to be sent', detail: 'The manufacturer has the request.' }
-    case 'SAMPLE_SENT':
-      return latestRound && !latestRound.receivedOn
-        ? {
-            tone: 'action',
-            title: 'Confirm the client received the sample',
-            detail: `Round ${latestRound.roundNo} left on ${latestRound.dispatchedOn ?? '—'}. Record the date ${client} received it to start their evaluation.`,
-            action: { kind: 'receipt', roundId: latestRound.id },
-            actionLabel: 'Record receipt',
-          }
-        : { tone: 'waiting', title: 'Sample on its way', detail: 'Waiting for the client to confirm receipt.' }
-    case 'UNDER_EVALUATION':
-      if (latestRound?.outcome === 'PASS') {
-        return {
-          tone: 'action',
-          title: 'Sample passed: record the approval',
-          detail: `${client}'s QC passed round ${latestRound.roundNo}. Record the approval date and reference to open ordering.`,
-          action: { kind: 'approve' },
-          actionLabel: 'Record approval',
-        }
-      }
-      if (latestRound?.outcome === 'FAIL') {
-        return {
-          tone: 'action',
-          title: 'Sample failed: try again or close',
-          detail: `Round ${latestRound.roundNo} failed. Raise another round, or reject the engagement from Change stage.`,
-          action: { kind: 'sample' },
-          actionLabel: 'Raise another round',
-        }
-      }
-      return {
-        tone: 'action',
-        title: "Record the client's evaluation result",
-        detail: `${client} is evaluating round ${latestRound?.roundNo ?? 1}. Chase their QC and record pass or fail when they answer.`,
-        ...(latestRound ? { action: { kind: 'outcome' as const, roundId: latestRound.id }, actionLabel: 'Record outcome' } : {}),
-      }
-    case 'APPROVED':
-      return {
-        tone: 'action',
-        title: 'Approved: record the first client order',
-        detail: `${client} has approved this source${e.approvedOn ? ` on ${e.approvedOn}` : ''}. Their order and the indent on the manufacturer turn this into commercial supply.`,
-        action: { kind: 'link', href: orderHref, label: 'Record client order' },
-        actionLabel: 'Record client order',
-      }
-    case 'COMMERCIAL':
-      return commercialStep(db, e, orderHref)
-  }
-}
-
-/**
- * What a requirement needs next: a source, a choice of sources, or progress on
- * the engagements already opened. The requirement's own status is still set
- * by hand; this reads the records around it.
- */
-export function requirementNextStep(db: Database, r: Requirement): NextStep {
-  const engagements = db.requirementEngagements
-    .filter((l) => l.requirementId === r.id)
-    .map((l) => db.engagements.find((e) => e.id === l.engagementId))
-    .filter((e): e is Engagement => Boolean(e))
-  const product = productName(db, r.productId)
-
-  if (r.status === 'CANCELLED' || r.status === 'CLOSED_LOST') {
-    return { tone: 'closed', title: 'Closed', detail: 'This requirement is no longer being pursued.' }
+  if (latestOffer) {
+    const answer =
+      latestOffer.status === 'ACCEPTED'
+        ? ', accepted'
+        : latestOffer.status === 'DECLINED'
+          ? ', declined'
+          : latestOffer.status === 'EXPIRED'
+            ? ', expired'
+            : ''
+    recorded.push(`Offer v${latestOffer.versionNo}, ${fmtDate(latestOffer.offerDate)}${answer}`)
+  } else {
+    missing.push('No offer')
   }
 
-  if (engagements.length === 0) {
-    const candidates = matchingSources(db, r)
-    if (candidates.length > 0) {
-      return {
-        tone: 'action',
-        title: 'Choose which sources to offer',
-        detail: `${candidates.length} represented ${candidates.length === 1 ? 'source makes' : 'sources make'} ${product}${r.requiredPharmacopoeia ? ` to ${r.requiredPharmacopoeia}` : ''}. Tick one or more below and open an engagement for each; the client may approve one, some or none.`,
-      }
-    }
-    const gap = sourcingGap(db, r.productId, r.requiredPharmacopoeia) ?? 'NO_SOURCE'
-    return {
-      tone: 'action',
-      title: 'Find a source',
-      detail: `${SOURCING_GAP_COPY[gap].label}. ${SOURCING_GAP_COPY[gap].detail}`,
-      action:
-        gap === 'NO_SOURCE'
-          ? { kind: 'link', href: '/manufacturers/new', label: 'Register a manufacturer' }
-          : { kind: 'link', href: `/products/${r.productId}`, label: 'Review the known sources' },
-      actionLabel: gap === 'NO_SOURCE' ? 'Register a manufacturer' : 'Review the known sources',
-    }
+  if (latestRound) {
+    recorded.push(`Sample round ${latestRound.roundNo} requested ${fmtDate(latestRound.requestedOn)}`)
+    if (latestRound.dispatchedOn) recorded.push(`Sample dispatched ${fmtDate(latestRound.dispatchedOn)}`)
+    if (latestRound.receivedOn) recorded.push(`Sample received ${fmtDate(latestRound.receivedOn)}`)
+    if (latestRound.outcome === 'PASS')
+      recorded.push(`Round ${latestRound.roundNo} passed${latestRound.outcomeOn ? ` ${fmtDate(latestRound.outcomeOn)}` : ''}`)
+    else if (latestRound.outcome === 'FAIL')
+      recorded.push(`Round ${latestRound.roundNo} failed${latestRound.outcomeOn ? ` ${fmtDate(latestRound.outcomeOn)}` : ''}`)
+    else missing.push('No evaluation result')
+  } else {
+    missing.push('No sample round')
   }
 
-  const live = engagements.filter((e) => !['REJECTED', 'DISCONTINUED'].includes(e.stage))
-  const best = furthestStage(engagements.map((e) => e.stage))
-  if (live.length === 0) {
-    return {
-      tone: 'action',
-      title: 'Every source so far has been closed',
-      detail: 'Open another candidate below, reopen one of the engagements, or close the requirement as lost.',
-    }
-  }
-  if (best === 'COMMERCIAL') {
-    return {
-      tone: 'done',
-      title: 'Answered: supplying commercially',
-      detail: `${companyName(db, r.clientCompanyId)} is buying ${product} through TCL. Follow the trade on the engagement.`,
-    }
-  }
-  if (best === 'APPROVED') {
-    return {
-      tone: 'action',
-      title: 'Approved: waiting for the first order',
-      detail: 'The client has approved a source. Their first order turns this into commercial supply.',
-    }
-  }
-  return {
-    tone: 'waiting',
-    title: `${live.length} ${live.length === 1 ? 'engagement' : 'engagements'} in progress`,
-    detail: 'Each engagement below shows its own next step. Open one to record offers, samples and approval.',
-  }
-}
+  if (e.approvedOn) recorded.push(`Approved ${fmtDate(e.approvedOn)}${e.approvalReference ? `, ref ${e.approvalReference}` : ''}`)
+  else missing.push('No approval')
 
-function commercialStep(db: Database, e: Engagement, orderHref: string): NextStep {
-  const deal = dealProgress(db, e)
-  if (deal.orders.length === 0) {
-    return {
-      tone: 'done',
-      title: 'Supplying commercially',
-      detail: 'No client order for this source is recorded in the system yet. Record one when the client reorders.',
-      action: { kind: 'link', href: orderHref, label: 'Record client order' },
-      actionLabel: 'Record client order',
-    }
-  }
-  const unindented = deal.lineStatuses.find((s) => s.unindentedQty > 1e-6)
-  if (unindented) {
-    return {
-      tone: 'action',
-      title: 'Place the indent on the manufacturer',
-      detail: `${unindented.coNumber} still has ${round(unindented.unindentedQty)} ${unindented.uom} with no indent behind it.`,
-      action: { kind: 'link', href: `/client-orders/${unindented.orderId}?raise=1`, label: 'Raise indent' },
-      actionLabel: 'Raise indent',
-    }
-  }
-  const noLc = deal.indents.find((i) => !i.lcNumber && i.status !== 'COMPLETED')
-  if (noLc) {
-    return {
-      tone: 'action',
-      title: "Record the client's letter of credit",
-      detail: `${noLc.indentNumber} has no LC on record. The client opens it in the manufacturer's favour before shipment.`,
-      action: { kind: 'link', href: `/indents/${noLc.id}`, label: 'Open indent' },
-      actionLabel: 'Open indent',
-    }
-  }
-  const unshipped = deal.indents.find((i) => !deal.shipments.some((s) => s.indentId === i.id))
-  if (unshipped) {
-    return {
-      tone: 'action',
-      title: 'Record the shipment',
-      detail: `${unshipped.indentNumber} has no shipment yet. Add it once the manufacturer confirms dispatch.`,
-      action: { kind: 'link', href: `/indents/${unshipped.id}`, label: 'Open indent' },
-      actionLabel: 'Open indent',
-    }
-  }
-  const held = deal.shipments.find((s) => s.status === 'HELD_AT_CUSTOMS')
-  if (held) {
-    return {
-      tone: 'action',
-      title: 'Shipment held at customs',
-      detail: `${held.shipmentRef}: ${held.holdRemark ?? 'held'}. Follow up with the C&F agent and record clearance.`,
-      action: { kind: 'link', href: `/shipments/${held.id}`, label: 'Open shipment' },
-      actionLabel: 'Open shipment',
-    }
-  }
-  const moving = deal.shipments.find((s) => ['PLANNED', 'IN_TRANSIT', 'ARRIVED'].includes(s.status))
-  if (moving) {
-    return {
-      tone: 'waiting',
-      title: 'Goods on the way',
-      detail: `${moving.shipmentRef} is ${moving.status.toLowerCase().replace(/_/g, ' ')}${moving.eta ? `, ETA ${fmtDate(moving.eta)}` : ''}. Record arrival and clearance as they happen.`,
-      action: { kind: 'link', href: `/shipments/${moving.id}`, label: 'Track shipment' },
-      actionLabel: 'Track shipment',
-    }
-  }
-  const undelivered = deal.shipments.find((s) => s.status === 'CLEARED')
-  if (undelivered) {
-    return {
-      tone: 'action',
-      title: 'Record the delivery',
-      detail: `${undelivered.shipmentRef} is cleared. Record what reached the client, with their GRN.`,
-      action: { kind: 'link', href: `/shipments/${undelivered.id}`, label: 'Open shipment' },
-      actionLabel: 'Open shipment',
-    }
-  }
-  const tbd = deal.commissions.find((c) => c.basis === 'TBD')
-  if (tbd) {
-    return {
-      tone: 'action',
-      title: 'Agree the commission',
-      detail: 'The goods are delivered but the commission terms are still to be decided.',
-      action: { kind: 'link', href: `/indents/${tbd.indentId}`, label: 'Open indent' },
-      actionLabel: 'Open indent',
-    }
-  }
-  const uninvoiced = deal.commissions.find((c) => c.status === 'PENDING')
-  if (uninvoiced) {
-    return {
-      tone: 'action',
-      title: 'Invoice the commission',
-      detail: 'Delivery is complete. Invoice the client for TCL\u2019s commission.',
-      action: { kind: 'link', href: `/commissions?client=${e.clientCompanyId}`, label: 'Open commission' },
-      actionLabel: 'Open commission',
-    }
-  }
-  const awaiting = deal.commissions.find((c) => c.status === 'INVOICED' || c.status === 'PARTIALLY_RECEIVED')
-  if (awaiting) {
-    return {
-      tone: 'waiting',
-      title: 'Waiting for the commission payment',
-      detail: `Invoiced${awaiting.invoicedOn ? ` on ${awaiting.invoicedOn}` : ''}. Record the receipt when the client pays.`,
-      action: { kind: 'link', href: `/commissions?client=${e.clientCompanyId}`, label: 'Open commission' },
-      actionLabel: 'Open commission',
-    }
-  }
-  return {
-    tone: 'done',
-    title: 'Complete: delivered and paid',
-    detail: 'Everything on record is delivered and the commission is received. Record a new order when the client reorders.',
-    action: { kind: 'link', href: orderHref, label: 'Record client order' },
-    actionLabel: 'Record client order',
-  }
+  const orderLines = db.clientOrderLines.filter((l) => l.engagementId === e.id)
+  if (orderLines.length) recorded.push(`${pluralCount(orderLines.length, 'client order line')} recorded`)
+  else missing.push('No client order')
+
+  if (e.firstCommercialOn) recorded.push(`Commercial since ${fmtDate(e.firstCommercialOn)}`)
+
+  if (e.stage === 'REJECTED') recorded.push('Recorded as rejected')
+  else if (e.stage === 'DISCONTINUED') recorded.push('Recorded as discontinued')
+  else if (e.stage === 'ON_HOLD')
+    recorded.push(`On hold${e.stageBeforeHold ? ` from ${e.stageBeforeHold.toLowerCase().replace(/_/g, ' ')}` : ''}`)
+
+  return { recorded, missing }
 }
 
 // ------------------------------------------- v_client_order_line_status

@@ -146,7 +146,7 @@ export function P2OrderDetail() {
             <WriteOnly>
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent-200 bg-accent-50/60 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-accent-800">Next step · {TRADE_STAGE_LABEL[stage!]}</p>
+                  <p className="text-sm font-semibold text-accent-800">Not recorded yet · {TRADE_STAGE_LABEL[stage!]}</p>
                   <p className="text-sm text-ink-700">{next.hint}</p>
                 </div>
                 <Button variant="primary" icon={next.icon} onClick={next.action}>
