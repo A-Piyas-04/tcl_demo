@@ -12,13 +12,15 @@
  * makes it and TCL does not represent them, which means an agency conversation.
  */
 
+import * as React from 'react'
 import { Link } from 'react-router-dom'
-import { Building2, Download, PackageSearch, Target } from 'lucide-react'
+import { Download, Factory, PackageSearch, SearchX, Target } from 'lucide-react'
 import { useDb } from '@/data/store'
 import { SectionNav } from '@/layout/sections'
 import {
   SOURCING_GAP_COPY,
   allSourcesFor,
+  clients as clientList,
   requirementRows,
   sourcingGap,
   type RequirementRow,
@@ -27,17 +29,19 @@ import {
 } from '@/data/selectors'
 import { convertQty, REQUIREMENT_KIND_LABEL } from '@/data/reference'
 import { logExport } from '@/data/api'
-import { useAsyncData } from '@/lib/hooks'
+import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
 import { downloadCsv, fmtDate, fmtQty, pluralise } from '@/lib/utils'
 import {
   Badge,
   Button,
   EmptyState,
+  FilterBar,
   KpiTile,
   LinkButton,
   Panel,
   PanelHeader,
   PageHeading,
+  Select,
   SkeletonTiles,
   TileGrid,
   Tooltip,
@@ -46,6 +50,8 @@ import {
 
 type Gap = SourcingGap
 const GAP_COPY = SOURCING_GAP_COPY
+
+const DEFAULTS = { q: '', client: '', gap: '' }
 
 interface Group {
   productId: string
@@ -107,7 +113,27 @@ export function UnsourcedDemand() {
   const all = groups ?? []
   const requirementCount = all.reduce((n, g) => n + g.requirements.length, 0)
   const clientCount = new Set(all.flatMap((g) => g.requirements.map((r) => r.client.id))).size
-  const agencyCases = all.filter((g) => g.gap === 'NOT_REPRESENTED').length
+
+  const { values, setValue, clear, activeCount } = useUrlFilters(DEFAULTS)
+  const [search, setSearch] = useUrlSearch(values.q, (v) => setValue('q', v))
+
+  const shown = React.useMemo(() => {
+    const q = values.q.trim().toLowerCase()
+    const out: Group[] = []
+    for (const g of all) {
+      if (values.gap && g.gap !== values.gap) continue
+      const moleculeHit =
+        !q || g.productName.toLowerCase().includes(q) || (g.casNumber ?? '').toLowerCase().includes(q)
+      const requirements = g.requirements.filter(
+        (r) =>
+          (!values.client || r.client.id === values.client) &&
+          (moleculeHit || r.client.displayName.toLowerCase().includes(q)),
+      )
+      if (requirements.length === 0) continue
+      out.push(requirements.length === g.requirements.length ? g : { ...g, requirements })
+    }
+    return out
+  }, [all, values])
 
   const exportList = () => {
     const rows = all.flatMap((g) =>
@@ -173,7 +199,7 @@ export function UnsourcedDemand() {
       </div>
 
       {loading ? (
-        <SkeletonTiles count={4} />
+        <SkeletonTiles count={2} />
       ) : all.length === 0 ? (
         <Panel className="p-4">
           <EmptyState
@@ -209,25 +235,58 @@ export function UnsourcedDemand() {
               tone="warn"
               hint={`Across ${pluralise(requirementCount, 'open requirement')}.`}
             />
-            <KpiTile
-              label="Repeated demand"
-              value={all.filter((g) => g.clientCount > 1).length}
-              tone="accent"
-              hint="Molecules asked for by more than one client. Start here."
-            />
-            <KpiTile
-              label="Agency conversations"
-              value={agencyCases}
-              icon={<Building2 className="h-4 w-4" />}
-              hint="A source is already in the register but is not represented."
-            />
           </TileGrid>
 
-          <div className="grid gap-3 lg:grid-cols-2">
-            {all.map((group, i) => (
-              <GroupPanel key={group.productId} group={group} rank={i + 1} />
-            ))}
-          </div>
+          <Panel>
+            <FilterBar
+              search={search}
+              onSearch={setSearch}
+              searchPlaceholder="Molecule, CAS or client…"
+              activeCount={activeCount}
+              onClear={clear}
+              primary={
+                <>
+                  <Select
+                    value={values.client}
+                    onChange={(v) => setValue('client', v)}
+                    allowEmpty
+                    emptyLabel="Any client"
+                    placeholder="Any client"
+                    options={clientList(db).map((c) => ({ value: c.id, label: c.displayName }))}
+                  />
+                  <Select
+                    value={values.gap}
+                    onChange={(v) => setValue('gap', v)}
+                    allowEmpty
+                    emptyLabel="Any gap"
+                    placeholder="Any gap"
+                    options={(Object.keys(GAP_COPY) as Gap[]).map((g) => ({ value: g, label: GAP_COPY[g].label }))}
+                  />
+                </>
+              }
+            />
+          </Panel>
+
+          {shown.length === 0 ? (
+            <Panel className="p-4">
+              <EmptyState
+                icon={<SearchX className="h-5 w-5" />}
+                title="No unsourced molecule matches these filters"
+                description="Try a different search or clear the filters."
+                action={
+                  <Button variant="secondary" size="sm" onClick={clear}>
+                    Clear filters
+                  </Button>
+                }
+              />
+            </Panel>
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {shown.map((group, i) => (
+                <GroupPanel key={group.productId} group={group} rank={i + 1} />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -294,6 +353,17 @@ function GroupPanel({ group, rank }: { group: Group; rank: number }) {
             >
               Open
             </Link>
+            <WriteOnly>
+              <Tooltip content="Register manufacturer">
+                <Link
+                  to="/manufacturers/new"
+                  aria-label="Register manufacturer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded text-ink-600 transition-colors hover:bg-paper-200 hover:text-accent-700"
+                >
+                  <Factory className="h-4 w-4" />
+                </Link>
+              </Tooltip>
+            </WriteOnly>
           </li>
         ))}
       </ul>
@@ -317,19 +387,15 @@ function GroupPanel({ group, rank }: { group: Group; rank: number }) {
             ))}
           </ul>
         ) : null}
-        <WriteOnly>
-          <div className="flex flex-wrap gap-2">
-            {group.gap === 'NO_SOURCE' ? (
-              <LinkButton to="/manufacturers/new" variant="secondary" size="sm">
-                Register a manufacturer
-              </LinkButton>
-            ) : (
+        {group.gap !== 'NO_SOURCE' ? (
+          <WriteOnly>
+            <div className="flex flex-wrap gap-2">
               <LinkButton to={`/products/${group.productId}`} variant="secondary" size="sm">
                 Review the sources for this molecule
               </LinkButton>
-            )}
-          </div>
-        </WriteOnly>
+            </div>
+          </WriteOnly>
+        ) : null}
       </div>
     </Panel>
   )

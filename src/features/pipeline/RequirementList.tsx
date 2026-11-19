@@ -18,7 +18,7 @@ import {
 } from '@/data/reference'
 import { logExport } from '@/data/api'
 import { useAsyncData, useUrlFilters, useUrlSearch } from '@/lib/hooks'
-import { fmtDate, fmtMoney, fmtQty, pluralise } from '@/lib/utils'
+import { fmtDate, pluralise } from '@/lib/utils'
 import type { RequirementKind, RequirementStatus } from '@/data/types'
 import {
   Badge,
@@ -135,35 +135,6 @@ export function RequirementList() {
             <span className="text-sm text-ink-400">Any</span>
           </Tooltip>
         ),
-    },
-    {
-      key: 'qty',
-      header: 'Annual quantity',
-      align: 'right',
-      sortable: true,
-      value: (r) => r.requirement.estAnnualQty,
-      cell: (r) => (
-        <span className="text-sm tabular text-ink-800">
-          {fmtQty(r.requirement.estAnnualQty, r.requirement.qtyUom)}
-          {r.requirement.qtyIsIndicative ? (
-            <Tooltip content="Indicative only, so this requirement is left out of value-weighted reports.">
-              <span className="ml-1 text-sm text-ink-400">est.</span>
-            </Tooltip>
-          ) : null}
-        </span>
-      ),
-    },
-    {
-      key: 'target',
-      header: 'Target price',
-      align: 'right',
-      sortable: true,
-      value: (r) => r.requirement.targetPrice,
-      cell: (r) => (
-        <span className="text-sm tabular text-ink-700">
-          {fmtMoney(r.requirement.targetPrice, r.requirement.targetCurrency ?? 'USD', { decimals: 0 })}
-        </span>
-      ),
     },
     {
       key: 'status',

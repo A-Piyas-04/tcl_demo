@@ -154,7 +154,7 @@ export function P2Detail() {
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <SummaryTile label="Sources" value={`${accepted} / ${sources.length}`} sub="approved / identified" />
+        <SummaryTile label="Sources" value={`${accepted} / ${sources.length}`} sub="approved / listed" />
         <SummaryTile label="Trade orders" value={`${open} / ${bundles.length}`} sub="open / total" />
         <SummaryTile label="Commission expected" value={fmtTotals(expected)} sub="not yet received" mono />
         <SummaryTile label="Commission received" value={fmtTotals(received)} sub="confirmed receipts" mono tone="ok" />
@@ -178,7 +178,7 @@ export function P2Detail() {
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-ink-500">
-                  Each manufacturer is sourced separately: <span className="font-medium text-ink-700">Identified → Sample submitted → Accepted / Rejected</span>.
+                  Each manufacturer is sourced separately: <span className="font-medium text-ink-700">Listed → Sample submitted → Accepted / Rejected</span>.
                 </p>
                 <WriteOnly>
                   <Button variant="primary" size="sm" icon={<Plus className="h-3.5 w-3.5" />} disabled={!api.isActive} onClick={() => setAddingSource(true)}>
@@ -189,8 +189,8 @@ export function P2Detail() {
               {sources.length === 0 ? (
                 <EmptyState
                   icon={<FlaskConical className="h-5 w-5" />}
-                  title="No manufacturer identified yet"
-                  description="Add the first manufacturer source. Sourcing starts at Identified."
+                  title="No manufacturer listed yet"
+                  description="Add the first manufacturer source."
                   action={
                     <WriteOnly>
                       <Button size="sm" variant="primary" onClick={() => setAddingSource(true)} disabled={!api.isActive}>

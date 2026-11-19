@@ -24,7 +24,7 @@ import type {
 // --------------------------------------------------------------- sourcing
 
 export const SOURCING_STATUS_LABEL: Record<SourcingStatus, string> = {
-  IDENTIFIED: 'Identified',
+  IDENTIFIED: 'Listed',
   SAMPLE_SUBMITTED: 'Sample submitted',
   ACCEPTED: 'Sample accepted',
   REJECTED: 'Sample rejected',
@@ -64,7 +64,7 @@ export function sourcingSteps(data: P2Data, sourcing: SourcingRecord): Step[] {
   const decisionSample = accepted ?? (latest?.status === 'REJECTED' ? latest : undefined)
 
   return [
-    { key: 'IDENTIFIED', label: 'Identified', state: 'done', date: sourcing.identifiedOn },
+    { key: 'IDENTIFIED', label: 'Listed', state: 'done', date: sourcing.identifiedOn },
     {
       key: 'SUBMITTED',
       label: 'Sample submitted',

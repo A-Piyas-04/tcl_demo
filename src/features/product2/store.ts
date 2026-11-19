@@ -270,8 +270,8 @@ function validateSourcing(d: P2Data, apiProductId: ID, input: SourcingInput, sel
       (s.intermediaryId ?? null) === (input.intermediaryId ?? null),
   )
   if (dupe) throw new RuleError(`${mfr.name} is already recorded as a source for this API through the same channel.`)
-  const identifiedOn = requireDate(input.identifiedOn, 'Identified on')
-  notFuture(identifiedOn, 'Identified on')
+  const identifiedOn = requireDate(input.identifiedOn, 'Listed on')
+  notFuture(identifiedOn, 'Listed on')
   const price = optText(input.indicativePrice)
   return {
     manufacturerId: mfr.id,
@@ -340,7 +340,7 @@ export function submitSample(sourcingId: ID, input: SampleInput): Promise<ID> {
     }
     const submittedOn = requireDate(input.submittedOn, 'Submitted on')
     notFuture(submittedOn, 'Submitted on')
-    if (submittedOn < source.identifiedOn) throw new RuleError('A sample cannot be submitted before the source was identified.')
+    if (submittedOn < source.identifiedOn) throw new RuleError('A sample cannot be submitted before the source was listed.')
     const previous = samplesFor(d, sourcingId)
     const last = previous[previous.length - 1]
     if (last?.decidedOn && submittedOn < last.decidedOn) {

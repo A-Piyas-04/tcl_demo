@@ -306,7 +306,7 @@ export function SourcingDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={existing ? 'Edit source' : 'Add manufacturer source'}
-      description="Who makes this API, and through whom TCL reaches them. Sourcing starts at Identified."
+      description="Who makes this API, and through whom TCL reaches them."
       icon={<FlaskConical className="h-5 w-5" />}
       confirmLabel={existing ? 'Save' : 'Add source'}
       busy={busy}
@@ -341,7 +341,7 @@ export function SourcingDialog({
         <FormRow label="Intermediary supplier" hint="Leave empty when TCL deals with the manufacturer directly." className="sm:col-span-2">
           <PartyPicker kind="INTERMEDIARY" value={intermediaryId} onChange={setIntermediaryId} allowEmpty emptyLabel="Direct — no intermediary" />
         </FormRow>
-        <FormRow label="Identified on" required error={show ? errors.identifiedOn : null}>
+        <FormRow label="Listed on" required error={show ? errors.identifiedOn : null}>
           <DateInput value={identifiedOn} max={todayIso()} onChange={(e) => setIdentifiedOn(e.target.value)} invalid={show && !!errors.identifiedOn} />
         </FormRow>
         <FormRow label="Indicative price" hint="Reference only; orders carry their own price." error={show ? errors.price : null}>
@@ -408,7 +408,7 @@ export function SampleDialog({
       : submittedOn > todayIso()
         ? 'Cannot be in the future.'
         : submittedOn < source.identifiedOn
-          ? `Cannot be before the source was identified (${fmtDate(source.identifiedOn)}).`
+          ? `Cannot be before the source was listed (${fmtDate(source.identifiedOn)}).`
           : null,
   }
 
